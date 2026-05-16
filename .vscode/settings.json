@@ -1,0 +1,12 @@
+{
+  "files.autoSave": "afterDelay",
+  "files.autoSaveDelay": 1000,
+  "files.hotExit": "onExitAndWindowClose",
+  "github.copilot.chat.claudeAgent.allowDangerouslySkipPermissions": true,
+  "github.copilot.chat.claudeAgent.enabled": true,
+  "github.copilot.chat.agent.autoFix": true,
+  "terminal.integrated.fontSize": 18,
+  "editor.fontSize": 16,
+  "editor.fontFamily": "'Cascadia Code', 'Fira Code', Consolas, 'Courier New', monospace",
+  "editor.fontLigatures": true
+}

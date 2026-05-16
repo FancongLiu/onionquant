@@ -1,0 +1,13 @@
+# Windows 换行符设置
+* text=auto
+
+# Python 文件
+*.py text diff=python
+*.ipynb text diff=json
+
+# Markdown
+*.md text
+
+# 批处理文件
+*.bat text eol=crlf
+*.ps1 text eol=crlf

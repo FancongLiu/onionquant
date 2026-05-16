@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+*.egg
+.env
+.venv/
+venv/
+env/
+
+# VS Code (个人设置不提交，但工作区设置可以提交)
+.vscode/*.code-snippets
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Claude AI 辅助文件
+.claude/
+
+# GitHub 自动同步脚本的日志
+auto_sync_log.txt

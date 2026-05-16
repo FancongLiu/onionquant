@@ -9,7 +9,7 @@ from ddgs import DDGS
 
 # ==================== 配置区域 ====================
 # 请在这里填入你的硅基流动API Key
-SILICONFLOW_API_KEY = "你的API_KEY填在这里"  # ← 请替换为你的实际API Key
+SILICONFLOW_API_KEY = "sk-uyxlnzpvlabdwywyeucjqbyffpjspgdyisrduzyowzpulpxn"  # ← 请替换为你的实际API Key
 
 # GLM-5.1模型配置
 API_URL = "https://api.siliconflow.cn/v1/chat/completions"

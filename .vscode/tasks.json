@@ -1,0 +1,39 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "🔄 同步代码到 GitHub",
+      "type": "shell",
+      "command": "python",
+      "args": ["scripts/auto_git_sync.py"],
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "📥 从 GitHub 拉取最新代码",
+      "type": "shell",
+      "command": "git pull",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "📊 查看提交历史",
+      "type": "shell",
+      "command": "git log --oneline --graph --all --decorate",
+      "group": "none",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": []
+    }
+  ]
+}
