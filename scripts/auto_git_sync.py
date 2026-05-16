@@ -13,7 +13,6 @@
 
 import subprocess
 import os
-import sys
 from datetime import datetime
 
 # ========== 配置区（您可以根据需要修改） ==========
@@ -91,7 +90,7 @@ def main():
 
     # 第5步：提交（commit）修改
     print("\n💾 正在保存修改（commit）...")
-    changes = status.count('\n') + 1 if status else 0
+    changes = len(status.strip().split('\n')) if status else 0
     commit_msg = f"{AUTO_COMMIT_MESSAGE} ({changes} 个文件变更)"
     success, _ = run_cmd(f'git commit -m "{commit_msg}"')
     
