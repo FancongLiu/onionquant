@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OnionQuant · Factor Monitor</title>
+<style>
+:root {
+  --bg: #0a0e17; --panel: #111827; --border: #1e293b;
+  --gold: #f0b90b; --accent: #3b82f6; --green: #10b981;
+  --red: #ef4444; --text: #e2e8f0; --muted: #94a3b8;
+  --transition-speed: 0.3s;
+}
+[data-theme="light"] {
+  --bg: #f8fafc; --panel: #ffffff; --border: #e2e8f0;
+  --gold: #b8860b; --accent: #2563eb; --green: #059669;
+  --red: #dc2626; --text: #1e293b; --muted: #64748b;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; transition: background var(--transition-speed), color var(--transition-speed); }
+.topbar {
+  position:sticky; top:0; z-index:100;
+  background:rgba(17,24,39,0.95); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border); padding:10px 20px;
+  display:flex; align-items:center; justify-content:space-between;
+  transition: background var(--transition-speed), border-color var(--transition-speed);
+}
+.topbar .logo { font-size:1.2em; font-weight:700; color:var(--gold); }
+.topbar .status { font-size:0.8em; color:var(--muted); }
+.theme-btn {
+  cursor:pointer; background:var(--border); border:none; color:var(--text);
+  padding:4px 10px; border-radius:14px; font-size:0.8em;
+  transition: background var(--transition-speed);
+}
+.theme-btn:hover { background:var(--accent); color:#fff; }
+.status-dot { width:8px; height:8px; border-radius:50%; display:inline-block; margin-right:6px; }
+.status-ok { background:var(--green); }
+.status-warn { background:var(--gold); }
+.status-critical { background:var(--red); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0%,100% { opacity:1 } 50% { opacity:0.3 } }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; padding:12px; max-width:1400px; margin:0 auto; }
+.grid-full { grid-column:1/-1; }
+.card {
+  background:var(--panel); border:1px solid var(--border);
+  border-radius:8px; padding:14px;
+  transition: background var(--transition-speed), border-color var(--transition-speed);
+}
+.card h3 { font-size:0.85em; color:var(--gold); margin-bottom:10px; letter-spacing:0.5px; }
+table { width:100%; font-size:0.78em; border-collapse:collapse; }
+th { color:var(--muted); text-align:left; padding:5px 8px; border-bottom:1px solid var(--border); font-weight:400; }
+td { padding:4px 8px; border-bottom:1px solid rgba(30,41,59,0.5); }
+.alert-critical { color:var(--red); font-weight:600; }
+.alert-warning { color:var(--gold); }
+.badge { font-size:0.7em; padding:2px 8px; border-radius:10px; font-weight:600; }
+.badge-critical { background:rgba(239,68,68,0.15); color:var(--red); }
+.badge-warning { background:rgba(240,185,11,0.15); color:var(--gold); }
+.badge-ok { background:rgba(16,185,129,0.15); color:var(--green); }
+.ic-bar { height:6px; border-radius:3px; margin-top:3px; background:var(--border); }
+.ic-bar-fill { height:100%; border-radius:3px; transition:width 0.5s; }
+.ic-bar-fill.pos { background:var(--green); }
+.ic-bar-fill.neg { background:var(--red); }
+.chart-svg { width:100%; height:180px; }
+.loading { color:var(--muted); text-align:center; padding:30px; font-style:italic; }
+.refresh { font-size:0.7em; color:var(--muted); }
+/* SSE toast */
+.toast-container { position:fixed; top:60px; right:16px; z-index:9999; display:flex; flex-direction:column; gap:8px; min-width:300px; }
+.toast {
+  background:var(--panel); border-left:4px solid var(--red); border-radius:6px; padding:10px 14px;
+  box-shadow:0 4px 20px rgba(0,0,0,0.4); animation:slideIn 0.3s ease;
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+}
+.toast.warn { border-left-color:var(--gold); }
+.toast-content { font-size:0.78em; }
+.toast-title { font-weight:700; color:var(--red); }
+.toast.warn .toast-title { color:var(--gold); }
+.toast-detail { color:var(--muted); font-size:0.72em; margin-top:2px; }
+.toast-close { cursor:pointer; background:none; border:none; color:var(--muted); font-size:1em; padding:2px 6px; }
+@keyframes slideIn { from { transform:translateX(100%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+@keyframes slideOut { from { transform:translateX(0); opacity:1; } to { transform:translateX(100%); opacity:0; } }
+.sse-indicator { font-size:0.65em; padding:2px 8px; border-radius:8px; }
+.sse-indicator.live { background:rgba(16,185,129,0.15); color:var(--green); }
+.sse-indicator.dead { background:rgba(239,68,68,0.15); color:var(--red); }
+/* IC detail panel */
+.ic-row { cursor:pointer; transition: background 0.15s; }
+.ic-row:hover { background:rgba(59,130,246,0.08); }
+.ic-row.active { background:rgba(59,130,246,0.12); }
+.ic-row.active td { color:var(--accent); }
+.ic-detail-panel {
+  display:none; margin-top:10px; padding:12px; border:1px solid var(--border);
+  border-radius:6px; background:rgba(17,24,39,0.5);
+  transition: background var(--transition-speed), border-color var(--transition-speed);
+}
+.ic-detail-panel.show { display:block; }
+.ic-detail-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.ic-detail-name { font-weight:700; color:var(--gold); font-size:0.9em; }
+.ic-detail-close { cursor:pointer; background:none; border:none; color:var(--muted); font-size:1.1em; }
+.ic-detail-stats { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-bottom:10px; }
+.ic-stat { text-align:center; padding:6px; background:var(--panel); border-radius:4px; border:1px solid var(--border); }
+.ic-stat-label { font-size:0.6em; color:var(--muted); text-transform:uppercase; }
+.ic-stat-value { font-size:0.85em; font-weight:700; }
+.ic-stat-value.pos { color:var(--green); }
+.ic-stat-value.neg { color:var(--red); }
+.ic-detail-sparkline { width:100%; height:100px; }
+@media (max-width: 700px) { .ic-detail-stats { grid-template-columns:repeat(3,1fr); } }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div>
+    <span class="logo">OnionQuant · Factor Monitor</span>
+    <span class="refresh" id="refresh-time"></span>
+  </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span class="sse-indicator dead" id="sse-indicator" title="SSE 实时推送状态">⚡ SSE</span>
+    <div class="status">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text">loading...</span>
+    </div>
+    <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">🌓</button>
+  </div>
+</div>
+
+<!-- SSE toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="grid">
+  <!-- Alerts -->
+  <div class="card grid-full">
+    <h3>Decay Alerts <span id="alert-count"></span></h3>
+    <table><thead><tr><th>Factor</th><th>Type</th><th>Severity</th><th>Detail</th><th>Metric</th></tr></thead>
+    <tbody id="alerts-body"><tr><td colspan="5" class="loading">Loading alerts...</td></tr></tbody></table>
+  </div>
+
+  <!-- IC Trend Chart -->
+  <div class="card">
+    <h3>IC Trends (Cross-Sectional)</h3>
+    <div class="chart-svg" id="ic-chart-container">
+      <svg id="ic-chart" width="100%" height="180"></svg>
+    </div>
+  </div>
+
+  <!-- IC Summary Table -->
+  <div class="card">
+    <h3>IC Summary <span style="font-size:0.65em;color:var(--muted);">(click row for detail)</span></h3>
+    <table><thead><tr><th>Factor</th><th>Mean IC</th><th>Strength</th></tr></thead>
+    <tbody id="ic-summary-body"><tr><td colspan="3" class="loading">Computing IC...</td></tr></tbody></table>
+    <div class="ic-detail-panel" id="ic-detail-panel">
+      <div class="ic-detail-header">
+        <span class="ic-detail-name" id="ic-detail-name">—</span>
+        <button class="ic-detail-close" onclick="closeICDetail()">✕</button>
+      </div>
+      <div class="ic-detail-stats" id="ic-detail-stats"></div>
+      <div class="ic-detail-sparkline"><svg id="ic-detail-sparkline" width="100%" height="100"></svg></div>
+    </div>
+  </div>
+
+  <!-- Factor Correlation / Crowding -->
+  <div class="card grid-full">
+    <h3>Factor Correlation Matrix (Crowding Detection)</h3>
+    <div id="corr-heatmap" style="overflow-x:auto; max-height:400px;">
+      <span class="loading">Loading correlation...</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/api';
+let ALERTS = [];
+let IC_DATA = {};  // cached full IC series data
+
+// ─── SSE connection ────────────────────────────────────
+var sseIndicator = document.getElementById('sse-indicator');
+var sseConn = null;
+
+function connectSSE() {
+  var token = window.DASHBOARD_TOKEN || '';
+  var url = '/sse?token=' + encodeURIComponent(token);
+  sseConn = new EventSource(url);
+
+  sseConn.addEventListener('connected', function(e) {
+    sseIndicator.className = 'sse-indicator live';
+    sseIndicator.textContent = '⚡ SSE 实时';
+  });
+
+  sseConn.addEventListener('factor_alert', function(e) {
+    try {
+      var data = JSON.parse(e.data);
+      showSSEToasts(data);
+      // Also trigger a data refresh so the alert table updates
+      refresh();
+    } catch(er) {}
+  });
+
+  sseConn.addEventListener('heartbeat', function(e) {
+    sseIndicator.className = 'sse-indicator live';
+    sseIndicator.textContent = '⚡ SSE 实时';
+  });
+
+  sseConn.onerror = function() {
+    sseIndicator.className = 'sse-indicator dead';
+    sseIndicator.textContent = '⚡ SSE 断线';
+    sseConn.close();
+    // Reconnect after 10s
+    setTimeout(connectSSE, 10000);
+  };
+}
+
+function showSSEToasts(data) {
+  var container = document.getElementById('toastContainer');
+  var alerts = data.alerts || [];
+  var criticals = alerts.filter(function(a) { return a.severity === 'critical'; });
+  if (criticals.length === 0 && data.critical === 0) return;
+
+  var toasts = criticals.length > 0 ? criticals : alerts.slice(0, 3);
+  toasts.forEach(function(a, i) {
+    var toast = document.createElement('div');
+    toast.className = 'toast' + (a.severity === 'warning' ? ' warn' : '');
+    toast.innerHTML =
+      '<div class="toast-content">' +
+        '<div class="toast-title">' + (a.severity === 'critical' ? '🔴 ' : '⚠️ ') + a.factor + ' · ' + a.severity.toUpperCase() + '</div>' +
+        '<div class="toast-detail">' + a.detail + '</div>' +
+      '</div>' +
+      '<button class="toast-close" onclick="this.parentElement.remove()">✕</button>';
+    container.appendChild(toast);
+    // Auto-remove after 12s
+    setTimeout(function() {
+      if (toast.parentElement) {
+        toast.style.animation = 'slideOut 0.3s ease forwards';
+        setTimeout(function() { if (toast.parentElement) toast.remove(); }, 300);
+      }
+    }, 12000 + i * 2000);
+  });
+
+  // Cap toasts at 5
+  var allToasts = container.querySelectorAll('.toast');
+  if (allToasts.length > 5) {
+    for (var k = 0; k < allToasts.length - 5; k++) {
+      allToasts[k].remove();
+    }
+  }
+}
+
+// ─── Data fetching & rendering ─────────────────────────
+
+async function fetchData() {
+  try {
+    const [decayResp, icResp, factorResp] = await Promise.all([
+      fetch(API + '/factor/decay'),
+      fetch(API + '/quant/ic_trend'),
+      fetch(API + '/quant/factors'),
+    ]);
+    return {
+      decay: await decayResp.json(),
+      ic: await icResp.json(),
+      factors: await factorResp.json(),
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+function renderAlerts(data) {
+  const tbody = document.getElementById('alerts-body');
+  const count = document.getElementById('alert-count');
+  const alerts = data.alerts || [];
+  ALERTS = alerts;
+
+  const critical = alerts.filter(a => a.severity === 'critical').length;
+  const warn = alerts.filter(a => a.severity === 'warning').length;
+
+  if (critical > 0) {
+    document.getElementById('status-dot').className = 'status-dot status-critical';
+    document.getElementById('status-text').textContent = `${critical} CRITICAL`;
+    count.innerHTML = `<span class="badge badge-critical">${critical} critical</span> <span class="badge badge-warning">${warn} warning</span>`;
+  } else if (warn > 0) {
+    document.getElementById('status-dot').className = 'status-dot status-warn';
+    document.getElementById('status-text').textContent = `${warn} warnings`;
+    count.innerHTML = `<span class="badge badge-warning">${warn} warning</span>`;
+  } else {
+    document.getElementById('status-dot').className = 'status-dot status-ok';
+    document.getElementById('status-text').textContent = 'all clear';
+    count.innerHTML = `<span class="badge badge-ok">0 alerts</span>`;
+  }
+
+  if (alerts.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--green);padding:14px;">All factors stable — no decay alerts</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = alerts.map(a => `
+    <tr>
+      <td><strong>${a.factor}</strong></td>
+      <td>${a.type.replace(/_/g,' ')}</td>
+      <td><span class="${a.severity==='critical'?'alert-critical':'alert-warning'}">${a.severity}</span></td>
+      <td style="font-size:0.75em;color:var(--muted);">${a.detail}</td>
+      <td style="font-size:0.75em;">${a.metric?.toFixed(4) || '—'}</td>
+    </tr>
+  `).join('');
+}
+
+function renderICChart(data) {
+  const container = document.getElementById('ic-chart');
+  const series = data.series || {};
+  const factors = Object.keys(series);
+  if (factors.length === 0) return;
+
+  const w = container.clientWidth || 600;
+  const h = 180;
+  const pad = { top: 20, right: 20, bottom: 30, left: 80 };
+  const pw = w - pad.left - pad.right;
+  const ph = h - pad.top - pad.bottom;
+
+  const allVals = factors.flatMap(f => series[f] || []);
+  const yMin = Math.min(-0.1, ...allVals);
+  const yMax = Math.max(0.1, ...allVals);
+  const yScale = v => pad.top + ph - ((v - yMin) / (yMax - yMin)) * ph;
+  const xScale = (i, n) => pad.left + (i / Math.max(n - 1, 1)) * pw;
+
+  const colors = ['#3b82f6','#f0b90b','#10b981','#ef4444','#8b5cf6','#ec4899','#06b6d4','#f97316'];
+
+  let svg = `<line x1="${pad.left}" y1="${yScale(0)}" x2="${pad.left+pw}" y2="${yScale(0)}" stroke="#334155" stroke-width="1"/>`;
+  svg += `<text x="${pad.left-6}" y="${yScale(yMax)}" text-anchor="end" font-size="9" fill="#64748b">${yMax.toFixed(2)}</text>`;
+  svg += `<text x="${pad.left-6}" y="${yScale(0)}" text-anchor="end" font-size="9" fill="#64748b">0.00</text>`;
+  svg += `<text x="${pad.left-6}" y="${yScale(yMin)}" text-anchor="end" font-size="9" fill="#64748b">${yMin.toFixed(2)}</text>`;
+
+  factors.forEach((f, fi) => {
+    const vals = series[f] || [];
+    const color = colors[fi % colors.length];
+    let path = '';
+    vals.forEach((v, i) => {
+      const x = xScale(i, vals.length);
+      const y = yScale(v);
+      path += (i === 0 ? 'M' : 'L') + x + ',' + y;
+    });
+    svg += `<path d="${path}" fill="none" stroke="${color}" stroke-width="1.5" opacity="0.8"/>`;
+  });
+
+  // Legend
+  factors.forEach((f, fi) => {
+    const lx = pad.left + fi * 110;
+    svg += `<circle cx="${lx}" cy="${h-8}" r="3" fill="${colors[fi%colors.length]}"/>`;
+    svg += `<text x="${lx+8}" y="${h-4}" font-size="8" fill="#94a3b8">${f}</text>`;
+  });
+
+  container.innerHTML = svg;
+}
+
+function renderICSummary(data) {
+  const tbody = document.getElementById('ic-summary-body');
+  const series = data.series || {};
+  const factors = Object.keys(series);
+  if (factors.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--muted);">No IC data available</td></tr>';
+    return;
+  }
+
+  const rows = factors.map(f => {
+    const vals = (series[f] || []).filter(v => !isNaN(v));
+    const mean = vals.length > 0 ? vals.reduce((a,b) => a+b, 0) / vals.length : 0;
+    return { factor: f, mean, vals, n: vals.length };
+  }).sort((a,b) => Math.abs(b.mean) - Math.abs(a.mean));
+
+  tbody.innerHTML = rows.map((r, i) => {
+    const cls = r.mean > 0.02 ? 'pos' : r.mean < -0.02 ? 'neg' : '';
+    const pct = Math.min(100, Math.abs(r.mean) * 300);
+    return `<tr class="ic-row" data-factor="${r.factor}" data-idx="${i}" onclick="showICDetail('${r.factor}')">
+      <td><strong>${r.factor}</strong></td>
+      <td style="color:${r.mean>=0?'var(--green)':'var(--red)'};">${r.mean.toFixed(4)}</td>
+      <td><div class="ic-bar"><div class="ic-bar-fill ${r.mean>=0?'pos':'neg'}" style="width:${pct}%"></div></div></td>
+    </tr>`;
+  }).join('');
+
+  // Re-mark the active row if one was selected
+  var activeFactor = document.getElementById('ic-detail-panel').dataset.activeFactor;
+  if (activeFactor) {
+    var activeRow = tbody.querySelector('[data-factor="' + activeFactor + '"]');
+    if (activeRow) activeRow.classList.add('active');
+  }
+}
+
+function showICDetail(factorName) {
+  var panel = document.getElementById('ic-detail-panel');
+  var nameEl = document.getElementById('ic-detail-name');
+  var statsEl = document.getElementById('ic-detail-stats');
+  var sparklineSvg = document.getElementById('ic-detail-sparkline');
+
+  // Toggle: if same factor clicked, close it
+  if (panel.dataset.activeFactor === factorName && panel.classList.contains('show')) {
+    closeICDetail();
+    return;
+  }
+
+  var vals = (IC_DATA[factorName] || []).filter(function(v) { return !isNaN(v); });
+  if (vals.length === 0) return;
+
+  // Mark active row
+  var tbody = document.getElementById('ic-summary-body');
+  tbody.querySelectorAll('.ic-row').forEach(function(r) { r.classList.remove('active'); });
+  var row = tbody.querySelector('[data-factor="' + factorName + '"]');
+  if (row) row.classList.add('active');
+
+  // Compute stats
+  var mean = vals.reduce(function(a,b) { return a+b; }, 0) / vals.length;
+  var variance = vals.reduce(function(a,b) { return a + (b-mean)*(b-mean); }, 0) / vals.length;
+  var std = Math.sqrt(variance);
+  var ir = std > 0 ? Math.abs(mean) / std : 0;
+  var hit = vals.filter(function(v) { return v > 0; }).length / vals.length;
+  var minVal = Math.min.apply(null, vals);
+  var maxVal = Math.max.apply(null, vals);
+
+  nameEl.textContent = factorName + ' · IC Detail';
+  statsEl.innerHTML =
+    '<div class="ic-stat"><div class="ic-stat-label">Mean IC</div><div class="ic-stat-value '+(mean>=0?'pos':'neg')+'">'+mean.toFixed(4)+'</div></div>' +
+    '<div class="ic-stat"><div class="ic-stat-label">Std IC</div><div class="ic-stat-value">'+std.toFixed(4)+'</div></div>' +
+    '<div class="ic-stat"><div class="ic-stat-label">IR</div><div class="ic-stat-value '+(ir>=0.3?'pos':'')+'">'+ir.toFixed(4)+'</div></div>' +
+    '<div class="ic-stat"><div class="ic-stat-label">Hit Rate</div><div class="ic-stat-value '+(hit>=0.55?'pos':'')+'">'+(hit*100).toFixed(1)+'%</div></div>' +
+    '<div class="ic-stat"><div class="ic-stat-label">Min</div><div class="ic-stat-value neg">'+minVal.toFixed(4)+'</div></div>' +
+    '<div class="ic-stat"><div class="ic-stat-label">Max</div><div class="ic-stat-value pos">'+maxVal.toFixed(4)+'</div></div>';
+
+  // Sparkline SVG
+  var w = sparklineSvg.clientWidth || 600;
+  var h = 100;
+  var pad = { top: 10, right: 10, bottom: 20, left: 40 };
+  var pw = w - pad.left - pad.right;
+  var ph = h - pad.top - pad.bottom;
+  var yMin = Math.min(0, minVal);
+  var yMax = Math.max(0, maxVal);
+  var yScale = function(v) { return pad.top + ph - ((v - yMin) / (yMax - yMin + 0.001)) * ph; };
+  var xScale = function(i) { return pad.left + (i / Math.max(vals.length - 1, 1)) * pw; };
+
+  var zeroY = yScale(0);
+  var path = '';
+  vals.forEach(function(v, i) {
+    path += (i === 0 ? 'M' : 'L') + xScale(i) + ',' + yScale(v);
+  });
+
+  var svg =
+    '<line x1="'+pad.left+'" y1="'+zeroY+'" x2="'+(pad.left+pw)+'" y2="'+zeroY+'" stroke="var(--border)" stroke-width="1" stroke-dasharray="4,3"/>' +
+    '<text x="'+(pad.left-4)+'" y="'+(yScale(yMax)+4)+'" text-anchor="end" font-size="9" fill="var(--muted)">'+yMax.toFixed(2)+'</text>' +
+    '<text x="'+(pad.left-4)+'" y="'+(zeroY+4)+'" text-anchor="end" font-size="9" fill="var(--muted)">0.00</text>' +
+    '<text x="'+(pad.left-4)+'" y="'+(yScale(yMin)+4)+'" text-anchor="end" font-size="9" fill="var(--muted)">'+yMin.toFixed(2)+'</text>' +
+    '<path d="'+path+'" fill="none" stroke="var(--accent)" stroke-width="2"/>' +
+    '<rect x="'+pad.left+'" y="'+pad.top+'" width="'+pw+'" height="'+ph+'" fill="url(#sparkGrad)" opacity="0.15"/>' +
+    '<defs><linearGradient id="sparkGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="var(--accent)"/><stop offset="100%" stop-color="transparent"/></linearGradient></defs>';
+  sparklineSvg.innerHTML = svg;
+
+  panel.dataset.activeFactor = factorName;
+  panel.classList.add('show');
+}
+
+function closeICDetail() {
+  var panel = document.getElementById('ic-detail-panel');
+  panel.classList.remove('show');
+  panel.dataset.activeFactor = '';
+  var tbody = document.getElementById('ic-summary-body');
+  tbody.querySelectorAll('.ic-row').forEach(function(r) { r.classList.remove('active'); });
+}
+
+function renderCorrHeatmap(data) {
+  const container = document.getElementById('corr-heatmap');
+  const factors = data.factors || [];
+  const stocks = data.stocks || [];
+  if (factors.length === 0) {
+    container.innerHTML = '<span class="loading" style="display:block;text-align:center;">No factor data for correlation</span>';
+    return;
+  }
+
+  // Build factor correlation from the factor×stock matrix
+  const fdata = data.data || {};
+  const topFactors = factors.slice(0, 12);
+  const topStocks = stocks.slice(0, 30);
+
+  // Compute correlation matrix between factors across stocks
+  const vals = {};
+  topFactors.forEach(f => {
+    vals[f] = topStocks.map(s => fdata[f]?.[s] ?? null).filter(v => v !== null);
+  });
+
+  // Pearson corr
+  function pearson(a, b) {
+    const n = Math.min(a.length, b.length);
+    if (n < 3) return 0;
+    let sa=0,sb=0,saa=0,sbb=0,sab=0;
+    for (let i=0;i<n;i++) { sa+=a[i]; sb+=b[i]; }
+    const ma=sa/n, mb=sb/n;
+    for (let i=0;i<n;i++) { const da=a[i]-ma, db=b[i]-mb; saa+=da*da; sbb+=db*db; sab+=da*db; }
+    const den = Math.sqrt(saa*sbb);
+    return den > 1e-10 ? sab/den : 0;
+  }
+
+  const corr = topFactors.map(f1 =>
+    topFactors.map(f2 => pearson(vals[f1]||[], vals[f2]||[]))
+  );
+
+  const cellW = 36, cellH = 20, labelW = 75;
+  let html = '<div style="display:flex;font-size:0.7em;">';
+  html += '<div style="width:'+labelW+'px;"></div>';
+  topFactors.forEach(f => {
+    html += `<div style="width:${cellW}px;text-align:center;writing-mode:vertical-lr;color:var(--muted);font-size:0.65em;">${f}</div>`;
+  });
+  html += '</div>';
+
+  topFactors.forEach((f1, i) => {
+    html += '<div style="display:flex;margin:1px 0;">';
+    html += `<div style="width:${labelW}px;text-align:right;padding-right:6px;color:var(--muted);font-size:0.65em;line-height:${cellH}px;">${f1}</div>`;
+    topFactors.forEach((f2, j) => {
+      const v = corr[i]?.[j] ?? 0;
+      const r = v > 0 ? Math.round(255*(1-v)) : 255;
+      const g = 30;
+      const b = v < 0 ? Math.round(255*(1+v)) : 30;
+      const intensity = Math.abs(v);
+      const bgR = v >= 0 ? Math.round(59 + (1-intensity)*196) : Math.round(59);
+      const bgB = v <= 0 ? Math.round(130 + (1-intensity)*125) : Math.round(30);
+      html += `<div style="width:${cellW}px;height:${cellH}px;background:rgb(${bgR},30,${bgB});text-align:center;font-size:0.55em;line-height:${cellH}px;border-radius:1px;margin:0 0.5px;" title="${f1}×${f2}: ${v.toFixed(3)}">${v.toFixed(2)}</div>`;
+    });
+    html += '</div>';
+  });
+
+  container.innerHTML = html;
+}
+
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const next = current === 'light' ? '' : 'light';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('factor-monitor-theme', next);
+}
+(function() {
+  const saved = localStorage.getItem('factor-monitor-theme');
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+})();
+
+async function refresh() {
+  const data = await fetchData();
+  if (!data) {
+    document.getElementById('status-dot').className = 'status-dot status-critical';
+    document.getElementById('status-text').textContent = 'API error';
+    return;
+  }
+  // Cache IC data for detail view
+  if (data.ic && data.ic.series) IC_DATA = data.ic.series;
+  renderAlerts(data.decay);
+  renderICChart(data.ic);
+  renderICSummary(data.ic);
+  renderCorrHeatmap(data.factors);
+  // Refresh detail panel if one is active
+  var panel = document.getElementById('ic-detail-panel');
+  if (panel && panel.classList.contains('show')) {
+    showICDetail(panel.dataset.activeFactor);
+  }
+  document.getElementById('refresh-time').textContent = ' · updated ' + new Date().toLocaleTimeString();
+}
+
+// ─── Startup ───────────────────────────────────────────
+refresh();
+setInterval(refresh, 60000);
+connectSSE();
+</script>
+</body>
+</html>

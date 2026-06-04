@@ -1,0 +1,90 @@
+# qlib_factor_config.yaml — 因子表达式配置
+# 基于 Qlib 表达式引擎定义因子，替代手写 pandas 计算
+#
+# Qlib 表达式语法:
+#   Ref($open, -5)   → 5天前的开盘价
+#   Mean($close, 20) → 20日均价
+#   Std($close, 20)  → 20日标准差
+#   $high - $low     → 算术运算
+#   Log($market_cap) → 函数
+
+# ── 六大类因子映射 ──
+
+momentum:
+  momentum_12m1m:
+    expr: "Ref($close, -252) / Ref($close, -21) - 1 - (Ref($close, -21) / $close - 1)"
+    desc: "12月-1月动量差"
+    direction: 1
+  momentum_6m:
+    expr: "Ref($close, -126) / $close - 1"
+    desc: "6月价格动量"
+    direction: 1
+  momentum_1m:
+    expr: "Ref($close, -21) / $close - 1"
+    desc: "1月价格动量"
+    direction: 1
+
+value:
+  value_pe:
+    expr: "-1 / $pe_ratio"
+    desc: "E/P ratio (P/E取倒数, 越大越好)"
+    direction: 1
+  value_pb:
+    expr: "-1 / $pb_ratio"
+    desc: "B/P ratio"
+    direction: 1
+  value_ps:
+    expr: "-1 / $ps_ratio"
+    desc: "S/P ratio"
+    direction: 1
+
+quality:
+  quality_roe:
+    expr: "$roe"
+    desc: "ROE (净资产收益率)"
+    direction: 1
+  quality_gm:
+    expr: "$gross_margin"
+    desc: "毛利率"
+    direction: 1
+  quality_de:
+    expr: "-$debt_to_equity"
+    desc: "负负债率 (低负债=高分)"
+    direction: 1
+
+growth:
+  growth_eps:
+    expr: "($eps - Ref($eps, -63)) / Abs(Ref($eps, -63))"
+    desc: "EPS季度增速"
+    direction: 1
+  growth_rev:
+    expr: "($revenue - Ref($revenue, -63)) / Abs(Ref($revenue, -63))"
+    desc: "营收季度增速"
+    direction: 1
+
+volatility:
+  volatility_60d:
+    expr: "-Std(Return($close, 1), 60)"
+    desc: "负60日波动率 (低波动=高分)"
+    direction: 1
+  volatility_beta:
+    expr: "-$beta"
+    desc: "负Beta系数"
+    direction: 1
+
+size:
+  size_lncap:
+    expr: "Log($market_cap)"
+    desc: "对数市值"
+    direction: 1
+
+# ── Qlib 内置因子集 ──
+# Alpha158: 158个标准alpha因子 (量价+基本面)
+# Alpha360: 360个量价因子 (仅OHLCV, 无需基本面)
+builtin_sets:
+  alpha158:
+    enabled: true
+    desc: "158个标准alpha因子 (含量价+基本面)"
+  alpha360:
+    enabled: false
+    desc: "360个纯量价因子 (仅OHLCV, 高频场景)"

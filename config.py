@@ -6,7 +6,6 @@
 
 import os
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 # ==================== 硅基流动API配置 ====================
@@ -14,14 +13,14 @@ from typing import Optional
 class SiliconFlowConfig:
     """硅基流动 API 配置"""
     api_key: str = field(default_factory=lambda: os.getenv(
-        "SILICONFLOW_API_KEY", "你的API_KEY填在这里"
+        "SILICONFLOW_API_KEY", ""
     ))
     api_url: str = "https://api.siliconflow.cn/v1/chat/completions"
-    model_name: str = os.getenv("GLM_MODEL_NAME", "glm-4-flash")
+    model_name: str = os.getenv("GLM_MODEL_NAME", "glm-4")
 
     def is_configured(self) -> bool:
         """检查 API Key 是否已配置"""
-        return bool(self.api_key) and self.api_key != "你的API_KEY填在这里"
+        return bool(self.api_key) and self.api_key != ""
 
 
 # ==================== 新闻搜索配置 ====================

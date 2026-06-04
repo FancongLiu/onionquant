@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OnionQuant · 董事长办公室</title>
+<style>
+/* ============ 全局 ============ */
+:root {
+  --bg: #0a0e17;
+  --panel: #111827;
+  --border: #1e293b;
+  --gold: #f0b90b;
+  --accent: #3b82f6;
+  --green: #10b981;
+  --red: #ef4444;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --card-bg: #1a1f2e;
+  --transition-speed: 0.3s;
+}
+[data-theme="light"] {
+  --bg: #f8fafc;
+  --panel: #ffffff;
+  --border: #e2e8f0;
+  --gold: #b8860b;
+  --accent: #2563eb;
+  --green: #059669;
+  --red: #dc2626;
+  --text: #1e293b;
+  --muted: #64748b;
+  --card-bg: #f1f5f9;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh; overflow: hidden;
+  transition: background var(--transition-speed), color var(--transition-speed);
+}
+body::before {
+  content: ''; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: radial-gradient(ellipse at 50% 0%, #1a2a4a 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 100%, #0a1a2a 0%, transparent 50%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ============ 顶部导航栏 ============ */
+.topbar {
+  position: sticky; top: 0; z-index: 100; height: 48px;
+  background: rgba(17,24,39,0.95); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  transition: background var(--transition-speed), border-color var(--transition-speed);
+}
+.topbar .logo {
+  font-size: 1.2em; font-weight: 700;
+  background: linear-gradient(135deg, var(--gold), #f59e0b);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.topbar .stats { display: flex; gap: 16px; font-size: 0.8em; align-items: center; }
+.topbar .stats span { color: var(--muted); }
+.topbar .stats strong { color: var(--gold); }
+.topbar a { color: var(--accent); text-decoration: none; font-size: 0.8em; font-weight: 600; }
+.topbar a:hover { color: var(--gold); }
+.sse-indicator { font-size:0.65em; padding:2px 8px; border-radius:8px; }
+.sse-indicator.live { background:rgba(16,185,129,0.15); color:var(--green); }
+.sse-indicator.dead { background:rgba(239,68,68,0.15); color:var(--red); }
+.theme-btn {
+  cursor:pointer; background:var(--border); border:none; color:var(--text);
+  padding:4px 10px; border-radius:14px; font-size:0.8em;
+  transition: background var(--transition-speed);
+}
+.theme-btn:hover { background:var(--accent); color:#fff; }
+.send-status { display:block; margin-top:6px; font-size:0.82em; font-weight:600; padding:6px 12px; border-radius:6px; transition:all 0.3s; text-align:center; }
+.send-status.ok { color:#fff; background:var(--green); }
+.send-status.fail { color:#fff; background:var(--red); }
+
+/* ============ 主布局: 侧边栏 + 内容区 ============ */
+.main-layout {
+  position: relative; z-index: 1;
+  display: flex; height: calc(100vh - 48px);
+}
+
+/* ============ 左侧边栏 ============ */
+.sidebar {
+  width: 260px; flex-shrink: 0;
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  transition: background var(--transition-speed), border-color var(--transition-speed);
+}
+.sidebar-header {
+  padding: 14px 16px; border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 10px;
+  flex-shrink: 0;
+}
+.sidebar-avatar {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: linear-gradient(135deg, #f0b90b, #d4a30b);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4em; flex-shrink: 0;
+  box-shadow: 0 0 12px rgba(240,185,11,0.25);
+}
+.sidebar-header h3 { font-size: 0.85em; color: var(--gold); }
+.sidebar-header p { font-size: 0.68em; color: var(--muted); }
+.sidebar-dept-count { font-size: 0.7em; color: var(--muted); text-align: right; margin-top: 1px; }
+.sidebar-collapse-btn {
+  background: var(--border); border: none; color: var(--text);
+  cursor: pointer; border-radius: 4px; padding: 2px 8px;
+  font-size: 0.65em; transition: all 0.2s; margin-left: auto;
+}
+.sidebar-collapse-btn:hover { background: var(--accent); color: #fff; }
+.sidebar.collapsed { width: 36px; }
+.sidebar.collapsed .sidebar-dept-list,
+.sidebar.collapsed .sidebar-footer,
+.sidebar.collapsed .sidebar-header h3,
+.sidebar.collapsed .sidebar-header p { display: none; }
+.sidebar.collapsed .sidebar-header { padding: 8px 6px; justify-content: center; flex-direction: column; }
+.sidebar.collapsed .sidebar-collapse-btn { margin: 0; }
+.sidebar-dept-list {
+  flex: 1; overflow-y: auto; padding: 6px 8px;
+}
+.sidebar-dept-list::-webkit-scrollbar { width: 4px; }
+.sidebar-dept-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+/* 侧边栏部门卡片 (紧凑) */
+.sidebar-dept-card {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border-radius: 8px; cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all 0.15s; margin-bottom: 2px;
+  position: relative;
+}
+.sidebar-dept-card:hover {
+  background: rgba(59,130,246,0.08);
+  border-left-color: var(--accent);
+}
+.sidebar-dept-card .dept-emoji { font-size: 1.1em; width: 24px; text-align: center; flex-shrink: 0; }
+.sidebar-dept-card .dept-info { flex: 1; min-width: 0; }
+.sidebar-dept-card .dept-name { font-size: 0.78em; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebar-dept-card .dept-leader { font-size: 0.65em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sidebar-dept-card .status-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+}
+.status-working { background: var(--green); animation: pulse 1.5s ease-in-out infinite; }
+.status-thinking { background: #f59e0b; animation: pulse 2s ease-in-out infinite; }
+.status-waiting { background: var(--muted); }
+.status-done { background: var(--accent); }
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.8); }
+}
+
+.market-panel {
+  padding: 8px 12px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  margin: 4px 0;
+}
+.market-title { font-size: 0.7em; color: var(--muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+.market-row { display: flex; justify-content: space-between; align-items: center; padding: 1px 0; }
+.market-label { font-size: 0.75em; font-weight: 600; color: var(--text); }
+.market-val { font-size: 0.8em; font-weight: 700; font-family: monospace; color: var(--accent); }
+.market-updated { font-size: 0.6em; color: var(--muted); margin-top: 4px; text-align: right; font-family: monospace; }
+
+/* 侧边栏底部署名 */
+.sidebar-footer {
+  padding: 8px 14px; border-top: 1px solid var(--border);
+  font-size: 0.65em; color: var(--muted); flex-shrink: 0;
+  display: flex; justify-content: space-between;
+}
+
+/* ============ 主内容区 ============ */
+.main-content {
+  flex: 1; display: flex; flex-direction: column;
+  overflow: hidden; padding: 14px 18px; gap: 10px;
+}
+
+/* 顶部信息栏 */
+.top-meta-bar {
+  display: flex; gap: 10px; flex-shrink: 0;
+}
+.secretary-mini {
+  flex: 1; background: var(--card-bg);
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 6px 12px; font-size: 0.72em; color: var(--muted);
+  display: flex; align-items: center; gap: 8px;
+  transition: background var(--transition-speed);
+}
+.secretary-mini .s-avatar { font-size: 1.1em; }
+
+
+/* ============ 双栏消息面板 ============ */
+.msg-dual {
+  flex: 1; display: flex; gap: 10px; min-height: 0;
+}
+.msg-panel {
+  flex: 1; display: flex; flex-direction: column;
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 12px; overflow: hidden; min-height: 0; min-width: 0;
+  transition: background var(--transition-speed), border-color var(--transition-speed);
+}
+.msg-panel-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px; border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.msg-panel-header.inbox-header { background: rgba(59,130,246,0.06); }
+.msg-panel-header.outbox-header { background: rgba(240,185,11,0.05); }
+.msg-panel-header h3 { font-size: 0.85em; margin: 0; }
+.msg-panel-header.inbox-header h3 { color: var(--accent); }
+.msg-panel-header.outbox-header h3 { color: var(--gold); }
+.msg-panel-count {
+  font-size: 0.65em; padding: 2px 8px; border-radius: 10px; color: #fff;
+}
+.msg-panel-count.inbox-count { background: var(--accent); }
+.msg-panel-count.outbox-count { background: #b8860b; }
+.msg-panel-list { flex: 1; overflow-y: auto; min-height: 0; }
+.msg-panel-list::-webkit-scrollbar { width: 4px; }
+.msg-panel-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+.msg-card {
+  display: flex; gap: 8px; padding: 8px 12px;
+  border-bottom: 1px solid var(--border); cursor: pointer;
+  transition: all 0.15s; align-items: flex-start;
+}
+.msg-card:hover { background: rgba(240,185,11,0.06); }
+.msg-card.unread { border-left-color: var(--accent); }
+.msg-card.pending { border-left-color: #f59e0b; }
+.msg-card .status-dot-msg {
+  width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  margin-top: 6px;
+}
+.status-dot-msg.unread { background: var(--accent); box-shadow: 0 0 4px var(--accent); }
+.status-dot-msg.pending { background: #f59e0b; box-shadow: 0 0 4px #f59e0b; }
+.status-dot-msg.sent { background: var(--green); }
+.status-dot-msg.read { background: var(--border); }
+.status-legend { font-size: 0.55em; color: var(--muted); font-weight: 400; margin-left: 8px; }
+.status-legend i.dot-sample { display: inline-block; width: 5px; height: 5px; border-radius: 50%; margin-right: 2px; vertical-align: middle; position: relative; top: -1px; }
+.status-legend i.dot-sample.unread { background: var(--accent); box-shadow: 0 0 2px var(--accent); }
+.status-legend i.dot-sample.sent { background: var(--green); }
+.status-legend i.dot-sample.pending { background: #f59e0b; box-shadow: 0 0 2px #f59e0b; }
+.msg-card .msg-avatar {
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.95em;
+}
+.msg-card .msg-body { flex: 1; min-width: 0; }
+.msg-card .msg-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1px; }
+.msg-card .msg-sender { font-size: 0.72em; font-weight: 600; }
+.msg-card .msg-sender.agent { color: var(--accent); }
+.msg-card .msg-sender.chairman { color: var(--gold); }
+.msg-card .msg-time { font-size: 0.82em; color: #f59e0b; font-family: monospace; font-weight: 600; }
+.msg-card .msg-time-sub { font-size: 0.72em; color: var(--muted); font-family: monospace; margin: 2px 0 4px 0; }
+.msg-card .msg-subject { font-size: 0.76em; color: var(--text); margin-bottom: 1px; }
+.msg-card .msg-preview {
+  font-size: 0.67em; color: var(--muted); overflow: hidden;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.msg-card .msg-reply-btn {
+  font-size: 0.64em; padding: 2px 8px; border-radius: 10px;
+  border: 1px solid var(--gold); background: transparent;
+  color: var(--gold); cursor: pointer; flex-shrink: 0;
+  transition: all 0.15s;
+}
+.msg-card .msg-reply-btn:hover { background: var(--gold); color: #000; }
+.msg-card .msg-delete-btn {
+  font-size: 0.62em; padding: 2px 7px; border-radius: 10px;
+  border: 1px solid var(--red); background: transparent;
+  color: var(--red); cursor: pointer; flex-shrink: 0;
+  transition: all 0.15s; margin-left: 2px;
+}
+.msg-card .msg-delete-btn:hover { background: var(--red); color: #fff; }
+.msg-empty { font-size: 0.75em; color: var(--muted); text-align: center; padding: 30px; }
+.panel-collapse-btn {
+  background: none; border: 1px solid var(--border); color: var(--muted);
+  cursor: pointer; border-radius: 4px; padding: 1px 7px; font-size: 0.7em;
+  transition: all 0.15s;
+}
+.panel-collapse-btn:hover { background: var(--border); color: var(--text); }
+.msg-panel-list.collapsed { display: none; }
+
+/* ============ 指令输入区 (最高优先级) ============ */
+.command-bar {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(240,185,11,0.08), rgba(240,185,11,0.02));
+  border: 2px solid var(--gold);
+  border-radius: 12px; padding: 12px 16px;
+  display: flex; gap: 10px; align-items: center;
+  transition: background var(--transition-speed), border-color var(--transition-speed);
+  box-shadow: 0 0 20px rgba(240,185,11,0.08);
+}
+.command-bar .letter-ctx {
+  display: none; flex: 0 1 auto; min-width: 0;
+  background: rgba(240,185,11,0.06); border: 1px dashed var(--gold);
+  border-radius: 6px; padding: 4px 10px; font-size: 0.72em; color: var(--muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px;
+}
+.command-bar .letter-ctx strong { color: var(--gold); }
+.command-bar .letter-ctx button { background: none; border: none; color: var(--red); cursor: pointer; margin-left: 6px; }
+.command-bar textarea {
+  flex: 1; background: var(--bg); border: 1px solid var(--border);
+  border-radius: 8px; padding: 12px 16px; color: var(--text);
+  font-size: 0.95em; outline: none; min-width: 0; resize: vertical;
+  font-family: inherit; line-height: 1.5; min-height: 54px;
+}
+.command-bar textarea:focus { border-color: var(--gold); box-shadow: 0 0 12px rgba(240,185,11,0.15); }
+.command-bar textarea::placeholder { color: #555; }
+.command-bar button {
+  background: linear-gradient(135deg, #f0b90b, #d4a30b);
+  border: none; border-radius: 8px; padding: 12px 24px;
+  color: #000; font-weight: 700; font-size: 0.9em;
+  cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  transition: all 0.2s;
+}
+.command-bar button:hover { transform: scale(1.03); box-shadow: 0 0 20px rgba(240,185,11,0.4); }
+
+/* ============ 双栏布局 (消息 + 任务/里程碑) ============ */
+.content-two-col {
+  flex: 1; display: flex; gap: 10px; min-height: 0;
+}
+.content-col-left {
+  flex: 1; display: flex; flex-direction: column; min-width: 0;
+}
+.content-col-right {
+  width: 320px; flex-shrink: 0; display: flex; flex-direction: column; gap: 10px;
+  overflow-y: auto;
+}
+.panel-box-office {
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 14px;
+  transition: background var(--transition-speed), border-color var(--transition-speed);
+}
+.panel-box-office h4 {
+  color: var(--accent); font-size: 0.78em; margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+.task-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+  font-size: 0.72em;
+}
+.task-row .task-id { color: var(--accent); font-weight: 600; font-family: monospace; }
+.task-row .task-name { color: var(--text); flex: 1; margin: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.task-row .task-status { font-size: 0.85em; }
+.milestone-row {
+  padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,0.03);
+  font-size: 0.72em; cursor: pointer; transition: all 0.15s;
+}
+.milestone-row:hover { background: rgba(240,185,11,0.04); }
+.milestone-row .ms-date {
+  color: var(--gold); font-family: monospace; font-weight: 600;
+  font-size: 0.85em; margin-right: 6px;
+}
+.milestone-row .ms-text { color: var(--text); }
+@media (max-width: 800px) {
+  .content-two-col { flex-direction: column; }
+  .content-col-right { width: 100%; max-height: 200px; }
+}
+
+/* ============ 信件弹窗 ============ */
+.modal-overlay {
+  display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0,0,0,0.85); z-index: 1000;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.active { display: flex; }
+.modal-content {
+  background: var(--panel); border: 1px solid var(--gold); border-radius: 16px;
+  padding: 24px; max-width: 750px; width: 90%; max-height: 85vh; overflow-y: auto;
+  position: relative;
+}
+.modal-close {
+  position: absolute; top: 12px; right: 16px;
+  background: none; border: none; color: var(--text); font-size: 1.5em;
+  cursor: pointer;
+}
+.letter-modal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.letter-modal-header h3 { color: var(--gold); margin: 0; font-size: 1em; }
+.letter-modal-body { font-size: 0.85em; line-height: 1.6; white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; color: var(--text); max-height: 55vh; overflow-y: auto; padding: 8px; background: var(--bg); border-radius: 8px; }
+.modal-action-btn {
+  background: var(--border); border: none; color: var(--text); cursor: pointer; border-radius: 6px;
+  padding: 4px 10px; font-size: 0.75em; transition: all 0.15s; margin-left: 4px;
+}
+.modal-action-btn:hover { background: var(--accent); color: #fff; }
+.modal-action-btn.reply { background: rgba(240,185,11,0.2); color: var(--gold); }
+.modal-action-btn.reply:hover { background: var(--gold); color: #000; }
+
+/* copy toast */
+.copy-toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: var(--accent); color: #fff; padding: 8px 20px; border-radius: 20px; font-size: 0.85em; z-index: 9999; animation: toastIn 0.3s ease-out; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+
+/* ============ 响应式: 平板 ============ */
+@media (max-width: 1024px) {
+  .sidebar { width: 220px; }
+  .content-col-right { width: 260px; }
+}
+@media (max-width: 800px) {
+  .sidebar { width: 180px; }
+  .log-mini { display: none; }
+  .sidebar-dept-card .dept-leader { display: none; }
+  .content-col-right { width: 100%; }
+}
+/* ============ 响应式: 手机 (董事长要求: 字体大一点, 适配手机) ============ */
+@media (max-width: 768px) {
+  body { font-size: 16px; height: auto; overflow: auto; }
+  body::before { display: none; }
+
+  /* 顶部导航 — 精简 */
+  .topbar {
+    height: 44px; padding: 0 10px; flex-wrap: nowrap; gap: 4px;
+  }
+  .topbar .logo { font-size: 1em; }
+  .topbar .stats { font-size: 0.7em; gap: 6px; overflow: hidden; }
+  .topbar .stats span:nth-child(4),
+  .topbar .stats span:nth-child(5),
+  .topbar a:nth-of-type(1) { display: none; }
+  .topbar a { font-size: 0.7em; }
+
+  /* 侧边栏 — 顶部水平滚动 */
+  .main-layout { flex-direction: column; height: auto; }
+  .sidebar {
+    width: 100%; max-height: none; flex-shrink: 0; flex-direction: column;
+    border-right: none; border-bottom: 2px solid var(--border);
+  }
+  .sidebar-header { padding: 8px 10px; }
+  .sidebar-header h3 { font-size: 0.9em; }
+  .sidebar-dept-list {
+    display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 4px;
+    padding: 6px 8px; flex: none; -webkit-overflow-scrolling: touch;
+  }
+  .sidebar-dept-list::-webkit-scrollbar { height: 2px; }
+  .sidebar-dept-card {
+    flex-shrink: 0; width: auto; padding: 6px 10px; white-space: nowrap;
+    font-size: 0.75em; border-left: none; border-bottom: 2px solid transparent;
+  }
+  .sidebar-dept-card .dept-name { font-size: 0.75em; }
+  .sidebar-dept-card .dept-leader { display: none; }
+  .sidebar-dept-card .status-dot { width: 6px; height: 6px; }
+  .sidebar-footer { display: none; }
+  .sidebar-collapse-btn { display: none; }
+
+  /* 主内容 */
+  .main-content { padding: 8px 10px; gap: 8px; }
+
+  /* 指令输入区 — 全宽触屏友好 */
+  .command-bar {
+    flex-direction: column; gap: 8px; padding: 10px; border-radius: 10px;
+  }
+  .command-bar textarea {
+    font-size: 16px; min-height: 60px; padding: 10px 12px;
+  }
+  .command-bar button {
+    width: 100%; padding: 14px; font-size: 1em; min-height: 48px;
+  }
+  .command-bar .letter-ctx { max-width: 100%; font-size: 0.8em; }
+
+  /* 秘书提示 */
+  .secretary-mini { font-size: 0.8em; padding: 8px 12px; }
+
+  /* 消息面板 — 上下堆叠 */
+  .msg-dual { flex-direction: column; gap: 8px; }
+  .msg-panel { flex: none; max-height: 50vh; min-height: 200px; }
+  .msg-panel-header h3 { font-size: 0.9em; }
+  .msg-card { padding: 10px; gap: 8px; }
+  .msg-card .msg-avatar { width: 32px; height: 32px; font-size: 1em; }
+  .msg-card .msg-sender { font-size: 0.78em; }
+  .msg-card .msg-time { font-size: 0.7em; }
+  .msg-card .msg-subject { font-size: 0.82em; }
+  .msg-card .msg-preview { font-size: 0.73em; }
+  .msg-card .msg-reply-btn {
+    font-size: 0.72em; padding: 6px 14px; min-height: 36px;
+    border-radius: 12px;
+  }
+
+  /* 弹窗 */
+  .modal-content {
+    width: 95%; max-width: none; padding: 14px; border-radius: 12px;
+    max-height: 90vh;
+  }
+  .letter-modal-header h3 { font-size: 0.9em; }
+  .letter-modal-body { font-size: 0.88em; max-height: 65vh; line-height: 1.7; }
+  .modal-action-btn { font-size: 0.8em; padding: 6px 14px; min-height: 36px; }
+  .modal-close { font-size: 1.8em; padding: 8px; }
+
+  /* 双栏布局 → 单栏 */
+  .content-two-col { flex-direction: column; }
+  .content-col-left { flex: none; }
+  .content-col-right { width: 100%; max-height: none; }
+  .panel-box-office h4 { font-size: 0.85em; }
+  .task-row { font-size: 0.78em; padding: 6px 0; }
+  .milestone-row { font-size: 0.78em; padding: 6px 0; }
+
+  /* 主题按钮 */
+  .theme-btn { padding: 6px 12px; font-size: 0.85em; min-height: 36px; }
+
+  /* SSE 指示器 */
+  .sse-indicator { font-size: 0.7em; padding: 3px 8px; }
+
+  /* Copy toast */
+  .copy-toast { font-size: 0.9em; padding: 10px 24px; bottom: 16px; }
+}
+
+/* 小屏手机 (<400px) */
+@media (max-width: 400px) {
+  .topbar .stats { gap: 3px; font-size: 0.63em; }
+  .topbar .stats a { display: none; }
+  .topbar .logo { font-size: 0.9em; }
+  .sidebar-dept-card { padding: 4px 7px; font-size: 0.68em; }
+  .msg-card .msg-reply-btn { padding: 4px 8px; font-size: 0.65em; min-height: 30px; }
+  .command-bar textarea { font-size: 15px; }
+  .command-bar button { font-size: 0.9em; padding: 12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<div class="topbar">
+  <div class="logo">OnionQuant</div>
+  <div class="stats">
+    <a href="/">System</a>
+    <a href="/office" style="color:var(--gold);">Office</a>
+    <a href="/trade">Trade</a>
+    <a href="/quant">Quant</a>
+    <span>Depts: <strong>16</strong></span>
+    <span>Active: <strong id="working-count">0</strong></span>
+    <span class="sse-indicator dead" id="sse-indicator" title="SSE">SSE</span>
+    <span>Time: <strong id="clock">—</strong></span>
+    <button class="theme-btn" onclick="toggleTheme()" title="Toggle theme">Theme</button>
+  </div>
+</div>
+
+<!-- 主布局: 侧边栏 + 内容区 -->
+<div class="main-layout">
+
+  <!-- ====== 左侧边栏: 部门列表 ====== -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-avatar">&#x1F451;</div>
+      <div>
+        <h3>Chairman</h3>
+        <p>16 Departments</p>
+      </div>
+      <button id="sidebarCollapseBtn" class="sidebar-collapse-btn" onclick="toggleSidebar()" title="Collapse">&laquo;</button>
+    </div>
+    <div class="sidebar-dept-list" id="sidebarDeptList"></div>
+    <div class="market-panel" id="marketPanel">
+      <div class="market-title">📊 Portfolio</div>
+      <div class="market-row"><span class="market-label">MU</span><span class="market-val" id="tickerMu">--</span></div>
+      <div class="market-row"><span class="market-label">INTC</span><span class="market-val" id="tickerIntc">--</span></div>
+      <div class="market-row"><span class="market-label">SOX</span><span class="market-val" id="tickerSox">--</span></div>
+      <div class="market-updated" id="tickerTime">--</div>
+    </div>
+    <div class="sidebar-footer">
+      <span id="sidebarFooterMsg">All systems ready</span>
+    </div>
+  </aside>
+
+  <!-- ====== 主内容区 ====== -->
+  <main class="main-content">
+    <!-- 指令输入区 (最高优先级 — 页面顶部) -->
+    <div class="command-bar" id="commandBarArea">
+      <div class="letter-ctx" id="letterContext">
+        <span>Replying: <strong id="letterCtxTitle">—</strong></span>
+        <button onclick="clearLetter()">&times;</button>
+      </div>
+      <textarea id="cmdInput" placeholder="📝 输入指令给 Agent，Enter 发送 / Shift+Enter 换行..."
+             rows="2"></textarea>
+      <button onclick="sendCommand()" id="sendBtn">📨 Send</button>
+      <span id="sendStatus" class="send-status"></span>
+    </div>
+
+    <!-- 秘书提示 -->
+    <div class="secretary-mini">
+      <span class="s-avatar">&#x1F916;</span>
+      <span id="secretaryMsg">Welcome back, Chairman. Messages below.</span>
+    </div>
+
+    <!-- 双栏消息面板: 📥 收件箱 (Agent来信) | 📤 发件箱 (董事长已发送) -->
+    <div class="msg-dual">
+
+      <div class="msg-panel" id="inboxPanel">
+        <div class="msg-panel-header inbox-header">
+          <h3>📥 Agent 来信 <span class="msg-panel-count inbox-count" id="inboxCount">0</span> <span class="status-legend"><i class="dot-sample unread"></i>未读 <i class="dot-sample sent"></i>已处理</span></h3>
+        </div>
+        <div class="msg-panel-list" id="inboxList">
+          <div class="msg-empty">Loading...</div>
+        </div>
+      </div>
+
+      <div class="msg-panel" id="outboxPanel">
+        <div class="msg-panel-header outbox-header">
+          <h3>📤 发件箱 <span class="msg-panel-count outbox-count" id="outboxCount">0</span> <span class="status-legend"><i class="dot-sample pending"></i>待处理 <i class="dot-sample sent"></i>已处理</span></h3>
+          <button class="panel-collapse-btn" onclick="toggleOutboxCollapse()" title="折叠/展开" id="outboxCollapseBtn">▼</button>
+        </div>
+        <div class="msg-panel-list" id="outboxList">
+          <div class="msg-empty">Loading...</div>
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  </div><!-- close main-layout -->
+
+<!-- 信件详情弹窗 -->
+<div class="modal-overlay" id="letterModal">
+  <div class="modal-content">
+    <div class="letter-modal-header">
+      <h3 id="letterModalTitle">Letter</h3>
+      <div>
+        <button class="modal-action-btn" onclick="copyModalLetter()">Copy</button>
+        <button class="modal-action-btn reply" onclick="replyToLetter()">Reply</button>
+        <button class="modal-close" onclick="closeLetterModal()">&times;</button>
+      </div>
+    </div>
+    <div class="letter-modal-body" id="letterModalBody"></div>
+  </div>
+</div>
+
+<script>
+// ==================== 部门数据 ====================
+const departments = [
+  { id:'ceo_office',         name:'CEO Office',        leader:'Claude',    avatar:'\u{1F3AF}', color:'#f0b90b', status:'working',  task:'Global decisions' },
+  { id:'strategy_research',  name:'Strategy Research',  leader:'Alpha',     avatar:'\u{1F4CA}', color:'#3b82f6', status:'working',  task:'Factor dev' },
+  { id:'academic_research',  name:'Academic Research',  leader:'Darwin',    avatar:'\u{1F393}', color:'#8b5cf6', status:'thinking', task:'Paper replication' },
+  { id:'sentiment_intel',    name:'Sentiment Intel',    leader:'Mercury',   avatar:'\u{1F4F0}', color:'#ec4899', status:'working',  task:'NLP APIs' },
+  { id:'data_engineering',   name:'Data Engineering',   leader:'Pipeline',  avatar:'\u{1F4BE}', color:'#06b6d4', status:'working',  task:'Data pipeline' },
+  { id:'backtest_engine',    name:'Backtest Engine',    leader:'Nautilus',  avatar:'\u{26A1}', color:'#f59e0b', status:'working',  task:'NautilusTrader' },
+  { id:'risk_management',    name:'Risk Management',    leader:'Shield',    avatar:'\u{1F6E1}', color:'#ef4444', status:'thinking', task:'Portfolio opt' },
+  { id:'execution',          name:'Execution',          leader:'Flash',     avatar:'\u{1F4B0}', color:'#10b981', status:'waiting', task:'Awaiting strategy' },
+  { id:'open_source_research',name:'Open Source R&D',   leader:'Radar',     avatar:'\u{1F50D}', color:'#6366f1', status:'working',  task:'Qlib+FinRL' },
+  { id:'reporting',          name:'Reporting',          leader:'Story',     avatar:'\u{1F4CA}', color:'#14b8a6', status:'done',    task:'Round1 complete' },
+  { id:'extreme_drive',      name:'Extreme Drive',      leader:'Iron',      avatar:'\u{2694}', color:'#dc2626', status:'working',  task:'Enforce delivery' },
+  { id:'continuous_evolution',name:'Continuous Evo',    leader:'Phoenix',   avatar:'\u{1F504}', color:'#a855f7', status:'thinking', task:'Architecture opt' },
+  { id:'it_tech',            name:'IT Tech',            leader:'Nova',      avatar:'\u{1F4BB}', color:'#0ea5e9', status:'working',  task:'Frontend+Token' },
+  { id:'knowledge_management',name:'Knowledge Mgmt',    leader:'Graph',     avatar:'\u{1F9E0}', color:'#d946ef', status:'done',    task:'KG updated' },
+  { id:'chairman_secretariat',name:'Secretariat',       leader:'Secretary', avatar:'\u{1F916}', color:'#eab308', status:'working',  task:'Coordinate' },
+  { id:'open_source_first',  name:'Open Source First',  leader:'Scout',     avatar:'\u{1F513}', color:'#f97316', status:'working',  task:'No hand-roll' },
+];
+
+// ==================== 初始化 ====================
+const sidebarDeptList = document.getElementById('sidebarDeptList');
+const logContainer = document.getElementById('logContainer');
+const secretaryMsg = document.getElementById('secretaryMsg');
+const cmdInput = document.getElementById('cmdInput');
+
+// Enter to send, Shift+Enter for newline
+cmdInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendCommand();
+  }
+});
+
+let activityLog = [];
+
+function renderSidebarDepts() {
+  sidebarDeptList.innerHTML = departments.map(d => `
+    <div class="sidebar-dept-card" onclick="showDeptInfo('${d.id}')" style="border-left-color:${d.color}">
+      <span class="dept-emoji">${d.avatar}</span>
+      <div class="dept-info">
+        <div class="dept-name">${d.name}</div>
+        <div class="dept-leader">${d.leader} &middot; ${d.task.slice(0,20)}</div>
+      </div>
+      <span class="status-dot status-${d.status}" title="${d.status}"></span>
+    </div>
+  `).join('');
+
+  document.getElementById('working-count').textContent =
+    departments.filter(d => d.status === 'working').length;
+}
+
+function addLog(msg) {
+  const now = new Date();
+  const time = now.toTimeString().slice(0,8);
+  activityLog.unshift({ time, msg });
+  if (activityLog.length > 30) activityLog.length = 30;
+  document.getElementById('sidebarFooterMsg').textContent = msg.slice(0, 40);
+}
+
+function renderLogs() {
+  logContainer.innerHTML = activityLog.slice(0, 4).map(l =>
+    `<div class="log-line"><span style="color:#555;">${l.time}</span> ${l.msg.slice(0,70)}</div>`
+  ).join('');
+  document.getElementById('sidebarFooterMsg').textContent =
+    activityLog.length > 0 ? activityLog[0].msg.slice(0, 40) : 'All systems ready';
+}
+
+function showDeptInfo(deptId) {
+  const d = departments.find(x => x.id === deptId);
+  if (!d) return;
+  const statusMap = { working:'Active', thinking:'Thinking', waiting:'Standby', done:'Done' };
+  secretaryMsg.textContent = `${d.name} — ${d.leader} — ${d.task} — ${statusMap[d.status] || d.status}`;
+  addLog(`Viewed: ${d.name}`);
+}
+
+// ==================== HTML 转义 ====================
+function escHtml(s) {
+  if (!s) return '';
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ==================== 已读/已处理追踪 ====================
+var READ_KEY = "onionquant_read_msgs";
+var PROC_KEY = "onionquant_processed_msgs";
+function getReadFiles() {
+  try { return new Set(JSON.parse(localStorage.getItem(READ_KEY) || "[]")); }
+  catch(e) { return new Set(); }
+}
+function getProcessedFiles() {
+  try { return new Set(JSON.parse(localStorage.getItem(PROC_KEY) || "[]")); }
+  catch(e) { return new Set(); }
+}
+function markRead(file) {
+  var s = getReadFiles();
+  s.add(file);
+  localStorage.setItem(READ_KEY, JSON.stringify(Array.from(s)));
+}
+function markProcessed(file) {
+  var s = getProcessedFiles();
+  s.add(file);
+  localStorage.setItem(PROC_KEY, JSON.stringify(Array.from(s)));
+}
+function isUnread(file) {
+  return !getReadFiles().has(file);
+}
+function isProcessed(file) {
+  return getProcessedFiles().has(file);
+}
+function isOlderThan(hours, tsIso) {
+  if (!tsIso) return false;
+  try {
+    var then = new Date(tsIso).getTime();
+    var now = Date.now();
+    if (isNaN(then)) return false;
+    return (now - then) > hours * 3600 * 1000;
+  } catch(e) { return false; }
+}
+// Returns status dot CSS class for inbox messages
+function inboxDotClass(file) {
+  if (isProcessed(file)) return 'sent';
+  if (isUnread(file)) return 'unread';
+  return 'read';
+}
+
+// ==================== 消息中心 ====================
+var _agentMsgs = [];
+var _chairmanMsgs = [];
+
+function fetchMessages() {
+  const token = window.DASHBOARD_TOKEN || '';
+  fetch('/api/inbox/history?token=' + encodeURIComponent(token))
+    .then(r => r.json())
+    .then(data => {
+      const sent = [];
+      (data.pending || []).forEach(m => {
+        if ((m.preview || '').startsWith('**Reply') || (m.subject || '').startsWith('**Reply')) return;
+        sent.push({...m, ts_iso: m.ts_iso || '', status: 'pending'});
+      });
+      (data.processed || []).forEach(m => {
+        if ((m.preview || '').startsWith('**Reply') || (m.subject || '').startsWith('**Reply')) return;
+        sent.push({...m, ts_iso: m.ts_iso || '', status: 'processed'});
+      });
+      sent.sort((a, b) => (b.ts_iso || '').localeCompare(a.ts_iso || ''));
+      _chairmanMsgs = sent;
+
+      const received = [];
+      (data.outbox || []).forEach(m => {
+        var fname = m.file || '';
+        if (!isUnread(fname) && isOlderThan(2, m.ts_iso)) return;
+        received.push({...m, ts_iso: m.ts_iso || ''});
+      });
+      received.sort((a, b) => (b.ts_iso || '').localeCompare(a.ts_iso || ''));
+      _agentMsgs = received;
+
+      renderInbox();
+      renderOutbox();
+    })
+    .catch(e => {
+      document.getElementById('inboxList').innerHTML = '<div class="msg-empty">Failed: ' + e.message + '</div>';
+      document.getElementById('outboxList').innerHTML = '<div class="msg-empty">Failed: ' + e.message + '</div>';
+    });
+}
+
+function renderInbox() {
+  const list = document.getElementById('inboxList');
+  if (!_agentMsgs.length) {
+    list.innerHTML = '<div class="msg-empty">No agent reports yet</div>';
+    return;
+  }
+  list.innerHTML = _agentMsgs.map(function(m) {
+    var ts = escHtml(m.timestamp || '—');
+    var subject = escHtml((m.subject || m.preview || m.file || '(untitled)').replace(/^# /,'').slice(0, 80));
+    var preview = escHtml((m.preview || '').slice(0, 250).replace(/\n/g, ' '));
+    var safeFile = escHtml(m.file || '');
+    var dotClass = inboxDotClass(safeFile);
+    var cardClass = (dotClass === 'unread') ? 'msg-card unread' : 'msg-card';
+    return '<div class="' + cardClass + '" data-file="' + safeFile + '" data-is-agent="true" onclick="msgCardClick(this)"><span class="status-dot-msg ' + dotClass + '"></span>'
+      + '<div class="msg-avatar" style="background:rgba(59,130,246,0.15)">🤖</div>'
+      + '<div class="msg-body">'
+      + '<div class="msg-subject">' + subject + '</div>'
+      + '<div class="msg-time-sub">' + ts + '</div>'
+      + '<div class="msg-preview">' + (preview || '📄 点击查看完整内容') + '</div>'
+      + '</div>'
+      + '<button class="msg-reply-btn" data-file="' + safeFile + '" data-is-agent="true" onclick="event.stopPropagation();msgReplyClick(this)" title="Quick reply">Reply</button>'
+      + '<button class="msg-delete-btn" data-file="' + safeFile + '" onclick="event.stopPropagation();deleteInboxMsg(this)" title="Delete">✕</button>'
+      + '</div>';
+  }).join('');
+  document.getElementById('inboxCount').textContent = _agentMsgs.length;
+}
+
+function renderOutbox() {
+  const list = document.getElementById('outboxList');
+  if (!_chairmanMsgs.length) {
+    list.innerHTML = '<div class="msg-empty">No sent commands</div>';
+    return;
+  }
+  list.innerHTML = _chairmanMsgs.map(function(m) {
+    var ts = escHtml(m.timestamp || '—');
+    var subject = escHtml((m.subject || m.preview || m.file || '(untitled)').replace(/^# /,'').slice(0, 80));
+    var preview = escHtml((m.preview || '').slice(0, 250).replace(/\n/g, ' '));
+    var safeFile = escHtml(m.file || '');
+    var st = m.status || '';
+    var dotClass2 = st === 'pending' ? 'pending' : 'sent';
+    var cardClass2 = st === 'pending' ? 'msg-card pending' : 'msg-card';
+    return '<div class="' + cardClass2 + '" data-file="' + safeFile + '" data-is-agent="false" onclick="msgCardClick(this)">'
+      + '<span class="status-dot-msg ' + dotClass2 + '"></span>'
+      + '<div class="msg-avatar" style="background:rgba(240,185,11,0.15)">👑</div>'
+      + '<div class="msg-body">'
+      + '<div class="msg-subject">' + subject + '</div>'
+      + '<div class="msg-time-sub">' + ts + '</div>'
+      + '<div class="msg-preview">' + (preview || '📄 点击查看完整内容') + '</div>'
+      + '</div>'
+      + '<button class="msg-delete-btn" data-file="' + safeFile + '" data-is-agent="false" onclick="event.stopPropagation();deleteOutboxMsg(this)" title="Delete">✕</button>'
+      + '</div>';
+  }).join('');
+  document.getElementById('outboxCount').textContent = _chairmanMsgs.length;
+}
+
+// ==================== 信件查看/回复 ====================
+var _currentLetter = null;
+
+// Safe click handlers (avoid onclick JS injection via data attributes)
+function msgCardClick(el) {
+  const file = el.getAttribute('data-file');
+  const isAgent = el.getAttribute('data-is-agent') === 'true';
+  markRead(file);
+  // Update visual state
+  el.classList.remove('unread', 'pending');
+  var dot = el.querySelector('.status-dot-msg');
+  if (dot) {
+    dot.classList.remove('unread', 'pending');
+    if (isAgent) {
+      // Inbox: read → user clicked, keep 'read'; or 'sent' if already processed
+      dot.classList.add(isProcessed(file) ? 'sent' : 'read');
+    }
+    // Outbox: keep server-side status (pending/sent), don't change
+  }
+  if (isAgent) viewAgentLetter(file);
+  else viewChairmanLetter(file);
+}
+function msgReplyClick(el) {
+  const file = el.getAttribute('data-file');
+  const isAgent = el.getAttribute('data-is-agent') === 'true';
+  quickReply(file, isAgent);
+}
+
+function quickReply(filename, isAgent) {
+  const token = window.DASHBOARD_TOKEN || '';
+  const url = isAgent
+    ? '/api/outbox/file/' + encodeURIComponent(filename) + '?token=' + encodeURIComponent(token)
+    : '/api/inbox/file/' + encodeURIComponent(filename) + '?token=' + encodeURIComponent(token);
+  fetch(url)
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok) {
+        _currentLetter = { file: d.file, content: d.content, type: isAgent ? 'outbox' : 'inbox' };
+        document.getElementById('letterCtxTitle').textContent = d.file;
+        document.getElementById('letterContext').style.display = 'flex';
+        document.getElementById('cmdInput').placeholder = 'Type reply...';
+        document.getElementById('sendBtn').textContent = 'Reply';
+        document.getElementById('cmdInput').focus();
+        addLog('Reply context loaded: ' + d.file);
+      }
+    }).catch(e => addLog('Error: ' + e.message));
+}
+
+
+
+function viewAgentLetter(filename) {
+  const token = window.DASHBOARD_TOKEN || '';
+  fetch('/api/outbox/file/' + encodeURIComponent(filename) + '?token=' + encodeURIComponent(token))
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok) {
+        _currentLetter = { file: d.file, content: d.content, type: 'agent' };
+        document.getElementById('letterModalTitle').textContent = '\u{1F4E5} ' + d.file;
+        document.getElementById('letterModalBody').textContent = d.content;
+        document.getElementById('letterModal').classList.add('active');
+      }
+    }).catch(e => addLog('Error: ' + e.message));
+}
+
+function viewChairmanLetter(filename) {
+  const token = window.DASHBOARD_TOKEN || '';
+  fetch('/api/inbox/file/' + encodeURIComponent(filename) + '?token=' + encodeURIComponent(token))
+    .then(r => r.json())
+    .then(d => {
+      if (d.ok) {
+        _currentLetter = { file: d.file, content: d.content, type: 'chairman' };
+        document.getElementById('letterModalTitle').textContent = '\u{1F4E4} ' + d.file;
+        document.getElementById('letterModalBody').textContent = d.content;
+        document.getElementById('letterModal').classList.add('active');
+      }
+    }).catch(e => addLog('Error: ' + e.message));
+}
+
+function replyToLetter() {
+  if (!_currentLetter) return;
+  document.getElementById('letterCtxTitle').textContent = _currentLetter.file;
+  document.getElementById('letterContext').style.display = 'flex';
+  document.getElementById('cmdInput').placeholder = 'Type reply...';
+  document.getElementById('sendBtn').textContent = 'Reply';
+  closeLetterModal();
+  document.getElementById('cmdInput').focus();
+  addLog('Reply context: ' + _currentLetter.file);
+}
+
+function clearLetter() {
+  _currentLetter = null;
+  document.getElementById('letterContext').style.display = 'none';
+  document.getElementById('cmdInput').placeholder = 'Type command...';
+  document.getElementById('sendBtn').textContent = 'Send';
+}
+
+function closeLetterModal() {
+  document.getElementById('letterModal').classList.remove('active');
+}
+
+function copyModalLetter() {
+  if (!_currentLetter) return;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(_currentLetter.content).then(() => showCopyToast('Copied'));
+  } else {
+    const ta = document.createElement('textarea');
+    ta.value = _currentLetter.content; ta.style.position = 'fixed'; ta.style.left = '-9999px';
+    document.body.appendChild(ta); ta.select(); document.execCommand('copy');
+    document.body.removeChild(ta); showCopyToast('Copied');
+  }
+}
+
+function showCopyToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'copy-toast'; t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => { t.remove(); }, 2000);
+}
+
+// ==================== 发送指令 ====================
+function sendCommand() {
+  const cmd = cmdInput.value.trim();
+  if (!cmd) return;
+  addLog(`Command: "${cmd.slice(0,50)}${cmd.length>50?'...':''}"`);
+  cmdInput.value = '';
+
+  let body = cmd;
+  if (_currentLetter) {
+    body = `**Reply to**: ${_currentLetter.file}\n\n> ${_currentLetter.content.slice(0, 800).replace(/\n/g, '\n> ')}\n\n---\n\n${cmd}`;
+  }
+
+  const token = window.DASHBOARD_TOKEN || '';
+  fetch('/api/inbox?token=' + encodeURIComponent(token), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ text: body, source: 'chairman_office' })
+  }).then(r => r.json()).then(d => {
+    var st = document.getElementById('sendStatus');
+    if (d.ok) {
+      addLog('Command sent: ' + (d.file || ''));
+      if (_currentLetter) { markProcessed(_currentLetter.file); }
+      secretaryMsg.textContent = 'Command sent. Agent will process on next scan.';
+      if (st) { st.textContent = '✓ 发送成功'; st.className = 'send-status ok'; setTimeout(function(){ st.textContent = ''; }, 3000); }
+      clearLetter();
+      setTimeout(fetchMessages, 2000);
+    } else {
+      addLog('Send failed: ' + (d.error || 'unknown'));
+      if (st) { st.textContent = '✗ 发送失败'; st.className = 'send-status fail'; setTimeout(function(){ st.textContent = ''; }, 5000); }
+    }
+  }).catch(e => {
+    addLog('Send error: ' + e.message);
+    console.log('[Chairman Command]', body);
+  });
+}
+
+// ==================== SSE 连接 ====================
+var sseInd = document.getElementById('sse-indicator');
+function connectSSE() {
+  var token = window.DASHBOARD_TOKEN || '';
+  var es = new EventSource('/sse?token=' + encodeURIComponent(token));
+  es.addEventListener('connected', function() {
+    sseInd.className = 'sse-indicator live';
+    sseInd.textContent = 'SSE';
+    addLog('SSE connected');
+  });
+  es.addEventListener('heartbeat', function() {
+    sseInd.className = 'sse-indicator live';
+    sseInd.textContent = 'SSE';
+  });
+  es.addEventListener('factor_alert', function(e) {
+    try { var d = JSON.parse(e.data); addLog('Factor alert: ' + d.alerts.length + ' decayed'); } catch(er) {}
+  });
+  es.addEventListener('outbox_new', function(e) {
+    try { var d = JSON.parse(e.data); addLog('New outbox: ' + (d.file || '')); } catch(er) {}
+  });
+  es.addEventListener('inbox_new', function(e) {
+    addLog('New inbox message!');
+    fetchMessages();
+  fetchTasks();
+  fetchMilestones();
+  });
+  es.onerror = function() {
+    sseInd.className = 'sse-indicator dead';
+    sseInd.textContent = 'SSE';
+    setTimeout(connectSSE, 10000);
+  };
+}
+
+// ==================== 模拟实时动态 ====================
+const mockActivities = [
+  'Strategy: CANSLIM factor computed, backtesting...',
+  'Data: yfinance->Parquet pipeline ready',
+  'Sentiment: Alpha Vantage NEWS_SENTIMENT connected',
+  'Academic: Replicating factor momentum paper',
+  'Open Source: Qlib env setup 60%',
+  'Backtest: NautilusTrader local running',
+  'Risk: Riskfolio-Lib HRP optimization coding',
+  'Extreme Drive: Round 2 audit in progress',
+  'Continuous Evo: Searching 2026 architecture patterns',
+  'IT: Frontend optimization in progress',
+];
+
+let mockIdx = 0;
+// ==================== 任务进度面板 ====================
+function fetchTasks() {
+  const token = window.DASHBOARD_TOKEN || '';
+  fetch('/api/task-tracker/summary?token=' + encodeURIComponent(token))
+    .then(r => r.json())
+    .then(data => {
+      const panel = document.getElementById('taskPanel');
+      if (!panel) return;
+      const tasks = data.tasks || [];
+      let html = '';
+      const s25 = tasks.filter(t => t.sprint === 'Sprint 25' || (t.id && String(t.id).startsWith('T105')));
+      if (s25.length > 0) {
+        html += s25.slice(0, 10).map(t => {
+          const progress = t.progress || '0%';
+          return '<div class="task-row">' +
+            '<span class="task-id">' + escHtml(t.id || '—') + '</span>' +
+            '<span class="task-name" title="' + escHtml(t.content || t.task || '') + '">' + escHtml((t.content || t.task || '').slice(0, 30)) + '</span>' +
+            '<span class="task-status">' + progress + '</span>' +
+            '</div>';
+        }).join('');
+      }
+      if (data.summary) {
+        html += '<div style="margin-top:8px;font-size:0.68em;color:var(--muted);border-top:1px solid var(--border);padding-top:6px;">' +
+          '总计: ' + (data.summary.total || 0) + ' · 完成' + (data.summary.done || 0) + ' · Sprint25 ' + (data.summary.sprint25_pending || 0) + '待处理' +
+          '</div>';
+      }
+      panel.innerHTML = html || '<div class="empty-hint">暂无任务数据</div>';
+    })
+    .catch(function(e) {
+      const panel = document.getElementById('taskPanel');
+      if (panel) panel.innerHTML = '<div class="empty-hint">无法加载任务</div>';
+    });
+}
+
+// ==================== 里程碑面板 (带时间) ====================
+var _milestones = [];
+function fetchMilestones() {
+  const token = window.DASHBOARD_TOKEN || '';
+  fetch('/api/milestones?token=' + encodeURIComponent(token))
+    .then(r => r.json())
+    .then(data => {
+      const panel = document.getElementById('milestonePanel');
+      if (!panel) return;
+      const milestones = data.milestones || data || [];
+      _milestones = milestones;
+      if (!milestones.length) {
+        panel.innerHTML = '<div class="empty-hint">暂无里程碑</div>';
+        return;
+      }
+      milestones.sort(function(a, b) { return (b.date || b.time || '').localeCompare(a.date || a.time || ''); });
+      panel.innerHTML = milestones.slice(0, 20).map(function(m) {
+        const dt = m.date || m.time || m.ts || '';
+        const text = m.text || m.title || m.name || m.event || '';
+        return '<div class="milestone-row" title="' + escHtml(text) + '">' +
+          '<span class="ms-date">' + escHtml(dt) + '</span>' +
+          '<span class="ms-text">' + escHtml(text.slice(0, 60)) + '</span>' +
+          '</div>';
+      }).join('');
+    })
+    .catch(function(e) {
+      const panel = document.getElementById('milestonePanel');
+      if (panel) panel.innerHTML = '<div class="empty-hint">无法加载里程碑</div>';
+    });
+}
+
+// Fetch tasks and milestones on load
+fetchTasks();
+fetchMilestones();
+
+setInterval(() => {
+  const msg = mockActivities[mockIdx % mockActivities.length];
+  addLog(msg);
+  mockIdx++;
+}, 5000);
+
+// ==================== 主题切换 ====================
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const next = current === 'light' ? '' : 'light';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('chairman-office-theme', next);
+}
+(function() {
+  const saved = localStorage.getItem('chairman-office-theme');
+  if (saved) document.documentElement.setAttribute('data-theme', saved);
+})();
+
+// Close modals on overlay click
+document.getElementById('letterModal').addEventListener('click', function(e) { if (e.target === this) closeLetterModal(); });
+
+// ==================== 时钟 ====================
+function updateClock() {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('zh-CN', {timeZone:'Asia/Shanghai'});
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+// ==================== 侧边栏折叠 ====================
+let _sidebarCollapsed = false;
+function toggleSidebar() {
+  _sidebarCollapsed = !_sidebarCollapsed;
+  const sidebar = document.querySelector('.sidebar');
+  const btn = document.getElementById('sidebarCollapseBtn');
+  if (_sidebarCollapsed) {
+    sidebar.classList.add('collapsed');
+    if (btn) btn.textContent = '»';
+  } else {
+    sidebar.classList.remove('collapsed');
+    if (btn) btn.textContent = '«';
+  }
+}
+
+// ==================== 发件箱折叠 ====================
+var _outboxCollapsed = false;
+function toggleOutboxCollapse() {
+  _outboxCollapsed = !_outboxCollapsed;
+  const list = document.getElementById('outboxList');
+  const btn = document.getElementById('outboxCollapseBtn');
+  if (_outboxCollapsed) {
+    list.classList.add('collapsed');
+    if (btn) btn.textContent = '▶';
+  } else {
+    list.classList.remove('collapsed');
+    if (btn) btn.textContent = '▼';
+  }
+}
+
+// ==================== 删除消息 ====================
+function deleteInboxMsg(el) {
+  const file = el.getAttribute('data-file');
+  if (!file) return;
+  markProcessed(file);
+  const card = el.closest('.msg-card');
+  const token = window.DASHBOARD_TOKEN || '';
+  fetch('/api/outbox/delete/' + encodeURIComponent(file) + '?token=' + encodeURIComponent(token), {
+    method: 'POST'
+  }).then(r => r.json()).then(d => {
+    if (d.ok) {
+      if (card) card.remove();
+      addLog('Deleted: ' + file);
+      fetchMessages();
+    } else {
+      addLog('Delete failed: ' + (d.error || 'unknown'));
+    }
+  }).catch(e => {
+    if (card) card.style.display = 'none';
+    addLog('Deleted (UI only): ' + file);
+  });
+}
+
+function deleteOutboxMsg(el) {
+  const file = el.getAttribute('data-file');
+  if (!file) return;
+  markProcessed(file);
+  const card = el.closest('.msg-card');
+  const token = window.DASHBOARD_TOKEN || '';
+  fetch('/api/inbox/delete/' + encodeURIComponent(file) + '?token=' + encodeURIComponent(token), {
+    method: 'POST'
+  }).then(r => r.json()).then(d => {
+    if (d.ok) {
+      if (card) card.remove();
+      addLog('Deleted outbox: ' + file);
+      fetchMessages();
+    } else {
+      addLog('Delete failed: ' + (d.error || 'unknown'));
+    }
+  }).catch(e => {
+    if (card) card.style.display = 'none';
+    addLog('Deleted (UI only): ' + file);
+  });
+}
+
+// ==================== 行情面板 ====================
+function fetchMarketSnapshot() {
+  fetch('/api/market/snapshot?token=' + encodeURIComponent(window.DASHBOARD_TOKEN || ''))
+    .then(r => r.json()).then(d => {
+      if (!d.ok) return;
+      document.getElementById('tickerMu').textContent = d.mu || '--';
+      document.getElementById('tickerIntc').textContent = d.intc || '--';
+      document.getElementById('tickerSox').textContent = d.sox || '--';
+      document.getElementById('tickerTime').textContent = d.updated || '';
+    }).catch(function(){});
+}
+setInterval(fetchMarketSnapshot, 60000);
+fetchMarketSnapshot();
+
+// ==================== 启动 ====================
+renderSidebarDepts();
+connectSSE();
+fetchMessages();
+addLog('OnionQuant system started — 16 departments');
+addLog('Chairman Office ready');
+secretaryMsg.textContent = 'Welcome back, Chairman. 16 departments on standby. Messages below, type commands above.';
+</script>
+</body>
+</html>

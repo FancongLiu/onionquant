@@ -1,0 +1,29 @@
+# 防止 Claude Code 读取 Copilot 的工作区内容（避免作弊）
+benchmark_copilot/
+benchmark2_copilot/
+benchmark3_copilot/
+
+# Python 缓存和虚拟环境
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# Git 内部文件
+.git/
+
+# 日志文件
+*.log
+
+# Hermes 迁移文件（暂停使用，不扫描）
+company/hermes_migration/
+
+# 凭证文件（绝对不能读）
+WECOM_CALLBACK_CREDS.md
+*.env
+.env.*
+
+# 操作系统文件
+.DS_Store
+Thumbs.db

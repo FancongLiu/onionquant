@@ -1,0 +1,39 @@
+{
+  "paused": true,
+  "paused_at": "2026-05-18T01:35:00",
+  "reason": "迁移到 Claude Code CLI / Hermes WSL，暂停所有定时任务。恢复时重命名为 cron_config.json",
+  "version": 1,
+  "updated": "2026-05-18T01:35:00",
+  "jobs": [
+    {
+      "id": "autonomous_loop",
+      "cron": "*/5 * * * *",
+      "prompt": "<<autonomous-loop-dynamic>>",
+      "description": "自主巡航 — 每5分钟扫描inbox+执行任务"
+    },
+    {
+      "id": "iteration_engine",
+      "cron": "13,28,43,58 * * * *",
+      "prompt": "持续迭代引擎 — 扫描项目状态，生成量化改进任务。如发现更优标的，更新 TASK_TRACKER.md 的 PIPELINE_TICKERS 行。重点 DXYZ/存储/半导体/AI芯片/航天/光模块。",
+      "description": "持续迭代引擎 — 每15分钟扫描项目生成改进任务"
+    },
+    {
+      "id": "redteam_review",
+      "cron": "17,47 * * * *",
+      "prompt": "红队审查 — 审查代码质量、安全风险、手搓代码检测。发现问题写 company/chairman_outbox/ALERT_redteam_*.md。",
+      "description": "红队审查 — 每30分钟审查代码质量和安全风险"
+    },
+    {
+      "id": "daily_pipeline",
+      "cron": "7 6 * * 1-5",
+      "prompt": "每日E2E量化流水线。执行: python scripts/run_pipeline.py --mode full。标的列表从 TASK_TRACKER.md PIPELINE_TICKERS 行自动读取。生成报告到 company/reports/pipeline_*.md。",
+      "description": "每日流水线 — 工作日6:07AM执行E2E量化流水线"
+    },
+    {
+      "id": "hourly_sentiment",
+      "cron": "0 22,23,0,1,2,3 * * 1-5",
+      "prompt": "交易时段每小时舆情推送。执行: python scripts/sentiment_hourly_push.py。标的: DXYZ, INTC, MU, WDC。报告写入 company/chairman_outbox/SENTINEL_hourly_*.md → WeChat + SSE 推送。",
+      "description": "交易时段每小时舆情推送 — 美股交易时间每整点推送DXYZ/INTC/MU/WDC舆情"
+    }
+  ]
+}

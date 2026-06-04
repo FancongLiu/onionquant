@@ -1,0 +1,12 @@
+{
+  "last_mentions": {},
+  "last_sentiment": {
+    "timestamp": "2026-05-18T02:20:09.118485+00:00",
+    "reddit_mentions": 0,
+    "reddit_sentiment": "neutral",
+    "stocktwits_messages": 30,
+    "stocktwits_sentiment": "neutral",
+    "news_count": 0
+  },
+  "alert_history": []
+}

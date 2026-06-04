@@ -1,0 +1,178 @@
+
+=== Choice (17 docs) ===
+  [5782404-jim-a-0819.pdf] Installation Manual: AD15-28 Gen 1
+    id=146hsG~PxOO31oCtZWVGsQ matched=AD15
+  [5782798-ctg-a-0819.pdf] Technical Guide: Coleman® Point™ Choice CD15 to CD28
+    id=s7yoqVtLXi_VciWrikRrMA matched=Choice
+  [5783150-csd-a-0819.pdf] Submittal Data Sheet: Coleman® Point™ Choice CD15 to CD28
+    id=dWSHDgsLVFIURzbIQ_96XA matched=Choice
+  [5783171-tsd-a-0819.pdf] Submittal Data Sheet: TempMaster® Omni™ Choice CV15 to CV28
+    id=t2_xfPOL0hpJS9y2VEXb1Q matched=Choice
+  [5783138-ysd-a-0819.pdf] Submittal Data Sheet: YORK® Sun™ Choice AV15 to AV28
+    id=ljutJe6DMiXkyj_2i1Cl_g matched=Choice
+  [5782792-ytg-a-0819.pdf] Technical Guide: YORK® Sun™ Choice AV15 to AV28
+    id=5DKdneX6PZyyX7aHKFLj~A matched=Choice
+  [5783169-lsd-a-0819.pdf] Submittal Data Sheet: Luxaire® Optimum™ Choice CD15 to CD28
+    id=Aa23C0cGpeRFSR2OtI7SwA matched=Choice
+  [5783134-ltg-a-0819.pdf] Technical Guide: Luxaire® Optimum™ Choice CD15 to CD28
+    id=jKqwSglbQU5HDTFgPT6SbA matched=Choice
+
+=== Select_R410A (27 docs) ===
+  [SI0339.pdf] Selecting Condenser Coils and Headers for Series 100 Mod A Packaged RTUs Service Information Letter
+    id=I2lNuKk_b6ooKAoFwr0s~Q matched=Select
+  [5759099-jtg-a-0320.pdf] Technical Guide: Select JV28 to JV50
+    id=2gwWGLu5HlRovZlPZyuhTw matched=Select
+  [5759100-ftg-a-0320.pdf] Technical Guide: Fraser-Johnston® Relia™ Select UV28 to UV50
+    id=0tXqzktM39gRJ~RKpeibgg matched=Select
+  [5759101-ltg-a-0320.pdf] Technical Guide: Luxaire® Optimum™ Select UV28 to UV50
+    id=2yvx2hDqCYsmXWbONJv5tw matched=Select
+  [5759102-ttg-a-0320.pdf] Technical Guide: TempMaster® Omni™ Select TV28 to TV50
+    id=myYaYwFjWs0w3nM244_mrQ matched=Select
+  [5759098-ytg-a-0320.pdf] Technical Guide: YORK® Sun™ Select YV28 to YV50
+    id=cTfqCOxelrSllMtknuYvmg matched=Select
+  [5759100-ftg-C-1220.pdf] Technical Guide: Fraser-Johnston® Relia™ Select UV28 to UV50
+    id=0oXSUWcFB7jAAAl6xvH_Fw matched=Select
+  [5759102-ttg-C-1220.pdf] Technical Guide: TempMaster® Omni™ Select TV28 to TV50
+    id=bcPipKyYL4IGysBiy3PgAA matched=Select
+
+=== Select_R454B (0 docs) ===
+
+=== Premier (21 docs) ===
+  [5553817-JAD-A.pdf] California Title 24 Impact on Premier Rooftop Units Application Guide
+    id=FB6wP0LEb1YmrJl7HaduGw matched=Premier
+  [5553807-JAD-A.pdf] Roof Curbs for Premier Rooftop Units Application Guide
+    id=EcuHswE2nvwk6MIjl5_Vag matched=Premier
+  [5586996-JSG-A.pdf] Johnson Controls Premier 25–50 Ton Rooftop Units Start-Up and Operation Guide
+    id=n3TN8DoIvhMOr21N5iDrIg matched=Premier
+  [5930899_UAI_A.pdf] Ultraviolet Lights for Premier Rooftop Units, Field Accessory Installation Kit
+    id=3SuPWcwrDPplICqzUNb4Zg matched=Premier
+  [5586959-JIM-A.pdf] Johnson Controls Premier 25–50 Ton Rooftop Units Installation and Maintenance Manual
+    id=dvviy7cmkBMkz2Bo50qCGg matched=Premier
+  [5820342-JCL-A.pdf] Start-Up and Service Data Checklist Premier 25 ton to 80 ton Rooftop Units
+    id=gEyUi251UiQoBMugUG8tPw matched=Premier
+  [5515928-YAD-A.pdf] Sound from SunPremier™ Rooftop Units Application Guide
+    id=VKE97xGt6nvfF0o_CVBizw matched=Premier
+  [5553809-YAD-A.pdf] Roof Curbs for YORK® Sun™ Premier Rooftop Units Application Guide
+    id=IyeLlXDVc80WVwGF~03~WQ matched=Premier
+
+=== Core_R410A (57 docs) ===
+  [5756028-uim-b-0719.pdf] Installation Manual: ZQ04 to ZQ06
+    id=boXiEVQKAz3WCoUJ0qb38g matched=ZQ
+  [1068153-BTG-Z-0120.pdf] Technical Guide: ZX/ZY/ZQ/ZL 04 to 14 Series 3 to 12.5 Ton R-410A Single Package Unit
+    id=Rkg1LnNO~Ds3WmxutR0M3g matched=ZX
+  [5830280-uim-a-0220.pdf] Installation Manual: ZL08-14, G1
+    id=kFThy~aXz0R8QFlNYBo_Cw matched=ZL
+  [1172223-LSD-F-0220.pdf] Submittal Data Sheet: ZQ04 to ZQ06, ZX04 to ZX14, ZY04 to ZY12 and ZL08 THRU 14
+    id=CZYxdoShqMadrwbiCCDXrg matched=ZX
+  [5147366-TTG-O-0120.pdf] Technical Guide: XYE04 to XYE09, XXEA7, XXE08 to XXE09, XXE12, XQE04 to XQE06
+    id=bjZ9~MW2~4z3C6N~Ek2YDg matched=XXE
+  [5123285-TSD-F-0220.pdf] Submittal Data Sheet: ZQ04 to ZQ06, ZX04 to ZX14, ZY04 to ZY12 and ZL08 THRU 14
+    id=bApWTQmbnW0f9P4ianCqIw matched=ZX
+  [1172225-JSD-F-0220.pdf] Submittal Data Sheet: ZQ04 to ZQ06, ZX04 to ZX14, ZY04 to ZY12 and ZL08 THRU 14
+    id=pxOfxbPH4D9CbVMMiVRYmw matched=ZX
+  [5261049-UIM-I-0120.pdf] Installation Manual: XXEA7, XXE08 to XXE09, XXE12
+    id=YIo6MKQzwhGesRnFTNWkKQ matched=XXE
+
+=== Core_R454B (4 docs) ===
+  [146.00-NOM10.pdf] Legacy RW Series (RWXW120-600), 10-50 Ton, 60 Hz, Vintage E Commerical Reversible Chiller Installation, Operation, and M
+    id=iE4RkeFsZiWeF04ZHXJbHg matched=WX
+  [146.06-NOM1.pdf] RW Series (RWXW120-600), 10-50 Ton, 60 Hz, Vintage D Commercial Reversible Chiller Installation, Operation, and Maintena
+    id=DBREbwESHmdBdot7W9UpiQ matched=WX
+  [146.06-NOM2.pdf] RW Series (RWXW120-600), 10-50 Ton, 60 Hz, Vintage E/F Commercial Reversible Chiller Installation, Operation, and Mainte
+    id=zisW6SWD0HAjlWBceR4yEw matched=WX
+  [PUBL-5300.pdf] SKYPAK™ Self-Contained Heating/Cooling Units, S**D, S**, R**D
+    id=6J_~g3C9V~VEDkFylZeiWw matched=KY
+
+=== Core_small (14 docs) ===
+  [5147366-TTG-O-0120.pdf] Technical Guide: XYE04 to XYE09, XXEA7, XXE08 to XXE09, XXE12, XQE04 to XQE06
+    id=bjZ9~MW2~4z3C6N~Ek2YDg matched=XYE04
+  [5261049-UIM-I-0120.pdf] Installation Manual: XXEA7, XXE08 to XXE09, XXE12
+    id=YIo6MKQzwhGesRnFTNWkKQ matched=XXEA7
+  [5147362-YTG-O-0120.pdf] Technical Guide: XYE04 to XYE09, XXEA7, XXE08 to XXE09, XXE12, XQE04 to XQE06
+    id=muQrErt0MvKv6xQvjADT4Q matched=XYE04
+  [5147365-JTG-O-0120.pdf] Technical Guide: XYE04 to XYE09, XXEA7, XXE08 to XXE09, XXE12, XQE04 to XQE06
+    id=oyNDGP3AcVLt~jz3Pq3COQ matched=XYE04
+  [5147364-BTG-O-0120.pdf] Technical Guide: XYE04 to XYE09, XXEA7, XXE08 to XXE09, XXE12, XQE04 to XQE06
+    id=zCLlsWTdPeVTXH1yD7Tliw matched=XYE04
+  [5147393-tsd-f-0918.pdf] Submittal Data Sheet: Single Package Heat Pump, 3 - 10 Ton Models: XYE04 to XYE09, XXEA7, XXE08 to XXE09, XXE12, XQE04 t
+    id=uiH_qe3WMrOXzMM3N4Xk8Q matched=XYE04
+  [5147367-ysd-f-0918.pdf] Submittal Data Sheet: Single Package Heat Pump, 3 - 10 Ton Models: XYE04 to XYE09, XXEA7, XXE08 to XXE09, XXE12, XQE04 t
+    id=FTaXqhzduLwl5vt9hM0wmg matched=XYE04
+  [5147391-jsd-f-0918.pdf] Submittal Data Sheet: Single Package Heat Pump, 3 - 10 Ton Models: XYE04 to XYE09, XXEA7, XXE08 to XXE09, XXE12, XQE04 t
+    id=2nkhrN0JZ5TH_G3p5ydVmg matched=XYE04
+
+=== Pro_R410A (147 docs) ===
+  [5566234-JTG-C-1119.pdf] Technical Guide: J15ZT to J23ZT Gas/Electric Single Package Air Conditioners
+    id=KEtQZ00zkR7g8aKGruC9hg matched=ZT
+  [5167827-XTG-D-0120.pdf] Technical Guide: ZF090, 120 and 150 50 Hz. (EXPORT ONLY)
+    id=os2KHRkY8MgR4Vf5jQ~WwA matched=ZF
+  [5167820-JTG-O-0120.pdf] Technical Guide: J06ZF to J12ZF Pro R-410A Single Package Unit
+    id=9_EHELLxgW~5Gx8wnjBIyw matched=ZF
+  [5566232-YTG-C-1119.pdf] Technical Guide: ZT180 to ZT276 Gas/Electric Single Package Air Conditioners
+    id=8uc1wkOjEEeLU4M7ZjzV7A matched=ZT
+  [5167821-YTG-M-0320.pdf] Technical Guide: ZT037 to ZT150 Series UHE York® Sun™ Pro R-410A Single Package Unit
+    id=ugmMDXaWRIymAItqyXXciQ matched=ZT
+  [349682-JSD-M-0320.pdf] Submittal Data Sheet: J06ZF to J12ZF, JA3-12 ZH/ZJ/ZR and JA3ZT to J12ZT Pro Gas/Electric and Electric/Electric Single P
+    id=_IQrM2U8ZjRuwgaK6S6KWg matched=JA3
+  [5167823-JTG-M-0320.pdf] Technical Guide: JA3ZT to J12ZT Series UHE R-410A Single Package Unit
+    id=PmL7zTwfbuRhE07tWMCFLA matched=JA3
+  [5167798-YTG-O-0120.pdf] Technical Guide: ZF078 to ZF150 Series R-410A York® Sun™ Pro Single Package Unit
+    id=edWtpcSrxKAfttlN3tllkQ matched=ZF
+
+=== Pro_R454B (22 docs) ===
+  [5123283-TSD-D-0320.pdf] Submittal Data Sheet: ZU/ZW/ZKTA3 to T12, ZST06 to ZST12 and ZVTA3 to T12
+    id=yHNWODd35LlW1s33n3XvFQ matched=KT
+  [5734685-tim-b-0519.pdf] Installation Manual: TempMaster Air Conditioner, YH/YJ/YKT07 to T25
+    id=fBi67hocfnUESQyYPWlpVg matched=KT
+  [5123247-TTG-P-0120.pdf] Technical Guide: TempMaster ZU/ZW/ZKTA3 to T12
+    id=eJsnOHvJvPrnFYTTzEXVuQ matched=KT
+  [5123380-tsd-d-0419.pdf] Submittal Data Sheet: TempMaster Air Conditioner, YH/YJ/YKT07 to T25
+    id=0NJ6doHGxwL8HMliBglsTg matched=KT
+  [5123381-tsd-b-0419.pdf] Submittal Data Sheet: TempMaster Heat Pump, PHT07 to PHT20, PJT15 to PJT20, and PKT07
+    id=Cr4_V4qtt9v8RHOJy0chlQ matched=KT
+  [5566230-tim-a-0818.pdf] Installation Manual: TempMaster ZKTA3 to ZKTA5
+    id=F3tHJfIkfuibNYT9JchV1w matched=KT
+  [5121835-tim-j-1118.pdf] Installation Manual: ZKT06 to ZKT12 Single Package R-410A Air Conditioner and Gas/Electric Units
+    id=BM~Yl6Qc7B_zRYySwss83Q matched=KT
+  [5734681-tim-b-0519.pdf] Installation Manual: TempMaster Heat Pump, PHT07 to PHT20, PJT15 to PJT20, and PKT07
+    id=qUYzg8UtCdp0RZSMtpZrVA matched=KT
+
+=== Series20 (44 docs) ===
+  [145.10-IOM2A.pdf] Installation Instructions for Low Ambient Kits for DSH/KSH/DSV/KSV Model Air-Cooled Self-Contained Units Manufactured be
+    id=aCdzhT2AX6WXPwzLj8BA_A matched=KS
+  [5566234-JTG-C-1119.pdf] Technical Guide: J15ZT to J23ZT Gas/Electric Single Package Air Conditioners
+    id=KEtQZ00zkR7g8aKGruC9hg matched=J15
+  [5376084-jim-b-0819.pdf] Installation Manual: J07NL/NM to J20NL/NM Split System Air Handler Units
+    id=234OS1djoHfAiHXm9dKeQQ matched=J20
+  [349700-jsd-g-0317.pdf] Submittal Data Sheet: J15 to 25ZR Series 20 Gas/Electric Single Package Air Conditioners
+    id=HwJYqQeQEANFSRzHl9dEkQ matched=Series 20
+  [506417-jsd-i-0118.pdf] Submittal Data Sheet: J*NC/ND/NL/NM Series 20 R-410A Split System Air Handler
+    id=UIIRmVDy2PYxygJ70AN6Bw matched=Series 20
+  [506416-jsd-j-0419.pdf] Submittal Data Sheet: J*YC07-25, YD10-20, YE07 Series 20 R-410A Split Condensers
+    id=AhqpdXubLAKnYqIVjaCGXQ matched=Series 20
+  [5287209-jim-g-0119.pdf] Installation Manual: J15 to 25ZF Series 20 High Efficiency R-410A Gas/Electric Single Package Air Conditioners
+    id=2B1Pn48IYatK6Wp10bkNEA matched=Series 20
+  [5734680-jim-b-0519.pdf] Installation Manual: J*PC07-20, PD15-20, PE07 Series 20 R-410A Split System Heat Pumps
+    id=ueuL9fjUpLHBIPYBbTUWyQ matched=Series 20
+
+=== Series5 (27 docs) ===
+  [SI0196.pdf] Software Update Version C.J04.01.06 for YPAL Mod D and E Service Information Letter
+    id=wGf3PQOiMZt3jQQZqftyMA matched=J04
+  [5167820-JTG-O-0120.pdf] Technical Guide: J06ZF to J12ZF Pro R-410A Single Package Unit
+    id=9_EHELLxgW~5Gx8wnjBIyw matched=J06
+  [349682-JSD-M-0320.pdf] Submittal Data Sheet: J06ZF to J12ZF, JA3-12 ZH/ZJ/ZR and JA3ZT to J12ZT Pro Gas/Electric and Electric/Electric Single P
+    id=_IQrM2U8ZjRuwgaK6S6KWg matched=J06
+  [5167826-JTG-K-0120.pdf] Technical Guide: J06XP to J12XP Pro R-410A Single Package Heat Pumps
+    id=JWml_XVTQkLKqRX7mVsdAw matched=J06
+  [5808011-JIM-A-0320.pdf] Installation Manual: J06-12ZB
+    id=Ymbg9MpJfRf9d4~YrNPIjw matched=J06
+  [5565591-YIM-B-1019.pdf] Installation Manual: ZJ037 to ZJ061 R-410A York® Sun™ Pro Single Package Unit
+    id=_7fRroKbffCDHLrqy9X0jg matched=J06
+  [5167533-JIM-J-1019.pdf] Installation Manual: J06 to 12ZR Pro R-410A Gas/Electric Single Package Air Conditioners
+    id=WCofdyksDP3Ssy8QX4Ncfw matched=J06
+  [349674-jsd-g-1117.pdf] Submittal Data Sheet: J03XN to J05XN Series 5 Single Package Heat Pumps
+    id=A16P27AYIuKHB0UM_6aFUg matched=Series 5
+
+=== By Doc Number ===
+  [5783136-jtg-a-0819.pdf] Technical Guide: Johnson Controls Choice AD15 to AD28
+    id=vxZvCT29BOXQ8vsBlUb56A

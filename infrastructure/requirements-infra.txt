@@ -1,0 +1,8 @@
+dagster>=1.7.0
+dagster-webserver>=1.7.0
+dagster-postgres>=1.7.0
+psycopg2-binary>=2.9.0
+pandas>=2.0.0
+numpy>=1.24.0
+yfinance>=0.2.40
+pyyaml>=6.0

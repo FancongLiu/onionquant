@@ -1,0 +1,95 @@
+# docker-compose.yml — OnionQuant 数据基础设施
+# TimescaleDB (时序市场数据) + Dagster (调度编排) + PostgreSQL (Dagster 元数据)
+#
+# 凭证从 .env 文件加载 (不硬编码在 compose 文件中)
+# 启动:  docker compose up -d
+# 停止:  docker compose down
+# 状态:  docker compose ps
+
+version: "3.9"
+
+services:
+  # ── TimescaleDB — 市场时序数据存储 ──
+  timescaledb:
+    image: timescale/timescaledb:latest-pg16
+    container_name: quant_timescaledb
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${TIMESCALE_USER:-quant}
+      POSTGRES_PASSWORD: ${TIMESCALE_PASSWORD}
+      POSTGRES_DB: ${TIMESCALE_DB:-market_data}
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+      - ./init_timescaledb.sql:/docker-entrypoint-initdb.d/01_init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TIMESCALE_USER:-quant} -d ${TIMESCALE_DB:-market_data}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Dagster PostgreSQL — 调度元数据 ──
+  dagster_postgres:
+    image: postgres:16-alpine
+    container_name: quant_dagster_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DAGSTER_POSTGRES_USER:-dagster}
+      POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DAGSTER_POSTGRES_DB:-dagster}
+    ports:
+      - "5433:5432"
+    volumes:
+      - dagster_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DAGSTER_POSTGRES_USER:-dagster} -d ${DAGSTER_POSTGRES_DB:-dagster}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Dagster Webserver — UI (http://localhost:3000) ──
+  dagster_webserver:
+    image: dagster/dagster:latest
+    container_name: quant_dagster_ui
+    restart: unless-stopped
+    command: dagster-webserver -h 0.0.0.0 -p 3000 -w /opt/dagster/app/workspace.yaml
+    environment:
+      DAGSTER_HOME: /opt/dagster/dagster_home
+      DAGSTER_POSTGRES_HOST: dagster_postgres
+      DAGSTER_POSTGRES_USER: ${DAGSTER_POSTGRES_USER:-dagster}
+      DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD}
+      DAGSTER_POSTGRES_DB: ${DAGSTER_POSTGRES_DB:-dagster}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./dagster_home:/opt/dagster/dagster_home
+      - ./quant_pipeline:/opt/dagster/app/quant_pipeline
+      - ../quant_framework:/opt/dagster/app/quant_framework
+    depends_on:
+      dagster_postgres:
+        condition: service_healthy
+
+  # ── Dagster Daemon — 后台调度器 ──
+  dagster_daemon:
+    image: dagster/dagster:latest
+    container_name: quant_dagster_daemon
+    restart: unless-stopped
+    command: dagster-daemon run
+    environment:
+      DAGSTER_HOME: /opt/dagster/dagster_home
+      DAGSTER_POSTGRES_HOST: dagster_postgres
+      DAGSTER_POSTGRES_USER: ${DAGSTER_POSTGRES_USER:-dagster}
+      DAGSTER_POSTGRES_PASSWORD: ${DAGSTER_POSTGRES_PASSWORD}
+      DAGSTER_POSTGRES_DB: ${DAGSTER_POSTGRES_DB:-dagster}
+    volumes:
+      - ./dagster_home:/opt/dagster/dagster_home
+      - ./quant_pipeline:/opt/dagster/app/quant_pipeline
+      - ../quant_framework:/opt/dagster/app/quant_framework
+    depends_on:
+      dagster_postgres:
+        condition: service_healthy
+
+volumes:
+  timescale_data:
+  dagster_db_data:

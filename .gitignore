@@ -30,5 +30,14 @@ Thumbs.db
 # Claude AI 辅助文件
 .claude/
 
+# 任务认领锁运行时文件（目录结构已通过 .gitkeep 提交）
+company/task_claims/*/.claim/
+
+# Agent 发件箱（可能包含敏感信息如 API key）
+company/chairman_outbox/
+
+# 凭证文件（绝对不能提交）
+WECOM_CALLBACK_CREDS.md
+
 # GitHub 自动同步脚本的日志
 auto_sync_log.txt

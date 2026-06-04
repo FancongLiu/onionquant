@@ -1,0 +1,2484 @@
+{
+  "known_manuals": {
+    "Technical Guide: Johnson Controls Choice AD15 to AD28": {
+      "rows": 2,
+      "models": [
+        "AD18[C,E]**[H,K,L](2,4,5,B,D,E)********2",
+        "AD20[C,E]**[H,K,L](2,4,5,B,D,E)********2"
+      ],
+      "reference_ids": [
+        210665882,
+        210665890
+      ],
+      "queries": [
+        "JOHNSON CONTROLS AD18 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS AD20 packaged rooftop product data pdf"
+      ],
+      "brand": "JOHNSON CONTROLS (2/4)",
+      "status": [
+        "Production Stopped"
+      ]
+    },
+    "25 ton to 50 ton component static pressure drops (iwg)": {
+      "rows": 1,
+      "models": [
+        "GVA[1,4][A,M]*"
+      ],
+      "reference_ids": [
+        202391353
+      ],
+      "queries": [
+        "JOHNSON CONTROLS GVA packaged rooftop product data pdf"
+      ],
+      "brand": "JOHNSON CONTROLS (2/4)",
+      "status": [
+        "Production Stopped"
+      ]
+    },
+    "Johnson Controls Premier Rooftop Units 60 Ton to 80 Ton Technical Guide R-454B": {
+      "rows": 1,
+      "models": [
+        "GVF[1,4][A,M]*"
+      ],
+      "reference_ids": [
+        206361939
+      ],
+      "queries": [
+        "JOHNSON CONTROLS GVF packaged rooftop product data pdf"
+      ],
+      "brand": "JOHNSON CONTROLS (2/4)",
+      "status": [
+        "Production Stopped"
+      ]
+    },
+    "Installation Manual: Select JH28 to JH50 Horizontal Airflow": {
+      "rows": 1,
+      "models": [
+        "JH35[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********2"
+      ],
+      "reference_ids": [
+        211183913
+      ],
+      "queries": [
+        "JOHNSON CONTROLS JH35 packaged rooftop product data pdf"
+      ],
+      "brand": "JOHNSON CONTROLS (2/4)",
+      "status": [
+        "Production Stopped"
+      ]
+    },
+    "Technical Guide: Select JV28 to JV50 and JH28 to JH50": {
+      "rows": 1,
+      "models": [
+        "JV30[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********2"
+      ],
+      "reference_ids": [
+        211182961
+      ],
+      "queries": [
+        "JOHNSON CONTROLS JV30 packaged rooftop product data pdf"
+      ],
+      "brand": "JOHNSON CONTROLS (2/4)",
+      "status": [
+        "Production Stopped"
+      ]
+    },
+    "Technical Guide: Johnson Controls Choice KS15 to KS25 and KK15 to KK25": {
+      "rows": 1,
+      "models": [
+        "KK18[C,E]**[H,K,L](2,4,5,B,D,E)********1"
+      ],
+      "reference_ids": [
+        215472126
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KK18 packaged rooftop product data pdf"
+      ],
+      "brand": "JOHNSON CONTROLS (2/4)",
+      "status": [
+        "Active"
+      ]
+    },
+    "6481655-YTG-B-1124.pdf": {
+      "rows": 1,
+      "models": [
+        "KE13[C,E]**[H,K,L](2,4,5,B,D,E)********1"
+      ],
+      "reference_ids": [
+        217336454
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KE13 packaged rooftop product data pdf"
+      ],
+      "brand": "JOHNSON CONTROLS (2/4)",
+      "status": [
+        "Active"
+      ]
+    },
+    "Technical Guide: Sun™ Pro KJ Series, 3 ton to 12.5 ton, AC": {
+      "rows": 1,
+      "models": [
+        "KJ120[C,E]**(E,G,H,K,L,N)(2,4,5)*******1"
+      ],
+      "reference_ids": [
+        215441636
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KJ120 packaged rooftop product data pdf"
+      ],
+      "brand": "JOHNSON CONTROLS (2/4)",
+      "status": [
+        "Active"
+      ]
+    },
+    "6481610-YTG-B-0225.pdf": {
+      "rows": 1,
+      "models": [
+        "KT102[C,E]**(E,G,H,K,L,N)(2,4)*******1"
+      ],
+      "reference_ids": [
+        216667535
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KT102 packaged rooftop product data pdf"
+      ],
+      "brand": "JOHNSON CONTROLS (2/4)",
+      "status": [
+        "Active"
+      ]
+    },
+    "_UNKNOWN_JOHNSON CONTROLS (2/4)_JOHNSON CONTROLS ZB090 packaged rooftop ": {
+      "rows": 1,
+      "models": [
+        "ZB090[C,E]**(E,G,H,K,L,N)(2,4,5)*******2"
+      ],
+      "reference_ids": [
+        211177471
+      ],
+      "queries": [
+        "JOHNSON CONTROLS ZB090 packaged rooftop product data pdf"
+      ],
+      "brand": "JOHNSON CONTROLS (2/4)",
+      "status": [
+        "Production Stopped"
+      ]
+    },
+    "Installation Manual: ZJ078 to ZJ150 R-410A York® Sun™ Pro Single Package Unit": {
+      "rows": 1,
+      "models": [
+        "ZJ078[C,E]**(E,G,H,K,L,N)(2,4,5)*******3"
+      ],
+      "reference_ids": [
+        211010330
+      ],
+      "queries": [
+        "JOHNSON CONTROLS ZJ078 packaged rooftop product data pdf"
+      ],
+      "brand": "JOHNSON CONTROLS (2/4)",
+      "status": [
+        "Production Stopped"
+      ]
+    },
+    "Technical Guide: Core KQ, KX, KY and KL 3 ton to 12.5 ton": {
+      "rows": 1,
+      "models": [
+        "KLE08A(2,4,5)*2********1"
+      ],
+      "reference_ids": [
+        217047606
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KLE08 packaged rooftop product data pdf"
+      ],
+      "brand": "JOHNSON CONTROLS (2/4)",
+      "status": [
+        "Active"
+      ]
+    },
+    "Technical Guide: Sun™ Pro WP Series, 6.5 ton to 12.5 ton, heat pump": {
+      "rows": 1,
+      "models": [
+        "WP102[C,E,N,S]**(P,R,S,U,V,X)(2,4,5)*******1"
+      ],
+      "reference_ids": [
+        217753074
+      ],
+      "queries": [
+        "JOHNSON CONTROLS WP102 packaged rooftop product data pdf"
+      ],
+      "brand": "JOHNSON CONTROLS (2/4)",
+      "status": [
+        "Active"
+      ]
+    },
+    "Technical Guide: ZX/ZY/ZQ/ZL Core 3 to 12.5 Ton R-410A Single Package Unit": {
+      "rows": 1,
+      "models": [
+        "ZLE08A(2,4,5)*2*********"
+      ],
+      "reference_ids": [
+        205286083
+      ],
+      "queries": [
+        "JOHNSON CONTROLS ZLE08 packaged rooftop product data pdf"
+      ],
+      "brand": "JOHNSON CONTROLS (2/4)",
+      "status": [
+        "Production Stopped"
+      ]
+    },
+    "_UNKNOWN_JOHNSON CONTROLS (2/4)_JOHNSON CONTROLS XP078 packaged rooftop ": {
+      "rows": 1,
+      "models": [
+        "XP078[C,E]**(P,R,S,U,V,X)(2,4,5)*******2"
+      ],
+      "reference_ids": [
+        211003591
+      ],
+      "queries": [
+        "JOHNSON CONTROLS XP078 packaged rooftop product data pdf"
+      ],
+      "brand": "JOHNSON CONTROLS (2/4)",
+      "status": [
+        "Production Stopped"
+      ]
+    },
+    "PROOF 2 - 1068152-ytg-0323.pdf": {
+      "rows": 1,
+      "models": [
+        "XXEA7A(2,4,5)*3*********"
+      ],
+      "reference_ids": [
+        10190561
+      ],
+      "queries": [
+        "JOHNSON CONTROLS XXEA7 packaged rooftop product data pdf"
+      ],
+      "brand": "JOHNSON CONTROLS (2/4)",
+      "status": [
+        "Production Stopped"
+      ]
+    },
+    "_UNKNOWN_JOHNSON CONTROLS (2/4)_JOHNSON CONTROLS ZXEA7 packaged rooftop ": {
+      "rows": 1,
+      "models": [
+        "ZXEA7A(2,4,5)*3********"
+      ],
+      "reference_ids": [
+        202373565
+      ],
+      "queries": [
+        "JOHNSON CONTROLS ZXEA7 packaged rooftop product data pdf"
+      ],
+      "brand": "JOHNSON CONTROLS (2/4)",
+      "status": [
+        "Production Stopped"
+      ]
+    },
+    "_UNKNOWN_JOHNSON CONTROLS (3/4)_JOHNSON CONTROLS AK18 packaged rooftop p": {
+      "rows": 1,
+      "models": [
+        "AK18[C,E]**[H,K,L](2,4,5,B,D,E)********2"
+      ],
+      "reference_ids": [
+        211303398
+      ],
+      "queries": [
+        "JOHNSON CONTROLS AK18 packaged rooftop product data pdf"
+      ],
+      "brand": "JOHNSON CONTROLS (3/4)",
+      "status": [
+        "Production Stopped"
+      ]
+    }
+  },
+  "inferred_groups": {
+    "JOHNSON CONTROLS/AD": {
+      "rows": 3,
+      "models": [
+        "AD15[C,E]**[H,K,L](2,4,5,B,D,E)********2",
+        "AD28[C,E]**[H,K,L](2,4,5,B,D,E)********2",
+        "AD25[C,E]**[H,K,L](2,4,5,B,D,E)********2"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS AD15 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS AD28 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS AD25 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/AK": {
+      "rows": 4,
+      "models": [
+        "AK25[C,E]**[H,K,L](2,4,5,B,D,E)********2",
+        "AK15[C,E]**[H,K,L](2,4,5,B,D,E)********2",
+        "AK18[C,E]**[H,K,L](2,4,5,B,D,E)********2",
+        "AK20[C,E]**[H,K,L](2,4,5,B,D,E)********2"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS AK25 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS AK15 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS AK18 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS AK20 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/AS": {
+      "rows": 4,
+      "models": [
+        "AS25[C,E]**[H,K,L](2,4,5,B,D,E)********2",
+        "AS15[C,E]**[H,K,L](2,4,5,B,D,E)********2",
+        "AS18[C,E]**[H,K,L](2,4,5,B,D,E)********2",
+        "AS20[C,E]**[H,K,L](2,4,5,B,D,E)********2"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS AS25 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS AS15 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS AS18 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS AS20 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/GVD": {
+      "rows": 1,
+      "models": [
+        "GVD[1,4][A,M]*"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS GVD packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/AE": {
+      "rows": 5,
+      "models": [
+        "AE23[C,E]**[H,K,L](2,4,5,B,D,E)********2",
+        "AE13[C,E]**[H,K,L](2,4,5,B,D,E)********2",
+        "AE18[C,E]**[H,K,L](2,4,5,B,D,E)********2",
+        "AE15[C,E]**[H,K,L](2,4,5,B,D,E)********2",
+        "AE20[C,E]**[H,K,L](2,4,5,B,D,E)********2"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS AE23 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS AE13 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS AE18 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS AE15 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS AE20 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/JH": {
+      "rows": 4,
+      "models": [
+        "JH40[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********2",
+        "JH28[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********2",
+        "JH50[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********2",
+        "JH30[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********2"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS JH40 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS JH28 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS JH50 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS JH30 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/JV": {
+      "rows": 4,
+      "models": [
+        "JV35[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********2",
+        "JV40[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********2",
+        "JV28[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********2",
+        "JV50[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********2"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS JV35 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS JV40 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS JV28 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS JV50 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/JX": {
+      "rows": 5,
+      "models": [
+        "JX30C**[G,H,J,K,L](2,4,5,B,D,E)********2",
+        "JX28C**[G,H,J,K,L](2,4,5,B,D,E)********2",
+        "JX50C**[G,H,J,K,L](2,4,5,B,D,E)********2",
+        "JX35C**[G,H,J,K,L](2,4,5,B,D,E)********2",
+        "JX40C**[G,H,J,K,L](2,4,5,B,D,E)********2"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS JX30 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS JX28 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS JX50 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS JX35 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS JX40 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/JY": {
+      "rows": 5,
+      "models": [
+        "JY28C**[G,H,J,K,L](2,4,5,B,D,E)********2",
+        "JY50C**[G,H,J,K,L](2,4,5,B,D,E)********2",
+        "JY40C**[G,H,J,K,L](2,4,5,B,D,E)********2",
+        "JY30C**[G,H,J,K,L](2,4,5,B,D,E)********2",
+        "JY35C**[G,H,J,K,L](2,4,5,B,D,E)********2"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS JY28 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS JY50 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS JY40 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS JY30 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS JY35 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/KD": {
+      "rows": 9,
+      "models": [
+        "KD25[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "KD150C00*(2,4,5)***1*",
+        "KD20[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "KD180C00*(2,4,5)***1*",
+        "KD15[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "KD28[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "KD240C00*(2,4,5)***1*",
+        "KD18[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "KD120C00*(2,4,5)***1*"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KD25 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KD150 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KD20 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KD180 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KD15 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KD28 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KD240 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KD18 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KD120 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/KK": {
+      "rows": 3,
+      "models": [
+        "KK20[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "KK25[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "KK15[C,E]**[H,K,L](2,4,5,B,D,E)********1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KK20 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KK25 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KK15 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/KS": {
+      "rows": 4,
+      "models": [
+        "KS20[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "KS18[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "KS25[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "KS15[C,E]**[H,K,L](2,4,5,B,D,E)********1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KS20 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KS18 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KS25 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KS15 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/VH": {
+      "rows": 5,
+      "models": [
+        "VH35[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********1",
+        "VH30[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********1",
+        "VH40[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********1",
+        "VH27[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********1",
+        "VH50[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS VH35 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS VH30 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS VH40 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS VH27 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS VH50 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/VV": {
+      "rows": 5,
+      "models": [
+        "VV30[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********1",
+        "VV27[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********1",
+        "VV50[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********1",
+        "VV35[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********1",
+        "VV40[C,E]**[G,H,J,K,L](2,4,5,B,D,E)********1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS VV30 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS VV27 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS VV50 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS VV35 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS VV40 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/VX": {
+      "rows": 5,
+      "models": [
+        "VX27C**[G,H,J,K,L](2,4,5,B,D,E)********1",
+        "VX35C**[G,H,J,K,L](2,4,5,B,D,E)********1",
+        "VX50C**[G,H,J,K,L](2,4,5,B,D,E)********1",
+        "VX30C**[G,H,J,K,L](2,4,5,B,D,E)********1",
+        "VX40C**[G,H,J,K,L](2,4,5,B,D,E)********1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS VX27 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS VX35 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS VX50 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS VX30 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS VX40 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/VY": {
+      "rows": 5,
+      "models": [
+        "VY27C**[G,H,J,K,L](2,4,5,B,D,E)********1",
+        "VY50C**[G,H,J,K,L](2,4,5,B,D,E)********1",
+        "VY40C**[G,H,J,K,L](2,4,5,B,D,E)********1",
+        "VY30C**[G,H,J,K,L](2,4,5,B,D,E)********1",
+        "VY35C**[G,H,J,K,L](2,4,5,B,D,E)********1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS VY27 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS VY50 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS VY40 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS VY30 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS VY35 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/KB": {
+      "rows": 5,
+      "models": [
+        "KB102[C,E]**(E,G,H,K,L,N)(2,4,5)*******1",
+        "KB090[C,E]**(E,G,H,K,L,N)(2,4,5)*******1",
+        "KB120[C,E]**(E,G,H,K,L,N)(2,4,5)*******1",
+        "KB078[C,E]**(E,G,H,K,L,N)(2,4,5)*******1",
+        "KB150[C,E]**(E,G,H,K,L,N)(2,4,5)*******1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KB102 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KB090 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KB120 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KB078 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KB150 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/KE": {
+      "rows": 6,
+      "models": [
+        "KE15[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "KE072(C,E)***(2,4,5)*******1",
+        "KE23[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "KE18[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "KE20[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "KE090C00*(2,4,5)***1*"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KE15 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KE072 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KE23 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KE18 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KE20 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KE090 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/KJ": {
+      "rows": 4,
+      "models": [
+        "KJ078[C,E]**(E,G,H,K,L,N)(2,4,5)*******1",
+        "KJ150[C,E]**(E,G,H,K,L,N)(2,4,5)*******1",
+        "KJ090[C,E]**(E,G,H,K,L,N)(2,4,5)*******1",
+        "KJ102[C,E]**(E,G,H,K,L,N)(2,4,5)*******1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KJ078 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KJ150 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KJ090 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KJ102 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/KT": {
+      "rows": 4,
+      "models": [
+        "KT120[C,E]**(E,G,H,K,L,N)(2,4)*******1",
+        "KT078[C,E]**(E,G,H,K,L,N)(2,4)*******1",
+        "KT150[C,E]**(E,G,H,K,L,N)(2,4)*******1",
+        "KT090[C,E]**(E,G,H,K,L,N)(2,4)*******1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KT120 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KT078 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KT150 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KT090 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/ZB": {
+      "rows": 5,
+      "models": [
+        "ZB102[C,E]**(E,G,H,K,L,N)(2,4,5)*******2",
+        "ZB090[C,E]**(E,G,H,K,L,N)(2,4,5)*******2",
+        "ZB120[C,E]**(E,G,H,K,L,N)(2,4,5)*******2",
+        "ZB078[C,E]**(E,G,H,K,L,N)(2,4,5)*******2",
+        "ZB150[C,E]**(E,G,H,K,L,N)(2,4,5)*******2"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS ZB102 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS ZB090 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS ZB120 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS ZB078 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS ZB150 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/ZJ": {
+      "rows": 3,
+      "models": [
+        "ZJ090[C,E]**(E,G,H,K,L,N)(2,4,5)*******3",
+        "ZJ102[C,E]**(E,G,H,K,L,N)(2,4,5)*******3",
+        "ZJ120[C,E]**(E,G,H,K,L,N)(2,4,5)*******3"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS ZJ090 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS ZJ102 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS ZJ120 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/ZT": {
+      "rows": 5,
+      "models": [
+        "ZT090[C,E]**(E,G,H,K,L,N)(2,4)*******2",
+        "ZT078[C,E]**(E,G,H,K,L,N)(2,4)*******2",
+        "ZT150[C,E]**(E,G,H,K,L,N)(2,4)*******2",
+        "ZT102[C,E]**(E,G,H,K,L,N)(2,4)*******2",
+        "ZT120[C,E]**(E,G,H,K,L,N)(2,4)*******2"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS ZT090 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS ZT078 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS ZT150 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS ZT102 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS ZT120 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/J": {
+      "rows": 5,
+      "models": [
+        "J10PCC00*(2,4)***6*",
+        "J15PCC00*(2,4)***5*",
+        "J20PDC00*(2,4)***5*",
+        "J07PEC00*(2,4)***5*",
+        "J12YCC00*(2,4,5)***5*"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS J10 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS J15 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS J20 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS J07 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS J12 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/HD": {
+      "rows": 4,
+      "models": [
+        "HD20[C,E]**[P,R](2,4,5,B,D,E)********2",
+        "HD25[C,E]**[P,R](2,4,5,B,D,E)********2",
+        "HD13[C,E]**[P,R](2,4,5,B,D,E)********2",
+        "HD15[C,E]**[P,R](2,4,5,B,D,E)********2"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS HD20 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS HD25 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS HD13 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS HD15 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/KLE": {
+      "rows": 3,
+      "models": [
+        "KLE14A(2,4,5)*2********1",
+        "KLE09A(2,4,5)*2********1",
+        "KLE12A(2,4,5)*2********1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KLE14 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KLE09 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KLE12 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/KLG": {
+      "rows": 4,
+      "models": [
+        "KLG14*(2,4,5)*2********1",
+        "KLG08*(2,4,5)*2********1",
+        "KLG09*(2,4,5)*2********1",
+        "KLG12*(2,4,5)*2********1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KLG14 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KLG08 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KLG09 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KLG12 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/WP": {
+      "rows": 4,
+      "models": [
+        "WP090[C,E,N,S]**(P,R,S,U,V,X)(2,4,5)*******1",
+        "WP120[C,E,N,S]**(P,R,S,U,V,X)(2,4,5)*******1",
+        "WP078[C,E,N,S]**(P,R,S,U,V,X)(2,4,5)*******1",
+        "WP150[C,E,N,S]**(P,R,S,U,V,X)(2,4)*******1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS WP090 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS WP120 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS WP078 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS WP150 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/ZE": {
+      "rows": 1,
+      "models": [
+        "ZE072(C,E)***(2,4,5)********"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS ZE072 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/ZLE": {
+      "rows": 3,
+      "models": [
+        "ZLE14A(2,4,5)*2*********",
+        "ZLE09A(2,4,5)*2*********",
+        "ZLE12A(2,4,5)*2*********"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS ZLE14 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS ZLE09 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS ZLE12 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/ZLG": {
+      "rows": 4,
+      "models": [
+        "ZLG14*(2,4,5)*2*********",
+        "ZLG08*(2,4,5)*2*********",
+        "ZLG09*(2,4,5)*2*********",
+        "ZLG12*(2,4,5)*2*********"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS ZLG14 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS ZLG08 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS ZLG09 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS ZLG12 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/KC": {
+      "rows": 4,
+      "models": [
+        "KC150C00*(2,4,5)***1*",
+        "KC180C00*(2,4,5)***1*",
+        "KC240C00*(2,4,5)***1*",
+        "KC120C00*(2,4,5)***1*"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KC150 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KC180 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KC240 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KC120 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/KXEA": {
+      "rows": 1,
+      "models": [
+        "KXEA7A(2,4,5)*3********1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KXEA7 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/KYE": {
+      "rows": 3,
+      "models": [
+        "KYE12A(2,4,5)*3********1",
+        "KYE08A(2,4,5)*3********1",
+        "KYE09A(2,4,5)*3********1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KYE12 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KYE08 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KYE09 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/WC": {
+      "rows": 2,
+      "models": [
+        "WC120C00*(2,4)***1*",
+        "WC180C00*(2,4)***1*"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS WC120 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS WC180 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/WD": {
+      "rows": 4,
+      "models": [
+        "WD180C00*(2,4)***1*",
+        "WD20[C,E]**[P,R](2,4,5,B,D,E)********1",
+        "WD13[C,E]**[P,R](2,4,5,B,D,E)********1",
+        "WD15[C,E]**[P,R](2,4,5,B,D,E)********1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS WD180 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS WD20 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS WD13 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS WD15 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/WXE": {
+      "rows": 3,
+      "models": [
+        "WXE09A(2,4,5)*3********1",
+        "WXE12A(2,4,5)*3********1",
+        "WXE08A(2,4,5)*3********1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS WXE09 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS WXE12 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS WXE08 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/WYEA": {
+      "rows": 1,
+      "models": [
+        "WYEA7A(2,4,5)*3********1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS WYEA7 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/XP": {
+      "rows": 5,
+      "models": [
+        "XP120[C,E]**(P,R,S,U,V,X)(2,4,5)*******2",
+        "XP078[C,E]**(P,R,S,U,V,X)(2,4,5)*******2",
+        "XP150[C,E]**(P,R,S,U,V,X)(2,4)*******3",
+        "XP090[C,E]**(P,R,S,U,V,X)(2,4,5)*******2",
+        "XP102[C,E]**(P,R,S,U,V,X)(2,4,5)*******2"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS XP120 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS XP078 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS XP150 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS XP090 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS XP102 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/XXE": {
+      "rows": 3,
+      "models": [
+        "XXE12A(2,4,5)*3********3",
+        "XXE08A(2,4,5)*3*********",
+        "XXE09A(2,4,5)*3*********"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS XXE12 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS XXE08 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS XXE09 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/XYEA": {
+      "rows": 1,
+      "models": [
+        "XYEA7A(2,4,5)*3*********"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS XYEA7 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/ZYE": {
+      "rows": 3,
+      "models": [
+        "ZYE09A(2,4,5)*3********",
+        "ZYE12A(2,4,5)*3********3",
+        "ZYE08A(2,4,5)*3********4"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS ZYE09 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS ZYE12 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS ZYE08 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/ZYG": {
+      "rows": 3,
+      "models": [
+        "ZYG12*(2,4,5)*3********3",
+        "ZYG08*(2,4,5)*3********4",
+        "ZYG09*(2,4,5)*3********"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS ZYG12 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS ZYG08 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS ZYG09 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/KXGA": {
+      "rows": 1,
+      "models": [
+        "KXGA7*(2,4,5)*3********1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KXGA7 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/KYG": {
+      "rows": 3,
+      "models": [
+        "KYG08*(2,4,5)*3********1",
+        "KYG09*(2,4,5)*3*******1",
+        "KYG12*(2,4,5)*3********1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KYG08 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KYG09 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS KYG12 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/KYEA": {
+      "rows": 1,
+      "models": [
+        "KYEA7A(2,4,5)*1********1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KYEA7 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/ZYEA": {
+      "rows": 1,
+      "models": [
+        "ZYEA7A(2,4,5)*1*********"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS ZYEA7 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/ZXEA": {
+      "rows": 1,
+      "models": [
+        "ZXEA7A(2,4,5)*3********"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS ZXEA7 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/GVB": {
+      "rows": 1,
+      "models": [
+        "GVB[1,4][A,M]*"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS GVB packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/KYGA": {
+      "rows": 1,
+      "models": [
+        "KYGA7*(2,4,5)*1********1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS KYGA7 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/ZYGA": {
+      "rows": 1,
+      "models": [
+        "ZYGA7*(2,4,5)*1*********"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS ZYGA7 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/WE": {
+      "rows": 1,
+      "models": [
+        "WE090C00*(2,4)***1*"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS WE090 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/WXEA": {
+      "rows": 1,
+      "models": [
+        "WXEA7A(2,4,5)*3********1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS WXEA7 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/XYE": {
+      "rows": 2,
+      "models": [
+        "XYE08A(2,4,5)*3*******",
+        "XYE09A(2,4,5)*3*******"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS XYE08 packaged rooftop product data pdf",
+        "JOHNSON CONTROLS XYE09 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/ZXGA": {
+      "rows": 1,
+      "models": [
+        "ZXGA7*(2,4,5)*3********"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS ZXGA7 packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/GVC": {
+      "rows": 1,
+      "models": [
+        "GVC[B,E][A,M]*"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS GVC packaged rooftop product data pdf"
+      ]
+    },
+    "JOHNSON CONTROLS/WYE": {
+      "rows": 1,
+      "models": [
+        "WYE08A(2,4,5)*3********1"
+      ],
+      "queries": [
+        "JOHNSON CONTROLS WYE08 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/48V": {
+      "rows": 1,
+      "models": [
+        "48V(2,4)(C,D,E,F)(Q,R)28**********"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 48V packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/48K4": {
+      "rows": 1,
+      "models": [
+        "48K4*(-,A,B,F,G,H,J,K,L,M,N,P)20**********"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 48K4 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/48FE": {
+      "rows": 1,
+      "models": [
+        "48FE**08*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 48FE packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50P7": {
+      "rows": 1,
+      "models": [
+        "50P7*040******(2,3)**(1,3)*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50P7 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50P9": {
+      "rows": 1,
+      "models": [
+        "50P9*040******(2,3)**(1,3)*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50P9 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50A7": {
+      "rows": 1,
+      "models": [
+        "50A7*020********"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50A7 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50A8": {
+      "rows": 1,
+      "models": [
+        "50A8*020*(L,N,P,J,1,2)*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50A8 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/38AXZ": {
+      "rows": 1,
+      "models": [
+        "38AXZ(M,N)07***(5,6,1)*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 38AXZ packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/38AUQ": {
+      "rows": 1,
+      "models": [
+        "38AUQ(D,E)07***(5,6,1)*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 38AUQ packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/38AUD": {
+      "rows": 1,
+      "models": [
+        "38AUD(T,U)12***(5,6,1)*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 38AUD packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50LC": {
+      "rows": 1,
+      "models": [
+        "50LC(D,E,F)*14*(1,3,4)*(1,5,6)*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50LC packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50LCD": {
+      "rows": 1,
+      "models": [
+        "50LCD*20*(5,6,7,8)*1*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50LCD packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50A2": {
+      "rows": 1,
+      "models": [
+        "50A2*030*(N,P,Q,1,2,3)*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50A2 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50A4": {
+      "rows": 1,
+      "models": [
+        "50A4*030*(N,P,Q,1,2,3)*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50A4 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50XCW06": {
+      "rows": 1,
+      "models": [
+        "50XCW06*****(A,B)*****"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50XCW06 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50XCW12": {
+      "rows": 1,
+      "models": [
+        "50XCW12*****(A,B)*****"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50XCW12 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50XCW16": {
+      "rows": 1,
+      "models": [
+        "50XCW16*****(A,B)*****"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50XCW16 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/48GE": {
+      "rows": 1,
+      "models": [
+        "48GE*(T,U)07*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 48GE packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50GC": {
+      "rows": 1,
+      "models": [
+        "50GC**07*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50GC packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50FCQ": {
+      "rows": 1,
+      "models": [
+        "50FCQ*07****B*****"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50FCQ packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/48K2": {
+      "rows": 1,
+      "models": [
+        "48K2*(-,A,B,F,G,H,J,K,L,M,N,P)20**********"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 48K2 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/48K3": {
+      "rows": 1,
+      "models": [
+        "48K3*(-,A,B,F,G,H,J,K,L,M,N,P)20**********"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 48K3 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/48K5": {
+      "rows": 1,
+      "models": [
+        "48K5*(-,A,B,F,G,H,J,K,L,M,N,P)20**********"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 48K5 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50P6": {
+      "rows": 1,
+      "models": [
+        "50P6*040******(2,3)**(1,3)*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50P6 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50P8": {
+      "rows": 1,
+      "models": [
+        "50P8*040******(2,3)**(1,3)*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50P8 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50A6": {
+      "rows": 1,
+      "models": [
+        "50A6*020*(L,N,P,J,1,2)*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50A6 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50A9": {
+      "rows": 1,
+      "models": [
+        "50A9*020********"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50A9 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/38AUZ": {
+      "rows": 1,
+      "models": [
+        "38AUZ(D,E)07***(5,6,1)*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 38AUZ packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50LCF": {
+      "rows": 1,
+      "models": [
+        "50LCF*17*(5,6,7,8)*(1,6)*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50LCF packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/38AXQ": {
+      "rows": 1,
+      "models": [
+        "38AXQ(M,N)07***(5,6,1)*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 38AXQ packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50WE": {
+      "rows": 1,
+      "models": [
+        "50WE**07***(1,5,6)******"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50WE packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50LCE": {
+      "rows": 1,
+      "models": [
+        "50LCE*20*(5,6,7,8)*1*"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50LCE packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50A3": {
+      "rows": 1,
+      "models": [
+        "50A3*030********"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50A3 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50A5": {
+      "rows": 1,
+      "models": [
+        "50A5*030********"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50A5 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50XCW08": {
+      "rows": 1,
+      "models": [
+        "50XCW08*****(A,B)*****"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50XCW08 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50XCW14": {
+      "rows": 1,
+      "models": [
+        "50XCW14*****(A,B)*****"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50XCW14 packaged rooftop product data pdf"
+      ]
+    },
+    "CARRIER CORPORATION/50XCW24": {
+      "rows": 1,
+      "models": [
+        "50XCW24*****(A,B)*****"
+      ],
+      "queries": [
+        "CARRIER CORPORATION 50XCW24 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/LD": {
+      "rows": 5,
+      "models": [
+        "LD15[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "LD18[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "LD20[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "LD25[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "LD28[C,E]**[H,K,L](2,4,5,B,D,E)********1"
+      ],
+      "queries": [
+        "BOSCH LD15 packaged rooftop product data pdf",
+        "BOSCH LD18 packaged rooftop product data pdf",
+        "BOSCH LD20 packaged rooftop product data pdf",
+        "BOSCH LD25 packaged rooftop product data pdf",
+        "BOSCH LD28 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/LK": {
+      "rows": 4,
+      "models": [
+        "LK15[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "LK18[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "LK20[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "LK25[C,E]**[H,K,L](2,4,5,B,D,E)********1"
+      ],
+      "queries": [
+        "BOSCH LK15 packaged rooftop product data pdf",
+        "BOSCH LK18 packaged rooftop product data pdf",
+        "BOSCH LK20 packaged rooftop product data pdf",
+        "BOSCH LK25 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/LS": {
+      "rows": 4,
+      "models": [
+        "LS15[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "LS18[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "LS20[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "LS25[C,E]**[H,K,L](2,4,5,B,D,E)********1"
+      ],
+      "queries": [
+        "BOSCH LS15 packaged rooftop product data pdf",
+        "BOSCH LS18 packaged rooftop product data pdf",
+        "BOSCH LS20 packaged rooftop product data pdf",
+        "BOSCH LS25 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/KB": {
+      "rows": 5,
+      "models": [
+        "KB078[C,E]**(E,G,H,K,L,N)(2,4,5)*******1",
+        "KB090[C,E]**(E,G,H,K,L,N)(2,4,5)*******1",
+        "KB102[C,E]**(E,G,H,K,L,N)(2,4,5)*******1",
+        "KB120[C,E]**(E,G,H,K,L,N)(2,4,5)*******1",
+        "KB150[C,E]**(E,G,H,K,L,N)(2,4,5)*******1"
+      ],
+      "queries": [
+        "BOSCH KB078 packaged rooftop product data pdf",
+        "BOSCH KB090 packaged rooftop product data pdf",
+        "BOSCH KB102 packaged rooftop product data pdf",
+        "BOSCH KB120 packaged rooftop product data pdf",
+        "BOSCH KB150 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/KJ": {
+      "rows": 5,
+      "models": [
+        "KJ078[C,E]**(E,G,H,K,L,N)(2,4,5)*******1",
+        "KJ090[C,E]**(E,G,H,K,L,N)(2,4,5)*******1",
+        "KJ102[C,E]**(E,G,H,K,L,N)(2,4,5)*******1",
+        "KJ120[C,E]**(E,G,H,K,L,N)(2,4,5)*******1",
+        "KJ150[C,E]**(E,G,H,K,L,N)(2,4,5)*******1"
+      ],
+      "queries": [
+        "BOSCH KJ078 packaged rooftop product data pdf",
+        "BOSCH KJ090 packaged rooftop product data pdf",
+        "BOSCH KJ102 packaged rooftop product data pdf",
+        "BOSCH KJ120 packaged rooftop product data pdf",
+        "BOSCH KJ150 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/KT": {
+      "rows": 5,
+      "models": [
+        "KT078[C,E]**(E,G,H,K,L,N)(2,4)*******1",
+        "KT090[C,E]**(E,G,H,K,L,N)(2,4)*******1",
+        "KT102[C,E]**(E,G,H,K,L,N)(2,4)*******1",
+        "KT120[C,E]**(E,G,H,K,L,N)(2,4)*******1",
+        "KT150[C,E]**(E,G,H,K,L,N)(2,4)*******1"
+      ],
+      "queries": [
+        "BOSCH KT078 packaged rooftop product data pdf",
+        "BOSCH KT090 packaged rooftop product data pdf",
+        "BOSCH KT102 packaged rooftop product data pdf",
+        "BOSCH KT120 packaged rooftop product data pdf",
+        "BOSCH KT150 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/LE": {
+      "rows": 5,
+      "models": [
+        "LE13[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "LE15[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "LE18[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "LE20[C,E]**[H,K,L](2,4,5,B,D,E)********1",
+        "LE23[C,E]**[H,K,L](2,4,5,B,D,E)********1"
+      ],
+      "queries": [
+        "BOSCH LE13 packaged rooftop product data pdf",
+        "BOSCH LE15 packaged rooftop product data pdf",
+        "BOSCH LE18 packaged rooftop product data pdf",
+        "BOSCH LE20 packaged rooftop product data pdf",
+        "BOSCH LE23 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/KE": {
+      "rows": 2,
+      "models": [
+        "KE072(C,E)***(2,4,5)*******1",
+        "KE090C00*(2,4,5)***1*"
+      ],
+      "queries": [
+        "BOSCH KE072 packaged rooftop product data pdf",
+        "BOSCH KE090 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/KLE": {
+      "rows": 4,
+      "models": [
+        "KLE08A(2,4,5)*2********1",
+        "KLE09A(2,4,5)*2********1",
+        "KLE12A(2,4,5)*2********1",
+        "KLE14A(2,4,5)*2********1"
+      ],
+      "queries": [
+        "BOSCH KLE08 packaged rooftop product data pdf",
+        "BOSCH KLE09 packaged rooftop product data pdf",
+        "BOSCH KLE12 packaged rooftop product data pdf",
+        "BOSCH KLE14 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/KLG": {
+      "rows": 4,
+      "models": [
+        "KLG08*(2,4,5)*2********1",
+        "KLG09*(2,4,5)*2********1",
+        "KLG12*(2,4,5)*2********1",
+        "KLG14*(2,4,5)*2********1"
+      ],
+      "queries": [
+        "BOSCH KLG08 packaged rooftop product data pdf",
+        "BOSCH KLG09 packaged rooftop product data pdf",
+        "BOSCH KLG12 packaged rooftop product data pdf",
+        "BOSCH KLG14 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/KYEA": {
+      "rows": 1,
+      "models": [
+        "KYEA7A(2,4,5)*1********1"
+      ],
+      "queries": [
+        "BOSCH KYEA7 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/KYGA": {
+      "rows": 1,
+      "models": [
+        "KYGA7*(2,4,5)*1********1"
+      ],
+      "queries": [
+        "BOSCH KYGA7 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/WP": {
+      "rows": 5,
+      "models": [
+        "WP078[C,E,N,S]**(P,R,S,U,V,X)(2,4,5)*******1",
+        "WP090[C,E,N,S]**(P,R,S,U,V,X)(2,4,5)*******1",
+        "WP102[C,E,N,S]**(P,R,S,U,V,X)(2,4,5)*******1",
+        "WP120[C,E,N,S]**(P,R,S,U,V,X)(2,4,5)*******1",
+        "WP150[C,E,N,S]**(P,R,S,U,V,X)(2,4)*******1"
+      ],
+      "queries": [
+        "BOSCH WP078 packaged rooftop product data pdf",
+        "BOSCH WP090 packaged rooftop product data pdf",
+        "BOSCH WP102 packaged rooftop product data pdf",
+        "BOSCH WP120 packaged rooftop product data pdf",
+        "BOSCH WP150 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/KC": {
+      "rows": 4,
+      "models": [
+        "KC120C00*(2,4,5)***1*",
+        "KC150C00*(2,4,5)***1*",
+        "KC180C00*(2,4,5)***1*",
+        "KC240C00*(2,4,5)***1*"
+      ],
+      "queries": [
+        "BOSCH KC120 packaged rooftop product data pdf",
+        "BOSCH KC150 packaged rooftop product data pdf",
+        "BOSCH KC180 packaged rooftop product data pdf",
+        "BOSCH KC240 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/KD": {
+      "rows": 4,
+      "models": [
+        "KD120C00*(2,4,5)***1*",
+        "KD150C00*(2,4,5)***1*",
+        "KD180C00*(2,4,5)***1*",
+        "KD240C00*(2,4,5)***1*"
+      ],
+      "queries": [
+        "BOSCH KD120 packaged rooftop product data pdf",
+        "BOSCH KD150 packaged rooftop product data pdf",
+        "BOSCH KD180 packaged rooftop product data pdf",
+        "BOSCH KD240 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/KXEA": {
+      "rows": 1,
+      "models": [
+        "KXEA7A(2,4,5)*3********1"
+      ],
+      "queries": [
+        "BOSCH KXEA7 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/KXGA": {
+      "rows": 1,
+      "models": [
+        "KXGA7*(2,4,5)*3********1"
+      ],
+      "queries": [
+        "BOSCH KXGA7 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/KYE": {
+      "rows": 3,
+      "models": [
+        "KYE08A(2,4,5)*3********1",
+        "KYE09A(2,4,5)*3********1",
+        "KYE12A(2,4,5)*3********1"
+      ],
+      "queries": [
+        "BOSCH KYE08 packaged rooftop product data pdf",
+        "BOSCH KYE09 packaged rooftop product data pdf",
+        "BOSCH KYE12 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/KYG": {
+      "rows": 3,
+      "models": [
+        "KYG08*(2,4,5)*3********1",
+        "KYG09*(2,4,5)*3********1",
+        "KYG12*(2,4,5)*3********1"
+      ],
+      "queries": [
+        "BOSCH KYG08 packaged rooftop product data pdf",
+        "BOSCH KYG09 packaged rooftop product data pdf",
+        "BOSCH KYG12 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/MD": {
+      "rows": 3,
+      "models": [
+        "MD13[C,E]**[P,R](2,4,5,B,D,E)********1",
+        "MD15[C,E]**[P,R](2,4,5,B,D,E)********1",
+        "MD20[C,E]**[P,R](2,4,5,B,D,E)********1"
+      ],
+      "queries": [
+        "BOSCH MD13 packaged rooftop product data pdf",
+        "BOSCH MD15 packaged rooftop product data pdf",
+        "BOSCH MD20 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/WC": {
+      "rows": 2,
+      "models": [
+        "WC120C00*(2,4)***1*",
+        "WC180C00*(2,4)***1*"
+      ],
+      "queries": [
+        "BOSCH WC120 packaged rooftop product data pdf",
+        "BOSCH WC180 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/WD": {
+      "rows": 2,
+      "models": [
+        "WD180C00*(2,4)***1*",
+        "WD240C00*(2,4)***1*"
+      ],
+      "queries": [
+        "BOSCH WD180 packaged rooftop product data pdf",
+        "BOSCH WD240 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/WE": {
+      "rows": 1,
+      "models": [
+        "WE090C00*(2,4)***1*"
+      ],
+      "queries": [
+        "BOSCH WE090 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/WXE": {
+      "rows": 3,
+      "models": [
+        "WXE08A(2,4,5)*3********1",
+        "WXE09A(2,4,5)*3********1",
+        "WXE12A(2,4,5)*3********1"
+      ],
+      "queries": [
+        "BOSCH WXE08 packaged rooftop product data pdf",
+        "BOSCH WXE09 packaged rooftop product data pdf",
+        "BOSCH WXE12 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/WXEA": {
+      "rows": 1,
+      "models": [
+        "WXEA7A(2,4,5)*3********1"
+      ],
+      "queries": [
+        "BOSCH WXEA7 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/WYE": {
+      "rows": 1,
+      "models": [
+        "WYE08A(2,4,5)*3********1"
+      ],
+      "queries": [
+        "BOSCH WYE08 packaged rooftop product data pdf"
+      ]
+    },
+    "BOSCH/WYEA": {
+      "rows": 1,
+      "models": [
+        "WYEA7A(2,4,5)*3********1"
+      ],
+      "queries": [
+        "BOSCH WYEA7 packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/RGEG": {
+      "rows": 1,
+      "models": [
+        "RGEG2T180AC"
+      ],
+      "queries": [
+        "RUUD RGEG2 packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/RHPH": {
+      "rows": 1,
+      "models": [
+        "RHPH2T180AC"
+      ],
+      "queries": [
+        "RUUD RHPH2 packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/RKNL": {
+      "rows": 1,
+      "models": [
+        "RKNL-G180C"
+      ],
+      "queries": [
+        "RUUD RKNL packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/RLNL": {
+      "rows": 1,
+      "models": [
+        "RLNL-G180C"
+      ],
+      "queries": [
+        "RUUD RLNL packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/RACDYB": {
+      "rows": 4,
+      "models": [
+        "RACDYB090AC",
+        "RACDYB102AC",
+        "RACDYB120AC",
+        "RACDYB150AC"
+      ],
+      "queries": [
+        "RUUD RACDYB090 packaged rooftop product data pdf",
+        "RUUD RACDYB102 packaged rooftop product data pdf",
+        "RUUD RACDYB120 packaged rooftop product data pdf",
+        "RUUD RACDYB150 packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/RACGYB": {
+      "rows": 4,
+      "models": [
+        "RACGYB180AC",
+        "RACGYB210AC",
+        "RACGYB240AC",
+        "RACGYB300AC"
+      ],
+      "queries": [
+        "RUUD RACGYB180 packaged rooftop product data pdf",
+        "RUUD RACGYB210 packaged rooftop product data pdf",
+        "RUUD RACGYB240 packaged rooftop product data pdf",
+        "RUUD RACGYB300 packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/RACHYB": {
+      "rows": 5,
+      "models": [
+        "RACHYB360AC",
+        "RACHYB180AC",
+        "RACHYB210AC",
+        "RACHYB240AC",
+        "RACHYB300AC"
+      ],
+      "queries": [
+        "RUUD RACHYB360 packaged rooftop product data pdf",
+        "RUUD RACHYB180 packaged rooftop product data pdf",
+        "RUUD RACHYB210 packaged rooftop product data pdf",
+        "RUUD RACHYB240 packaged rooftop product data pdf",
+        "RUUD RACHYB300 packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/RACY": {
+      "rows": 7,
+      "models": [
+        "RACY2078C",
+        "RACY2090C",
+        "RACY2120C",
+        "RACY2150C",
+        "RACY2180C",
+        "RACY2240C",
+        "RACY2119C"
+      ],
+      "queries": [
+        "RUUD RACY2078 packaged rooftop product data pdf",
+        "RUUD RACY2090 packaged rooftop product data pdf",
+        "RUUD RACY2120 packaged rooftop product data pdf",
+        "RUUD RACY2150 packaged rooftop product data pdf",
+        "RUUD RACY2180 packaged rooftop product data pdf",
+        "RUUD RACY2240 packaged rooftop product data pdf",
+        "RUUD RACY2119 packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/RGECYB": {
+      "rows": 1,
+      "models": [
+        "RGECYB072AC"
+      ],
+      "queries": [
+        "RUUD RGECYB072 packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/RGEDYB": {
+      "rows": 4,
+      "models": [
+        "RGEDYB090AC",
+        "RGEDYB102AC",
+        "RGEDYB120AC",
+        "RGEDYB150AC"
+      ],
+      "queries": [
+        "RUUD RGEDYB090 packaged rooftop product data pdf",
+        "RUUD RGEDYB102 packaged rooftop product data pdf",
+        "RUUD RGEDYB120 packaged rooftop product data pdf",
+        "RUUD RGEDYB150 packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/RGEDZT": {
+      "rows": 4,
+      "models": [
+        "RGEDZT090AC*****A",
+        "RGEDZT102AC*****A",
+        "RGEDZT120AC*****A",
+        "RGEDZT150AC*****A"
+      ],
+      "queries": [
+        "RUUD RGEDZT090 packaged rooftop product data pdf",
+        "RUUD RGEDZT102 packaged rooftop product data pdf",
+        "RUUD RGEDZT120 packaged rooftop product data pdf",
+        "RUUD RGEDZT150 packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/RGEGYB": {
+      "rows": 4,
+      "models": [
+        "RGEGYB180AC",
+        "RGEGYB210AC",
+        "RGEGYB240AC",
+        "RGEGYB300AC"
+      ],
+      "queries": [
+        "RUUD RGEGYB180 packaged rooftop product data pdf",
+        "RUUD RGEGYB210 packaged rooftop product data pdf",
+        "RUUD RGEGYB240 packaged rooftop product data pdf",
+        "RUUD RGEGYB300 packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/RGEHYB": {
+      "rows": 5,
+      "models": [
+        "RGEHYB360AC",
+        "RGEHYB180AC",
+        "RGEHYB210AC",
+        "RGEHYB240AC",
+        "RGEHYB300AC"
+      ],
+      "queries": [
+        "RUUD RGEHYB360 packaged rooftop product data pdf",
+        "RUUD RGEHYB180 packaged rooftop product data pdf",
+        "RUUD RGEHYB210 packaged rooftop product data pdf",
+        "RUUD RGEHYB240 packaged rooftop product data pdf",
+        "RUUD RGEHYB300 packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/RHPHYB": {
+      "rows": 2,
+      "models": [
+        "RHPHYB180AC",
+        "RHPHYB240AC"
+      ],
+      "queries": [
+        "RUUD RHPHYB180 packaged rooftop product data pdf",
+        "RUUD RHPHYB240 packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/RHPCYB": {
+      "rows": 1,
+      "models": [
+        "RHPCYB072AC"
+      ],
+      "queries": [
+        "RUUD RHPCYB072 packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/RHPCZT": {
+      "rows": 1,
+      "models": [
+        "RHPCZT072AC"
+      ],
+      "queries": [
+        "RUUD RHPCZT072 packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/RHPDYB": {
+      "rows": 3,
+      "models": [
+        "RHPDYB090AC",
+        "RHPDYB102AC",
+        "RHPDYB120AC"
+      ],
+      "queries": [
+        "RUUD RHPDYB090 packaged rooftop product data pdf",
+        "RUUD RHPDYB102 packaged rooftop product data pdf",
+        "RUUD RHPDYB120 packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/RHPDYC": {
+      "rows": 4,
+      "models": [
+        "RHPDYC078AC",
+        "RHPDYC090AC",
+        "RHPDYC102AC",
+        "RHPDYC120AC"
+      ],
+      "queries": [
+        "RUUD RHPDYC078 packaged rooftop product data pdf",
+        "RUUD RHPDYC090 packaged rooftop product data pdf",
+        "RUUD RHPDYC102 packaged rooftop product data pdf",
+        "RUUD RHPDYC120 packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/RLRL": {
+      "rows": 1,
+      "models": [
+        "RLRL-H180C"
+      ],
+      "queries": [
+        "RUUD RLRL packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/VACDZR": {
+      "rows": 3,
+      "models": [
+        "VACDZR090AC*****A",
+        "VACDZR102AC*****A",
+        "VACDZR120AC*****A"
+      ],
+      "queries": [
+        "RUUD VACDZR090 packaged rooftop product data pdf",
+        "RUUD VACDZR102 packaged rooftop product data pdf",
+        "RUUD VACDZR120 packaged rooftop product data pdf"
+      ]
+    },
+    "RUUD/VACDZS": {
+      "rows": 1,
+      "models": [
+        "VACDZS150AV*****A"
+      ],
+      "queries": [
+        "RUUD VACDZS150 packaged rooftop product data pdf"
+      ]
+    },
+    "BRYANT HEATING & COOLING SYSTEMS/559K": {
+      "rows": 1,
+      "models": [
+        "559K*07*"
+      ],
+      "queries": [
+        "BRYANT HEATING & COOLING SYSTEMS 559K packaged rooftop product data pdf"
+      ]
+    },
+    "LENNOX/EL": {
+      "rows": 6,
+      "models": [
+        "EL090KCSST*Y,G,J",
+        "EL120KCSDT*Y,G,J",
+        "EL072KCSST*Y,G,J",
+        "EL180KCSDT*Y,G,J",
+        "EL150KCSDT*Y,G,J",
+        "EL240KCSDT*Y,G,J"
+      ],
+      "queries": [
+        "LENNOX EL090 packaged rooftop product data pdf",
+        "LENNOX EL120 packaged rooftop product data pdf",
+        "LENNOX EL072 packaged rooftop product data pdf",
+        "LENNOX EL180 packaged rooftop product data pdf",
+        "LENNOX EL150 packaged rooftop product data pdf",
+        "LENNOX EL240 packaged rooftop product data pdf"
+      ]
+    },
+    "BRYANT HEATING & COOLING SYSTEMS/547K": {
+      "rows": 1,
+      "models": [
+        "547K*07**********B"
+      ],
+      "queries": [
+        "BRYANT HEATING & COOLING SYSTEMS 547K packaged rooftop product data pdf"
+      ]
+    },
+    "BRYANT HEATING & COOLING SYSTEMS/549L": {
+      "rows": 1,
+      "models": [
+        "549L*07*"
+      ],
+      "queries": [
+        "BRYANT HEATING & COOLING SYSTEMS 549L packaged rooftop product data pdf"
+      ]
+    },
+    "BRYANT HEATING & COOLING SYSTEMS/559L": {
+      "rows": 1,
+      "models": [
+        "559L*08*"
+      ],
+      "queries": [
+        "BRYANT HEATING & COOLING SYSTEMS 559L packaged rooftop product data pdf"
+      ]
+    },
+    "BRYANT HEATING & COOLING SYSTEMS/547L": {
+      "rows": 1,
+      "models": [
+        "547L*08*"
+      ],
+      "queries": [
+        "BRYANT HEATING & COOLING SYSTEMS 547L packaged rooftop product data pdf"
+      ]
+    },
+    "BRYANT HEATING & COOLING SYSTEMS/553L": {
+      "rows": 1,
+      "models": [
+        "553L(E,P,T)07***********"
+      ],
+      "queries": [
+        "BRYANT HEATING & COOLING SYSTEMS 553L packaged rooftop product data pdf"
+      ]
+    },
+    "BRYANT HEATING & COOLING SYSTEMS/583L": {
+      "rows": 1,
+      "models": [
+        "583L(E,P,T)07***********"
+      ],
+      "queries": [
+        "BRYANT HEATING & COOLING SYSTEMS 583L packaged rooftop product data pdf"
+      ]
+    },
+    "LENNOX/LCT": {
+      "rows": 12,
+      "models": [
+        "LCT092H5E**Y,G,J",
+        "LCT102H5E**Y,G,J",
+        "LCT120H5E**Y,G,J",
+        "LCT150H5E**Y,G,J",
+        "LCT156H5M**Y,G,J",
+        "LCT180H5M**Y,G,J",
+        "LCT210H5M**Y,G,J",
+        "LCT240H5M**Y,G,J",
+        "LCT300H5M**Y,G,J",
+        "LCT302H5M**Y,G,J",
+        "LCT360H5M**Y,G,J",
+        "LCT072H5E**Y,G,J"
+      ],
+      "queries": [
+        "LENNOX LCT092 packaged rooftop product data pdf",
+        "LENNOX LCT102 packaged rooftop product data pdf",
+        "LENNOX LCT120 packaged rooftop product data pdf",
+        "LENNOX LCT150 packaged rooftop product data pdf",
+        "LENNOX LCT156 packaged rooftop product data pdf",
+        "LENNOX LCT180 packaged rooftop product data pdf",
+        "LENNOX LCT210 packaged rooftop product data pdf",
+        "LENNOX LCT240 packaged rooftop product data pdf",
+        "LENNOX LCT300 packaged rooftop product data pdf",
+        "LENNOX LCT302 packaged rooftop product data pdf",
+        "LENNOX LCT360 packaged rooftop product data pdf",
+        "LENNOX LCT072 packaged rooftop product data pdf"
+      ]
+    },
+    "LENNOX/LGM": {
+      "rows": 10,
+      "models": [
+        "LGM074U5E**Y,G,J",
+        "LGM092U5E**Y,G,J",
+        "LGM102U5E**Y,G,J",
+        "LGM120U5E**Y,G,J",
+        "LGM150U5E**Y,G,J",
+        "LGM156U5M**Y,G,J",
+        "LGM180U5M**Y,G,J",
+        "LGM210U5M**Y,G,J",
+        "LGM240U5M**Y,G,J",
+        "LGM300U5M**Y,G,J"
+      ],
+      "queries": [
+        "LENNOX LGM074 packaged rooftop product data pdf",
+        "LENNOX LGM092 packaged rooftop product data pdf",
+        "LENNOX LGM102 packaged rooftop product data pdf",
+        "LENNOX LGM120 packaged rooftop product data pdf",
+        "LENNOX LGM150 packaged rooftop product data pdf",
+        "LENNOX LGM156 packaged rooftop product data pdf",
+        "LENNOX LGM180 packaged rooftop product data pdf",
+        "LENNOX LGM210 packaged rooftop product data pdf",
+        "LENNOX LGM240 packaged rooftop product data pdf",
+        "LENNOX LGM300 packaged rooftop product data pdf"
+      ]
+    },
+    "LENNOX/ELITE": {
+      "rows": 1,
+      "models": [
+        "(2) EL120KCSST*Y,G,J"
+      ],
+      "queries": [
+        "LENNOX ELITE packaged rooftop product data pdf"
+      ]
+    },
+    "LENNOX/LDT": {
+      "rows": 10,
+      "models": [
+        "LDT072H5E**Y,G,J",
+        "LDT078H5E**Y,G,J",
+        "LDT092H5E**Y,G,J",
+        "LDT102H5E**Y,G,J",
+        "LDT120H5E**Y,G,J",
+        "LDT152H5E**Y,G,J",
+        "LDT156H5M**Y,G,J",
+        "LDT180H5M**Y,G,J",
+        "LDT240H5M**Y,G,J",
+        "LDT302H5M**Y,G,J"
+      ],
+      "queries": [
+        "LENNOX LDT072 packaged rooftop product data pdf",
+        "LENNOX LDT078 packaged rooftop product data pdf",
+        "LENNOX LDT092 packaged rooftop product data pdf",
+        "LENNOX LDT102 packaged rooftop product data pdf",
+        "LENNOX LDT120 packaged rooftop product data pdf",
+        "LENNOX LDT152 packaged rooftop product data pdf",
+        "LENNOX LDT156 packaged rooftop product data pdf",
+        "LENNOX LDT180 packaged rooftop product data pdf",
+        "LENNOX LDT240 packaged rooftop product data pdf",
+        "LENNOX LDT302 packaged rooftop product data pdf"
+      ]
+    },
+    "LENNOX/ZCD": {
+      "rows": 5,
+      "models": [
+        "ZCD074S5T**Y,G,J",
+        "ZCD092S5T**Y,G,J",
+        "ZCD102S5T**Y,G,J",
+        "ZCD120S5M**Y,G,J",
+        "ZCD150S5M**Y,G,J"
+      ],
+      "queries": [
+        "LENNOX ZCD074 packaged rooftop product data pdf",
+        "LENNOX ZCD092 packaged rooftop product data pdf",
+        "LENNOX ZCD102 packaged rooftop product data pdf",
+        "LENNOX ZCD120 packaged rooftop product data pdf",
+        "LENNOX ZCD150 packaged rooftop product data pdf"
+      ]
+    },
+    "LENNOX/ZHD": {
+      "rows": 3,
+      "models": [
+        "ZHD092S5T**Y,G,J",
+        "ZHD102S5T**Y,G,J",
+        "ZHD120S5M**Y,G,J"
+      ],
+      "queries": [
+        "LENNOX ZHD092 packaged rooftop product data pdf",
+        "LENNOX ZHD102 packaged rooftop product data pdf",
+        "LENNOX ZHD120 packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/RACG": {
+      "rows": 1,
+      "models": [
+        "RACG2T180AC"
+      ],
+      "queries": [
+        "RHEEM RACG2 packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/RHPH": {
+      "rows": 1,
+      "models": [
+        "RHPH2T180AC"
+      ],
+      "queries": [
+        "RHEEM RHPH2 packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/RACCYB": {
+      "rows": 1,
+      "models": [
+        "RACCYB072AC"
+      ],
+      "queries": [
+        "RHEEM RACCYB072 packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/RACDYB": {
+      "rows": 4,
+      "models": [
+        "RACDYB090AC",
+        "RACDYB102AC",
+        "RACDYB120AC",
+        "RACDYB150AC"
+      ],
+      "queries": [
+        "RHEEM RACDYB090 packaged rooftop product data pdf",
+        "RHEEM RACDYB102 packaged rooftop product data pdf",
+        "RHEEM RACDYB120 packaged rooftop product data pdf",
+        "RHEEM RACDYB150 packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/RACGYB": {
+      "rows": 4,
+      "models": [
+        "RACGYB180AC",
+        "RACGYB210AC",
+        "RACGYB240AC",
+        "RACGYB300AC"
+      ],
+      "queries": [
+        "RHEEM RACGYB180 packaged rooftop product data pdf",
+        "RHEEM RACGYB210 packaged rooftop product data pdf",
+        "RHEEM RACGYB240 packaged rooftop product data pdf",
+        "RHEEM RACGYB300 packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/RACHYB": {
+      "rows": 5,
+      "models": [
+        "RACHYB360AC",
+        "RACHYB180AC",
+        "RACHYB210AC",
+        "RACHYB240AC",
+        "RACHYB300AC"
+      ],
+      "queries": [
+        "RHEEM RACHYB360 packaged rooftop product data pdf",
+        "RHEEM RACHYB180 packaged rooftop product data pdf",
+        "RHEEM RACHYB210 packaged rooftop product data pdf",
+        "RHEEM RACHYB240 packaged rooftop product data pdf",
+        "RHEEM RACHYB300 packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/RGECYB": {
+      "rows": 1,
+      "models": [
+        "RGECYB072AC"
+      ],
+      "queries": [
+        "RHEEM RGECYB072 packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/RGEDYB": {
+      "rows": 4,
+      "models": [
+        "RGEDYB090AC",
+        "RGEDYB102AC",
+        "RGEDYB120AC",
+        "RGEDYB150AC"
+      ],
+      "queries": [
+        "RHEEM RGEDYB090 packaged rooftop product data pdf",
+        "RHEEM RGEDYB102 packaged rooftop product data pdf",
+        "RHEEM RGEDYB120 packaged rooftop product data pdf",
+        "RHEEM RGEDYB150 packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/RGEGYB": {
+      "rows": 4,
+      "models": [
+        "RGEGYB180AC",
+        "RGEGYB210AC",
+        "RGEGYB240AC",
+        "RGEGYB300AC"
+      ],
+      "queries": [
+        "RHEEM RGEGYB180 packaged rooftop product data pdf",
+        "RHEEM RGEGYB210 packaged rooftop product data pdf",
+        "RHEEM RGEGYB240 packaged rooftop product data pdf",
+        "RHEEM RGEGYB300 packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/RGEHYB": {
+      "rows": 5,
+      "models": [
+        "RGEHYB360AC",
+        "RGEHYB180AC",
+        "RGEHYB210AC",
+        "RGEHYB240AC",
+        "RGEHYB300AC"
+      ],
+      "queries": [
+        "RHEEM RGEHYB360 packaged rooftop product data pdf",
+        "RHEEM RGEHYB180 packaged rooftop product data pdf",
+        "RHEEM RGEHYB210 packaged rooftop product data pdf",
+        "RHEEM RGEHYB240 packaged rooftop product data pdf",
+        "RHEEM RGEHYB300 packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/RHPHYB": {
+      "rows": 2,
+      "models": [
+        "RHPHYB180AC",
+        "RHPHYB240AC"
+      ],
+      "queries": [
+        "RHEEM RHPHYB180 packaged rooftop product data pdf",
+        "RHEEM RHPHYB240 packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/RPCY": {
+      "rows": 2,
+      "models": [
+        "RPCY2090C",
+        "RPCY2120C"
+      ],
+      "queries": [
+        "RHEEM RPCY2090 packaged rooftop product data pdf",
+        "RHEEM RPCY2120 packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/RACL": {
+      "rows": 6,
+      "models": [
+        "RACL2078C",
+        "RACL2090C",
+        "RACL2120C",
+        "RACL2150C",
+        "RACL2180C",
+        "RACL2240C"
+      ],
+      "queries": [
+        "RHEEM RACL2078 packaged rooftop product data pdf",
+        "RHEEM RACL2090 packaged rooftop product data pdf",
+        "RHEEM RACL2120 packaged rooftop product data pdf",
+        "RHEEM RACL2150 packaged rooftop product data pdf",
+        "RHEEM RACL2180 packaged rooftop product data pdf",
+        "RHEEM RACL2240 packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/RHPCYB": {
+      "rows": 1,
+      "models": [
+        "RHPCYB072AC"
+      ],
+      "queries": [
+        "RHEEM RHPCYB072 packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/RHPDYB": {
+      "rows": 3,
+      "models": [
+        "RHPDYB090AC",
+        "RHPDYB102AC",
+        "RHPDYB120AC"
+      ],
+      "queries": [
+        "RHEEM RHPDYB090 packaged rooftop product data pdf",
+        "RHEEM RHPDYB102 packaged rooftop product data pdf",
+        "RHEEM RHPDYB120 packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/RHPDYC": {
+      "rows": 4,
+      "models": [
+        "RHPDYC078AC",
+        "RHPDYC090AC",
+        "RHPDYC102AC",
+        "RHPDYC120AC"
+      ],
+      "queries": [
+        "RHEEM RHPDYC078 packaged rooftop product data pdf",
+        "RHEEM RHPDYC090 packaged rooftop product data pdf",
+        "RHEEM RHPDYC102 packaged rooftop product data pdf",
+        "RHEEM RHPDYC120 packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/RHPDZT": {
+      "rows": 3,
+      "models": [
+        "RHPDZT090AC*****B",
+        "RHPDZT102AC*****B",
+        "RHPDZT120AC*****B"
+      ],
+      "queries": [
+        "RHEEM RHPDZT090 packaged rooftop product data pdf",
+        "RHEEM RHPDZT102 packaged rooftop product data pdf",
+        "RHEEM RHPDZT120 packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/RLRL": {
+      "rows": 1,
+      "models": [
+        "RLRL-H180C"
+      ],
+      "queries": [
+        "RHEEM RLRL packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/SLKL": {
+      "rows": 1,
+      "models": [
+        "SLKL-C180C"
+      ],
+      "queries": [
+        "RHEEM SLKL packaged rooftop product data pdf"
+      ]
+    },
+    "_UNGROUPED/York DCH190 packaged rooftop product data pdf": {
+      "rows": 1,
+      "models": [
+        "DCH190"
+      ],
+      "queries": [
+        "York DCH190 packaged rooftop product data pdf"
+      ]
+    },
+    "_UNGROUPED/York DCH220 packaged rooftop product data pdf": {
+      "rows": 1,
+      "models": [
+        "DCH220"
+      ],
+      "queries": [
+        "York DCH220 packaged rooftop product data pdf"
+      ]
+    },
+    "_UNGROUPED/York DCH250 packaged rooftop product data pdf": {
+      "rows": 1,
+      "models": [
+        "DCH250"
+      ],
+      "queries": [
+        "York DCH250 packaged rooftop product data pdf"
+      ]
+    },
+    "RHEEM/EACDZS": {
+      "rows": 1,
+      "models": [
+        "EACDZS150AV*****A"
+      ],
+      "queries": [
+        "RHEEM EACDZS150 packaged rooftop product data pdf"
+      ]
+    }
+  }
+}

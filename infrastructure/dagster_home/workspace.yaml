@@ -1,0 +1,7 @@
+# workspace.yaml — Dagster 工作区
+# 加载 quant_pipeline 包中的所有作业和资产
+
+load_from:
+  - python_package:
+      package_name: quant_pipeline
+      location_name: quant_empire_pipeline

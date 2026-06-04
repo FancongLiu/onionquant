@@ -1,0 +1,2144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📊 OnionQuant · Factor Studio</title>
+<style>
+:root {
+  --bg: #0a0e17; --panel: #111827; --border: #1e293b;
+  --gold: #f0b90b; --accent: #3b82f6; --green: #10b981;
+  --red: #ef4444; --text: #e2e8f0; --muted: #94a3b8;
+  --card-bg: #1a1f2e;
+  --transition-speed: 0.3s;
+}
+[data-theme="light"] {
+  --bg: #f8fafc; --panel: #ffffff; --border: #e2e8f0;
+  --gold: #b8860b; --accent: #2563eb; --green: #059669;
+  --red: #dc2626; --text: #1e293b; --muted: #64748b;
+  --card-bg: #ffffff;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family:'Segoe UI','Microsoft YaHei',sans-serif;
+  background:var(--bg); color:var(--text); min-height:100vh;
+  transition: background var(--transition-speed), color var(--transition-speed);
+}
+.panel, .topbar, .risk-card, .strategy-card, .gloss-row, .log-viewer {
+  transition: background var(--transition-speed), border-color var(--transition-speed);
+}
+
+/* Topbar */
+.topbar {
+  position:sticky; top:0; z-index:100;
+  background:rgba(17,24,39,0.95); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border); padding:10px 20px;
+  display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;
+}
+.topbar .logo {
+  font-size:1.2em; font-weight:700;
+  background:linear-gradient(135deg,var(--gold),#f59e0b);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.topbar .nav { display:flex; gap:10px; font-size:0.85em; }
+.topbar .nav a { color:var(--muted); text-decoration:none; padding:4px 10px; border-radius:6px; }
+.topbar .nav a:hover { color:var(--gold); }
+.topbar .nav a.active { color:var(--gold); background:rgba(240,185,11,0.1); }
+.conn-dot { width:8px; height:8px; border-radius:50%; display:inline-block; }
+.conn-ok { background:var(--green); box-shadow:0 0 6px var(--green); }
+.conn-err { background:var(--red); box-shadow:0 0 6px var(--red); }
+.theme-toggle {
+  cursor:pointer; background:var(--border); border:none; color:var(--text);
+  padding:4px 10px; border-radius:14px; font-size:0.8em;
+  transition: background var(--transition-speed);
+}
+.theme-toggle:hover { background:var(--accent); color:#fff; }
+/* Method tabs (T947) */
+.method-tab, .sc-tab {
+  cursor:pointer; padding:3px 10px; border:1px solid var(--border); border-radius:14px;
+  background:transparent; color:var(--muted); font-size:0.72em; transition:all 0.2s;
+}
+.method-tab:hover, .sc-tab:hover { border-color:var(--accent); color:var(--text); }
+.method-tab.active, .sc-tab.active { background:var(--accent); border-color:var(--accent); color:#fff; }
+
+/* Layout */
+.main-grid {
+  display:grid; grid-template-columns:2fr 1fr 1fr; gap:12px;
+  padding:12px; max-width:1600px; margin:0 auto;
+}
+.panel {
+  background:var(--card-bg); border:1px solid var(--border);
+  border-radius:10px; padding:14px; min-height:200px;
+}
+.panel h3 { font-size:0.9em; color:var(--gold); margin-bottom:10px; }
+.panel-wide { grid-column:1/-1; }
+
+/* Factor Heatmap */
+.heatmap-wrap { overflow-x:auto; max-height:400px; }
+.heatmap-cell { display:inline-block; width:48px; height:24px; margin:1px; border-radius:2px; }
+.heatmap-row-label { font-size:0.7em; color:var(--muted); width:70px; display:inline-block; text-align:right; margin-right:4px; }
+.heatmap-col-label { font-size:0.65em; color:var(--muted); text-align:center; }
+
+/* Signal Tables */
+.sig-table { width:100%; font-size:0.78em; border-collapse:collapse; }
+.sig-table th { color:var(--muted); text-align:left; padding:4px 6px; border-bottom:1px solid var(--border); font-weight:400; }
+.sig-table td { padding:4px 6px; }
+.sig-table .long { color:var(--green); }
+.sig-table .short { color:var(--red); }
+.score-bar { height:4px; border-radius:2px; background:var(--border); min-width:40px; }
+.score-bar .fill-long { height:100%; border-radius:2px; background:var(--green); }
+.score-bar .fill-short { height:100%; border-radius:2px; background:var(--red); }
+
+/* IC Chart */
+.ic-chart { width:100%; height:250px; }
+.ic-tooltip { position:absolute; display:none; background:rgba(0,0,0,0.85); color:var(--gold); font-size:0.75em; padding:4px 8px; border-radius:4px; pointer-events:none; z-index:10; }
+
+/* Risk Grid */
+.risk-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.risk-card { background:rgba(59,130,246,0.05); border-radius:8px; padding:10px; text-align:center; }
+.risk-card .val { font-size:1.3em; font-weight:700; display:block; }
+.risk-card .lbl { font-size:0.7em; color:var(--muted); }
+.risk-card .val.green { color:var(--green); }
+.risk-card .val.red { color:var(--red); }
+.risk-card .val.gold { color:var(--gold); }
+
+/* Market Table */
+.mkt-table { width:100%; font-size:0.75em; border-collapse:collapse; }
+.mkt-table th { color:var(--muted); text-align:left; padding:3px 6px; border-bottom:1px solid var(--border); font-weight:400; }
+.mkt-table td { padding:3px 6px; }
+.mkt-up { color:var(--green); }
+.mkt-down { color:var(--red); }
+
+.loading { color:var(--muted); font-style:italic; text-align:center; padding:20px; }
+.empty { color:var(--muted); font-size:0.8em; text-align:center; padding:10px; }
+
+/* ── Animations ───────────────────────────────────────── */
+@keyframes fadeInUp {
+  from { opacity:0; transform:translateY(8px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+@keyframes statusPulse {
+  0%,100% { box-shadow:0 0 0 0 rgba(16,185,129,0.4); }
+  50%     { box-shadow:0 0 0 6px rgba(16,185,129,0); }
+}
+@keyframes statusFlash {
+  0%   { background:rgba(240,185,11,0.3); }
+  100% { background:transparent; }
+}
+@keyframes shimmer {
+  0%   { background-position:-200% 0; }
+  100% { background-position:200% 0; }
+}
+@keyframes pulseGold {
+  0%,100% { border-color:var(--border); }
+  50%     { border-color:rgba(240,185,11,0.4); }
+}
+@keyframes metricUp {
+  0%   { color:var(--green); transform:translateY(-2px); }
+  100% { color:inherit; transform:translateY(0); }
+}
+@keyframes metricDown {
+  0%   { color:var(--red); transform:translateY(2px); }
+  100% { color:inherit; transform:translateY(0); }
+}
+
+/* Panel transitions */
+.panel {
+  transition: border-color 0.4s ease, box-shadow 0.4s ease, transform 0.2s ease;
+  animation: fadeInUp 0.4s ease both;
+}
+.panel:nth-child(2) { animation-delay:0.05s; }
+.panel:nth-child(3) { animation-delay:0.10s; }
+.panel:nth-child(4) { animation-delay:0.15s; }
+.panel:nth-child(5) { animation-delay:0.20s; }
+.panel:nth-child(6) { animation-delay:0.25s; }
+.panel:hover {
+  border-color:rgba(240,185,11,0.3);
+  box-shadow:0 4px 20px rgba(0,0,0,0.3);
+}
+.panel:focus-within {
+  border-color:rgba(59,130,246,0.4);
+  box-shadow:0 0 0 3px rgba(59,130,246,0.08);
+}
+
+/* Status change flash — applied via JS class */
+.status-changed {
+  animation: statusFlash 1.2s ease-out;
+}
+
+/* Active pulse for in-progress items */
+.status-live {
+  animation: statusPulse 2s ease-in-out infinite;
+}
+.status-live-dot {
+  width:8px; height:8px; border-radius:50%; display:inline-block;
+  background:var(--green); animation:statusPulse 2s ease-in-out infinite;
+}
+
+/* Metric change animations */
+.metric-up   { animation:metricUp 1.5s ease-out; }
+.metric-down { animation:metricDown 1.5s ease-out; }
+
+/* Risk card hover lift */
+.risk-card {
+  transition:transform 0.2s ease, box-shadow 0.2s ease, background 0.3s ease;
+}
+.risk-card:hover {
+  transform:translateY(-2px);
+  box-shadow:0 4px 12px rgba(0,0,0,0.3);
+  background:rgba(59,130,246,0.08);
+}
+
+/* Strategy card enter + hover */
+.strategy-card {
+  transition:transform 0.2s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  animation: fadeInUp 0.35s ease both;
+}
+.strategy-card:hover {
+  transform:translateX(3px);
+  border-left:2px solid var(--gold);
+}
+
+/* Sig table row hover */
+.sig-table tbody tr {
+  transition:background 0.2s ease, transform 0.15s ease;
+}
+.sig-table tbody tr:hover {
+  background:rgba(240,185,11,0.04);
+}
+
+/* Shimmer loading placeholder */
+.shimmer-bg {
+  background:linear-gradient(90deg,
+    var(--card-bg) 0%, rgba(240,185,11,0.06) 50%, var(--card-bg) 100%);
+  background-size:200% 100%;
+  animation:shimmer 2s ease-in-out infinite;
+}
+
+/* Smooth number transitions */
+.smooth-val {
+  transition:color 0.5s ease, transform 0.3s ease;
+}
+
+/* Button / nav link hover */
+.topbar .nav a {
+  transition:color 0.25s ease, background 0.25s ease, transform 0.15s ease;
+}
+.topbar .nav a:hover { transform:translateY(-1px); }
+
+/* Heatmap cell hover */
+.heatmap-cell {
+  transition:transform 0.15s ease, box-shadow 0.15s ease;
+}
+.heatmap-cell:hover {
+  transform:scale(1.3);
+  box-shadow:0 0 6px rgba(240,185,11,0.4);
+}
+
+/* Table row fade-in cascade */
+.mkt-table tbody tr {
+  animation: fadeInUp 0.3s ease both;
+}
+.mkt-table tbody tr:nth-child(1)  { animation-delay:0.02s; }
+.mkt-table tbody tr:nth-child(2)  { animation-delay:0.04s; }
+.mkt-table tbody tr:nth-child(3)  { animation-delay:0.06s; }
+.mkt-table tbody tr:nth-child(4)  { animation-delay:0.08s; }
+.mkt-table tbody tr:nth-child(5)  { animation-delay:0.10s; }
+
+@media(max-width:1100px) { .main-grid { grid-template-columns:1fr 1fr; } }
+@media(max-width:700px) { .main-grid { grid-template-columns:1fr; } }
+
+/* Glossary & Tooltips */
+.gloss-term { color: var(--gold); cursor: help; border-bottom: 1px dotted var(--gold); position: relative; }
+.gloss-term:hover .gloss-tip { display: block; }
+.gloss-tip { display: none; position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background: #1e293b; border: 1px solid var(--gold); border-radius: 8px; padding: 8px 12px; font-size: 0.78em; color: var(--text); white-space: normal; min-width: 220px; max-width: 320px; z-index: 999; pointer-events: none; line-height: 1.5; }
+.gloss-tip .en { color: var(--muted); font-size: 0.85em; margin-bottom: 2px; }
+.gloss-tip .cn { color: var(--text); }
+.gloss-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 0.78em; cursor: default; }
+.gloss-row .term { color: var(--gold); font-weight: 600; min-width: 100px; }
+.gloss-row .def { color: var(--muted); flex: 1; margin-left: 8px; }
+.gloss-row .def .def-en { color: var(--muted); font-size: 0.85em; }
+.gloss-row .def .def-cn { color: var(--text); }
+.gloss-panel { max-height: 400px; overflow-y: auto; }
+.gloss-toggle { cursor: pointer; color: var(--accent); font-size: 0.75em; float: right; }
+.strategy-card { background: rgba(59,130,246,0.05); border-radius: 8px; padding: 10px; margin-bottom: 8px; font-size: 0.78em; }
+
+/* Beginner-friendly enhancements */
+.beginner-banner {
+  background: linear-gradient(135deg, rgba(240,185,11,0.08), rgba(59,130,246,0.08));
+  border: 1px solid rgba(240,185,11,0.25); border-radius: 10px;
+  padding: 14px 18px; margin: 0 12px 8px 12px;
+  font-size: 0.82em; line-height: 1.6;
+  animation: fadeInUp 0.5s ease both;
+}
+.beginner-banner .bb-title { color: var(--gold); font-weight: 700; font-size: 1.05em; }
+.beginner-banner .bb-sub { color: var(--muted); font-size: 0.9em; margin-top: 4px; }
+.beginner-banner .bb-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; margin-top: 8px; }
+.beginner-banner .bb-item { background: rgba(0,0,0,0.2); border-radius: 6px; padding: 8px 10px; }
+.beginner-banner .bb-item .bb-icon { font-size: 1.3em; }
+.beginner-banner .bb-item .bb-head { color: var(--text); font-weight: 600; font-size: 0.85em; }
+.beginner-banner .bb-item .bb-desc { color: var(--muted); font-size: 0.78em; margin-top: 2px; }
+.bb-close { float: right; cursor: pointer; color: var(--muted); background: none; border: none; font-size: 1.2em; line-height: 1; padding: 0 4px; }
+.bb-close:hover { color: var(--gold); }
+
+.help-toggle {
+  cursor: pointer; color: var(--accent); font-size: 0.7em; font-weight: 400;
+  background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.2);
+  border-radius: 10px; padding: 1px 8px; margin-left: 6px;
+  transition: all 0.2s;
+}
+.help-toggle:hover { background: rgba(59,130,246,0.2); }
+.help-content {
+  display: none; background: rgba(59,130,246,0.03); border-left: 2px solid var(--accent);
+  border-radius: 0 6px 6px 0; padding: 8px 12px; margin: 6px 0 10px 0;
+  font-size: 0.78em; color: var(--muted); line-height: 1.7;
+}
+.help-content.show { display: block; animation: fadeInUp 0.25s ease; }
+.help-content .help-highlight { color: var(--gold); font-weight: 500; }
+.help-content .help-example { background: rgba(0,0,0,0.15); border-radius: 4px; padding: 4px 8px; margin: 4px 0; font-size: 0.92em; }
+
+.risk-label { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 0.78em; font-weight: 600; }
+.risk-label.good { background: rgba(16,185,129,0.15); color: var(--green); }
+.risk-label.ok { background: rgba(240,185,11,0.12); color: var(--gold); }
+.risk-label.warn { background: rgba(245,158,11,0.15); color: #f59e0b; }
+.risk-label.danger { background: rgba(239,68,68,0.15); color: var(--red); }
+
+.quick-nav { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px 6px 12px; }
+.quick-nav a { font-size: 0.72em; color: var(--muted); text-decoration: none; padding: 3px 8px; border: 1px solid var(--border); border-radius: 12px; transition: all 0.2s; }
+.quick-nav a:hover { border-color: var(--accent); color: var(--text); }
+.strategy-card .s-name { color: var(--gold); font-weight: 600; }
+.strategy-card .s-status { font-size: 0.75em; padding: 1px 6px; border-radius: 4px; margin-left: 6px; }
+.strategy-card .s-status.done { background: rgba(16,185,129,0.2); color: var(--green); }
+.strategy-card .s-status.wip { background: rgba(59,130,246,0.2); color: var(--accent); }
+.strategy-card .s-desc { color: var(--muted); margin-top: 4px; font-size: 0.9em; }
+
+/* ─── Mobile Responsive (T874) ─── */
+@media (max-width: 1024px) {
+  .main-grid { grid-template-columns: 1fr 1fr; gap: 8px; padding: 8px; }
+  .panel-wide { grid-column: 1/-1; }
+}
+@media (max-width: 768px) {
+  .main-grid { grid-template-columns: 1fr; gap: 6px; padding: 6px; }
+  .topbar { flex-direction: column; align-items: flex-start; padding: 8px 12px; }
+  .topbar .nav { flex-wrap: wrap; gap: 4px; }
+  .topbar .nav a { font-size: 0.75em; padding: 3px 8px; }
+  .panel { padding: 10px; min-height: auto; border-radius: 8px; }
+  .panel h3 { font-size: 0.82em; }
+  .risk-metrics { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .heatmap-wrap { max-height: 250px; }
+  .log-viewer { max-height: 150px !important; }
+  .gloss-row { flex-direction: column; }
+  body { font-size: 14px; }
+}
+@media (max-width: 480px) {
+  .topbar .logo { font-size: 1em; }
+  .topbar .nav a { font-size: 0.7em; padding: 2px 6px; }
+  .panel { padding: 8px; border-radius: 6px; }
+  .risk-metrics { grid-template-columns: 1fr; }
+  .strategy-card { padding: 6px; font-size: 0.72em; }
+  canvas { max-height: 200px; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span class="logo">📊 OnionQuant · Factor Studio</span>
+  <div class="nav">
+    <a href="/" onclick="window.open('/','_blank');return false;">🧅 Dashboard</a>
+    <a href="/office" onclick="window.open('/office','_blank');return false;">👑 Office</a>
+    <a class="active" href="/quant">📊 Factor Studio</a>
+    <a href="/factors" onclick="window.open('/factors','_blank');return false;">🔬 Monitor</a>
+    <span style="font-size:0.8em;color:var(--muted);margin-left:8px;">
+      <span class="conn-dot conn-ok" id="connDot"></span>
+      <span id="connLabel">live</span>
+    </span>
+    <span style="font-size:0.75em;color:var(--muted);margin-left:12px;">
+      数据源: <span id="dataSource" style="color:var(--gold);">generated</span>
+    </span>
+    <span style="font-size:0.75em;color:var(--muted);">
+      下次刷新: <span id="refreshCountdown" style="color:var(--accent);">30s</span>
+    </span>
+    <select id="factorFilter" onchange="onFactorFilter()" style="background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-size:0.75em;" multiple title="选择显示的因子 (Ctrl+点击多选)">
+    </select>
+    <button class="theme-toggle" onclick="toggleTheme()" title="Toggle dark/light theme" id="themeBtn">🌙 Dark</button>
+  </div>
+</div>
+
+<div id="beginnerBanner" class="beginner-banner">
+  <button class="bb-close" onclick="dismissBanner()" title="关闭">×</button>
+  <div class="bb-title">🎓 量化入门：5分钟看懂这个面板</div>
+  <div class="bb-sub">即使你完全不懂量化交易，下面的引导也能让你快速上手。每个数据旁边都有 <span style="color:var(--accent);">💡 这是什么？</span> 按钮，<strong>点击就能看到通俗解释</strong>。顶部还有<span style="color:var(--gold);">"一句话总结"</span>，把复杂的数字翻译成人话。</div>
+  <div class="bb-grid">
+    <div class="bb-item"><span class="bb-icon">🔢 第1步</span><div class="bb-head">先看"一句话总结"面板</div><div class="bb-desc">页面顶部有个总结，用红/黄/绿灯告诉你当前策略好不好。绿色=继续持有，黄色=需要关注，红色=可能出问题。</div></div>
+    <div class="bb-item"><span class="bb-icon">📈 第2步</span><div class="bb-head">看净值曲线 (Equity Curve)</div><div class="bb-desc">这条线往上走=赚钱，往下走=亏钱。红色阴影面积=最惨时亏了多少。如果线长期往上且波动不大，就是好策略。</div></div>
+    <div class="bb-item"><span class="bb-icon">🔥 第3步</span><div class="bb-head">看因子热力图 (Factor Heatmap)</div><div class="bb-desc">绿色=因子在帮你赚钱，红色=因子在亏钱。找"长期稳定偏绿"的因子——那些是真正有效的信号。</div></div>
+    <div class="bb-item"><span class="bb-icon">🛡️ 第4步</span><div class="bb-head">看风险指标 (Risk Metrics)</div><div class="bb-desc">Sharpe>1.0算合格，>2.0算优秀。最大回撤<-10%要注意。VaR告诉你"95%的情况下一天最多亏X%"，帮你做仓位管理。</div></div>
+    <div class="bb-item"><span class="bb-icon">🏆 第5步</span><div class="bb-head">比策略 (Strategy Comparison)</div><div class="bb-desc">多策略横向对比——Sharpe高+回撤小=最优。别只看收益，回撤和夏普比收益更重要。</div></div>
+    <div class="bb-item"><span class="bb-icon">📖 第6步</span><div class="bb-head">查术语表 (Glossary)</div><div class="bb-desc">页面底部有中英文术语表，所有量化名词都有解释。看到不懂的词就往下翻。</div></div>
+  </div>
+  <div style="margin-top:10px;padding:8px 12px;background:rgba(240,185,11,0.1);border-radius:6px;font-size:0.82em;">
+    <strong>💡 核心心态：</strong>量化交易不是预测未来，而是<strong>用统计学方法找到概率上占优的策略</strong>。没有100%准确的信号，只有长期来看期望值为正的策略。Sharpe=1.0意味着每冒1块钱风险，大约赚回1块钱超额收益——这已经比大部分散户强了。
+  </div>
+</div>
+
+<div class="quick-nav">
+  <span style="color:var(--muted);font-size:0.72em;">快速跳转:</span>
+  <a href="#summaryPanel">🧠 一句话总结</a>
+  <a href="#equityPanel">📈 净值曲线</a>
+  <a href="#heatmapPanel">🔥 因子热力图</a>
+  <a href="#signalPanel">🟢 交易信号</a>
+  <a href="#icPanel">📊 IC趋势</a>
+  <a href="#riskPanel">🛡️ 风险指标</a>
+  <a href="#glossaryPanel">📖 术语表</a>
+</div>
+
+<div id="summaryPanel" class="panel panel-wide" style="border-left:3px solid var(--gold);">
+  <h3>🧠 一句话总结 (Executive Summary) <button class="help-toggle" onclick="toggleHelp('helpSummary')">💡 怎么读这个？</button>
+    <span style="font-weight:400;font-size:0.7em;color:var(--muted);" id="summaryTimestamp"></span>
+  </h3>
+  <div id="helpSummary" class="help-content">
+    <strong>这个面板把上面所有复杂数据压缩成你能看懂的一句话。</strong><br>
+    <span class="help-highlight">信号灯规则：</span>
+    <span style="color:#10b981;">🟢 全绿</span> = 策略表现好，夏普>1.0且回撤小 → 放心持有<br>
+    <span style="color:#f59e0b;">🟡 黄灯</span> = 有指标需要关注，但不一定出问题 → 继续观察<br>
+    <span style="color:#ef4444;">🔴 红灯</span> = 有指标恶化，需要关注 → 检查对应面板找原因<br>
+    <span class="help-highlight">新手提示：</span>不要太在意单日涨跌，看长期趋势。量化策略看的是统计优势，不是单次输赢。
+  </div>
+  <div id="summaryContent" style="font-size:0.85em;line-height:1.8;">
+    <div class="loading">等待数据加载...</div>
+  </div>
+</div>
+
+<div class="main-grid">
+  <!-- Equity Curve (T896) -->
+  <div class="panel panel-wide" id="equityPanel">
+    <h3>📈 净值曲线 (Equity Curve) <button class="help-toggle" onclick="toggleHelp('helpEquity')">💡 这是什么？</button><span style="font-weight:400;font-size:0.75em;color:var(--muted);" id="equitySource">loading...</span></h3>
+    <div id="helpEquity" class="help-content">
+      <strong>净值曲线 = 你的钱随着时间的变化图</strong><br>
+      <span class="help-highlight">怎么看：</span>线往上走 = 策略在赚钱；线往下走 = 策略在亏钱。红色阴影区域是"回撤"——从上一个高点跌了多少。<br>
+      <span class="help-highlight">关键指标：</span>斜率越陡 = 赚钱越快。曲线越平滑 = 风险越低。大起大落 = 高风险。<br>
+      <span class="help-highlight">新手关注：</span>如果这条线长期往上且没有大幅跳水，就是好策略。
+    </div>
+    <canvas id="equityCanvas" style="width:100%;height:220px;"></canvas>
+  </div>
+
+  <!-- Factor Heatmap -->
+  <div class="panel panel-wide" id="heatmapPanel">
+    <h3>🔥 因子热力图 (Factor Heatmap) <button class="help-toggle" onclick="toggleHelp('helpHeatmap')">💡 这是什么？</button></h3>
+    <div id="helpHeatmap" class="help-content">
+      <strong>因子 = 预测股票涨跌的信号变量</strong><br>
+      <span class="help-highlight">怎么看：</span>每一行是一个因子（如"动量"），每一列是一个交易日。颜色越<span style="color:#10b981;">绿</span> = 该因子当天预测越准（IC>0），越<span style="color:#ef4444;">红</span> = 预测越差（IC<0）。<br>
+      <span class="help-highlight">关键指标 IC (Information Coefficient)：</span>因子值与未来收益的相关性。|IC|>0.02 算有用，|IC|>0.05 算优秀。<br>
+      <span class="help-highlight">新手关注：</span>找"长期稳定偏绿"的因子——那些是真正能赚钱的信号。
+    </div>
+    <div id="heatmapContent" class="loading">Loading factor data...</div>
+  </div>
+
+  <!-- Long Signals -->
+  <div class="panel" id="signalPanel">
+    <h3>🟢 Top Long Signals <button class="help-toggle" onclick="toggleHelp('helpSignal')">💡 什么是交易信号？</button></h3>
+    <div id="helpSignal" class="help-content">
+      <strong>交易信号告诉你要买什么、卖什么。</strong><br>
+      <span class="help-highlight">Long = 做多 = 买：</span>认为这个股票会涨。Score 越高越看好。<br>
+      <span class="help-highlight">Short = 做空 = 卖：</span>认为这个股票会跌。Score 越负越不看好。<br>
+      <span class="help-highlight">Score 怎么来的？</span>所有有效因子加权求和得出综合分数，正分=看涨，负分=看跌。<br>
+      <span class="help-highlight">新手注意：</span>信号≠保证。量化给的是概率优势，不是预测。Top 15意味着系统认为这15只最值得关注。
+    </div>
+    <div id="longSignals" class="loading">Loading...</div>
+  </div>
+
+  <!-- Short Signals -->
+  <div class="panel">
+    <h3>🔴 Top Short Signals</h3>
+    <div id="shortSignals" class="loading">Loading...</div>
+  </div>
+
+  <!-- IC Trend -->
+  <div class="panel panel-wide">
+    <h3>📈 Factor IC Trends (252-day rolling)</h3>
+    <canvas class="ic-chart" id="icCanvas"></canvas>
+    <div id="icFallback" class="empty" style="display:none;">IC data not available</div>
+  </div>
+
+  <!-- Risk Metrics -->
+  <div class="panel" id="riskPanel">
+    <h3>🛡️ Risk Metrics <button class="help-toggle" onclick="toggleHelp('helpRisk')">💡 怎么看风险？</button></h3>
+    <div id="helpRisk" class="help-content">
+      <strong>风险指标帮你回答："这个策略最惨会亏多少？值得冒这个险吗？"</strong><br>
+      <span class="help-highlight">Sharpe > 1.0</span> = 合格，> 2.0 = 优秀。衡量"每冒1元风险赚多少超额收益"。<br>
+      <span class="help-highlight">Max DD (最大回撤)</span> = 从最高点跌到最低点的最大幅度。例如 -8.7% 意味着历史上最惨时亏了8.7%。这是你最需要关心的数字。<br>
+      <span class="help-highlight">VaR 95%</span> = 95%概率下一天最多亏X%。例如 VaR=-1.43% 意思是：100天里大约95天亏损不超过1.43%。<br>
+      <span class="help-highlight">Volatility (波动率)</span> = 15-25%正常，>40%高波动。波动大=不一定是坏事，但你得能承受。<br>
+      <span class="help-highlight">新手黄金法则：</span>先看Max DD——你能不能接受这个亏损幅度？再看Sharpe——赚钱效率够不够高？
+    </div>
+    <div class="risk-grid" id="riskGrid">
+      <div class="risk-card"><span class="val">—</span><span class="lbl">Sharpe</span></div>
+      <div class="risk-card"><span class="val">—</span><span class="lbl">Sortino</span></div>
+      <div class="risk-card"><span class="val">—</span><span class="lbl">Max DD</span></div>
+      <div class="risk-card"><span class="val">—</span><span class="lbl">VaR 95%</span></div>
+      <div class="risk-card"><span class="val">—</span><span class="lbl">Volatility</span></div>
+      <div class="risk-card"><span class="val">—</span><span class="lbl">Calmar</span></div>
+    </div>
+  </div>
+
+  <!-- Department Activity (T899) -->
+  <div class="panel panel-wide">
+    <h3>🏢 Department Activity <span style="font-weight:400;font-size:0.75em;color:var(--muted);" id="deptActivitySource">loading...</span></h3>
+    <div id="deptActivityContent" style="display:flex;flex-wrap:wrap;gap:6px;font-size:0.74em;"></div>
+  </div>
+
+  <!-- Portfolio Optimization (T947) — multi-method: MV/RP/HRP/BL/Kelly -->
+  <div class="panel" id="optPanel">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <h3 style="margin:0;">📊 Portfolio Optimization <button class="help-toggle" onclick="toggleHelp('helpOpt')">💡 组合优化是什么？</button></h3>
+      <span style="font-weight:400;font-size:0.7em;color:var(--muted);" id="optSource">loading...</span>
+    </div>
+    <div id="helpOpt" class="help-content">
+      <strong>组合优化 = 决定每个股票买多少。</strong>不是简单平均分配，而是用数学方法找到最优配比。<br>
+      <span class="help-highlight">MV (均值方差)：</span>经典方法，在收益和风险之间找最优平衡。缺点是对输入参数敏感。<br>
+      <span class="help-highlight">Risk Parity (风险平价)：</span>让每个资产贡献相同风险。比MV更稳健，回撤通常更小。<br>
+      <span class="help-highlight">HRP (分层风险平价)：</span>用机器学习聚类股票，相关性高的归一组再分配。目前最先进的静态分配方法之一。<br>
+      <span class="help-highlight">BL (Black-Litterman)：</span>让你把自己的判断("我觉得NVDA会跑赢")融合进数学优化。<br>
+      <span class="help-highlight">Kelly (凯利公式)：</span>赌场用的公式——如果你知道胜率和赔率，每次该下注多少。适合有明确信号的策略。<br>
+      <span class="help-highlight">新手推荐：</span>先看 Risk Parity —— 最稳健，不易出错。熟练后再尝试其他方法。
+    </div>
+    <div class="method-tabs" style="display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap;" id="methodTabs">
+      <button class="method-tab active" data-method="mv">MV</button>
+      <button class="method-tab" data-method="rp">Risk Parity</button>
+      <button class="method-tab" data-method="hrp">HRP</button>
+      <button class="method-tab" data-method="bl">BL</button>
+      <button class="method-tab" data-method="kelly">Kelly</button>
+    </div>
+    <div id="optContent" style="font-size:0.78em;line-height:1.6;"></div>
+  </div>
+
+  <!-- Parameter Sweep Heatmap (T906) -->
+  <div class="panel">
+    <h3>🔥 Param Sweep <span style="font-weight:400;font-size:0.75em;color:var(--muted);" id="sweepSource">loading...</span></h3>
+    <canvas id="sweepCanvas" style="width:100%;height:200px;"></canvas>
+    <div id="sweepBest" style="font-size:0.75em;color:var(--gold);margin-top:4px;"></div>
+  </div>
+
+  <!-- Strategy Comparison (T893 + T949) -->
+  <div class="panel" id="strategyCompPanel">
+    <h3>🏆 Strategy Comparison <button class="help-toggle" onclick="toggleHelp('helpStratComp')">💡 怎么选策略？</button>
+    <span style="font-weight:400;font-size:0.75em;color:var(--muted);" id="stratCompSource">loading...</span>
+      <span style="float:right;display:flex;gap:4px;">
+        <button class="sc-tab active" id="scTabTable" onclick="switchStratView('table')">📋 Table</button>
+        <button class="sc-tab" id="scTabRadar" onclick="switchStratView('radar')">🕸️ Radar</button>
+        <button class="sc-tab" id="scTabEquity" onclick="switchStratView('equity')">📈 Equity</button>
+      </span>
+    </h3>
+    <div id="helpStratComp" class="help-content">
+      <strong>不同策略横向对比，帮你选最优。</strong><br>
+      <span class="help-highlight">Sharpe</span> = 最重要的指标，越高越好。>1.0算及格，>2.0算优秀。<br>
+      <span class="help-highlight">Return (收益率)</span> = 不能只看这个！高收益可能来自高杠杆或高波动。<br>
+      <span class="help-highlight">MaxDD (最大回撤)</span> = 绝对值越小越好。收益相近时选回撤最小的。<br>
+      <span class="help-highlight">Win% (胜率)</span> = 交易成功的比例。>50%算好，但胜率低也可能赚钱（如果赔率够高）。<br>
+      <span class="help-highlight">新手选策略秘籍：</span>Sharpe最高 + MaxDD最小 = 最佳选择。⭐标记的就是Sharpe最高的策略。
+    </div>
+    <div id="stratCompTable" style="font-size:0.78em;line-height:1.6;"></div>
+    <div id="stratCompRadar" style="display:none;">
+      <canvas id="radarCanvas" width="400" height="400" style="width:100%;max-width:400px;height:auto;"></canvas>
+    </div>
+    <div id="stratCompEquity" style="display:none;">
+      <canvas id="equityCanvas" width="700" height="320" style="width:100%;max-width:700px;height:auto;"></canvas>
+    </div>
+  </div>
+
+  <!-- Risk Limits (T900) -->
+  <div class="panel" id="riskLimitsPanel">
+    <h3>🚨 Risk Limits <span style="font-weight:400;font-size:0.75em;color:var(--muted);" id="riskLimitsSource">loading...</span></h3>
+    <div id="riskLimitsContent" style="font-size:0.78em;line-height:1.7;"></div>
+  </div>
+
+  <!-- Enhanced Risk (T890) -->
+  <div class="panel" id="riskEnhancedPanel">
+    <h3>🔍 Risk Analysis <span style="font-weight:400;font-size:0.75em;color:var(--muted);" id="riskEnhancedSource">loading...</span></h3>
+    <div id="riskEnhancedContent" style="font-size:0.78em;line-height:1.6;"></div>
+  </div>
+
+  <!-- Market Overview -->
+  <div class="panel">
+    <h3>💹 Market Overview <button class="help-toggle" onclick="toggleHelp('helpMarket')">💡 怎么读行情？</button></h3>
+    <div id="helpMarket" class="help-content">
+      <strong>实时市场行情概览。</strong><br>
+      <span class="help-highlight">Price = 最新价格。</span>Chg% = 相对于前一日的涨跌幅。<br>
+      <span class="help-highlight">绿色=涨，红色=跌。</span>Vol = 成交量（M=百万股）。<br>
+      <span class="help-highlight">新手提示：</span>别只看涨跌——成交量大=市场参与度高=流动性好。流动性差的股票买卖价差大，交易成本高。
+    </div>
+    <div id="marketContent" class="loading">Loading market data...</div>
+  </div>
+
+  <!-- Data Pipeline Health (T869) -->
+  <div class="panel" id="dataHealthPanel">
+    <h3>🩺 Data Pipeline Health <span style="font-weight:400;font-size:0.75em;color:var(--muted);" id="healthStatus">checking...</span></h3>
+    <div id="dataHealthContent" style="font-size:0.82em;line-height:1.8;">
+      <div><span style="color:var(--muted);">Last fetch:</span> <span id="dhLastFetch">—</span></div>
+      <div><span style="color:var(--muted);">Staleness:</span> <span id="dhStaleness">—</span></div>
+      <div><span style="color:var(--muted);">Tickers:</span> <span id="dhTickers">—</span></div>
+      <div><span style="color:var(--muted);">Date range:</span> <span id="dhDateRange">—</span></div>
+    </div>
+  </div>
+
+  <!-- WeChat Notification (T882) -->
+  <div class="panel" id="wechatPanel">
+    <h3>💬 WeChat Push <span style="font-weight:400;font-size:0.75em;color:var(--muted);" id="wechatStatusLabel">checking...</span></h3>
+    <div id="wechatContent" style="font-size:0.82em;line-height:1.8;">
+      <div><span style="color:var(--muted);">Status:</span> <span id="wcStatus">—</span></div>
+      <div><span style="color:var(--muted);">Push count:</span> <span id="wcPushCount">—</span></div>
+      <div><span style="color:var(--muted);">Last push:</span> <span id="wcLastPush">—</span></div>
+      <div id="wcError" style="display:none;color:#ef4444;margin-top:4px;"></div>
+    </div>
+  </div>
+
+  <!-- Factor Decay Alerts (T884) -->
+  <div class="panel" id="decayPanel">
+    <h3>⚠️ Factor Decay <span style="font-weight:400;font-size:0.75em;color:var(--muted);" id="decayStatus">loading...</span></h3>
+    <div id="decayContent" style="font-size:0.78em;line-height:1.7;max-height:180px;overflow-y:auto;"></div>
+  </div>
+
+  <!-- Sensitivity Analysis (T887) -->
+  <div class="panel">
+    <h3>📐 Param Sensitivity <span style="font-weight:400;font-size:0.75em;color:var(--muted);">elasticity ranking</span></h3>
+    <div id="sensitivityContent" style="font-size:0.78em;line-height:1.6;max-height:180px;overflow-y:auto;"></div>
+  </div>
+
+  <!-- Log Viewer (T871) -->
+  <div class="panel">
+    <h3>📜 System Log <span style="font-weight:400;font-size:0.75em;color:var(--muted);" id="logLevelLabel">all</span>
+    <span style="float:right;font-size:0.7em;cursor:pointer;color:var(--muted);" onclick="toggleLogLevel()">filter level ▾</span></h3>
+    <div id="logContent" class="log-viewer" style="max-height:200px;overflow-y:auto;font-size:0.72em;font-family:'Consolas','Courier New',monospace;"></div>
+  </div>
+
+  <!-- Stock Recommendations (NEW: plain-language explanations) -->
+  <div class="panel panel-wide" id="recommendationsPanel">
+    <h3>🎯 智能选股推荐 (Stock Recommendations) <button class="help-toggle" onclick="toggleHelp('helpRecs')">💡 怎么用这些推荐？</button>
+      <span style="font-weight:400;font-size:0.7em;color:var(--muted);" id="recsSource">loading...</span>
+    </h3>
+    <div id="helpRecs" class="help-content">
+      <strong>系统分析所有因子后，自动选出当前最值得关注的股票，并用大白话解释为什么。</strong><br>
+      <span class="help-highlight">看涨 (Long) = 系统综合判断这只股票接下来可能上涨。</span>绿色底色，红色为看跌。<br>
+      <span class="help-highlight">综合得分 (Score)：</span>越高=信号越强。>2.0=高置信度，1.0-2.0=中等，<1.0=偏低。<br>
+      <span class="help-highlight">因子归因：</span>告诉你"为什么选这只"——是动量强？估值低？还是质量好？<br>
+      <span class="help-highlight">⚠️ 重要提示：</span>这些是量化模型的计算结果，不是投资建议。任何单一信号都不应该成为买卖的唯一依据。建议结合你的判断、仓位管理和风险控制使用。
+    </div>
+    <div id="recommendationsContent" style="font-size:0.82em;line-height:1.7;">
+      <div class="loading">正在计算智能推荐... 首次加载可能需要30秒。</div>
+    </div>
+  </div>
+
+  <!-- Strategy Digest -->
+  <div class="panel">
+    <h3>📋 策略研究纪要 <span style="font-weight:400;font-size:0.75em;color:var(--muted);">Strategy Digest</span></h3>
+    <div class="strategy-card"><span class="s-name">多因子模型 (Multi-Factor)</span><span class="s-status done">已落地</span><div class="s-desc">IC加权+贝叶斯收缩+制度感知融合。momentum/value/volatility/quality四类25因子。</div></div>
+    <div class="strategy-card"><span class="s-name">ML收益预测 (ML Prediction)</span><span class="s-status done">已落地</span><div class="s-desc">sklearn Ridge/RF/XGBoost从因子预测前向收益。时间序列CV无前视偏差。特征重要性排名。</div></div>
+    <div class="strategy-card"><span class="s-name">统计套利 (Stat Arb)</span><span class="s-status done">已落地</span><div class="s-desc">协整配对交易+均值回归。ADF检验+卡尔曼滤波动态对冲比率。</div></div>
+    <div class="strategy-card"><span class="s-name">CANSLIM量化筛选 (CANSLIM Screen)</span><span class="s-status done">已落地</span><div class="s-desc">William O'Neil七因子量化版。季度EPS+年度EPS+RS评级+SMR+行业+机构+供需。</div></div>
+    <div class="strategy-card"><span class="s-name">风险归因 (Risk Attribution)</span><span class="s-status done">已落地</span><div class="s-desc">Barra风格因子归因+Brinson业绩归因+行业暴露检查+风险预算分解。</div></div>
+    <div class="strategy-card"><span class="s-name">深度强化学习 (Deep RL)</span><span class="s-status wip">规划中</span><div class="s-desc">FinRL/Stable-Baselines3 PPO/SAC交易策略。需要GPU和大量历史数据。</div></div>
+    <div class="strategy-card"><span class="s-name">LLM多专家辩论 (Multi-Agent Debate)</span><span class="s-status wip">调研中</span><div class="s-desc">多金融专家LLM互相辩论选股。参考ChatDev/MetaGPT架构。已写outbox询问董事长资源。</div></div>
+  </div>
+
+  <!-- Glossary -->
+  <div class="panel panel-wide">
+    <h3>📖 术语表 <span style="font-weight:400;font-size:0.75em;color:var(--muted);">Glossary (EN/CN)</span> <span class="gloss-toggle" onclick="toggleGlossary()" id="glossToggle">收起 ▲</span></h3>
+    <div class="gloss-panel" id="glossContent">
+      <div class="gloss-row"><span class="term">Factor / 因子</span><span class="def"><span class="def-en">A variable that predicts stock returns</span><span class="def-cn">预测股票收益的信号变量，如动量、价值、波动率</span></span></div>
+      <div class="gloss-row"><span class="term">IC (Information Coefficient)</span><span class="def"><span class="def-en">Spearman correlation between factor values and forward returns</span><span class="def-cn">因子值与未来收益的斯皮尔曼相关系数，衡量因子预测能力。>0.02为好，>0.05为优秀</span></div>
+      <div class="gloss-row"><span class="term">IC IR (Information Ratio)</span><span class="def"><span class="def-en">Mean(IC) / Std(IC) — measures signal consistency</span><span class="def-cn">IC的均值除以标准差，衡量信号稳定性。>0.5为好</span></div>
+      <div class="gloss-row"><span class="term">Sharpe Ratio / 夏普比率</span><span class="def"><span class="def-en">(Return - RiskFree) / Volatility — risk-adjusted return</span><span class="def-cn">每单位风险带来的超额收益。>1.0为合格，>2.0为优秀</span></div>
+      <div class="gloss-row"><span class="term">Sortino Ratio / 索提诺比率</span><span class="def"><span class="def-en">Like Sharpe but only penalizes downside volatility</span><span class="def-cn">只惩罚下行波动的夏普改进版，更适合不对称收益分布</span></div>
+      <div class="gloss-row"><span class="term">Max Drawdown / 最大回撤</span><span class="def"><span class="def-en">Largest peak-to-trough decline in equity curve</span><span class="def-cn">净值从最高点到最低点的最大跌幅，衡量最坏情况下的亏损</span></div>
+      <div class="gloss-row"><span class="term">VaR 95% (Value at Risk)</span><span class="def"><span class="def-en">95th percentile worst daily loss — "we are 95% sure we won't lose more than X in a day"</span><span class="def-cn">95%置信度下一天最多亏多少。例如VaR=-1.43%表示95%的情况下日亏损不超过1.43%</span></div>
+      <div class="gloss-row"><span class="term">Calmar Ratio / 卡尔玛比率</span><span class="def"><span class="def-en">Annual Return / Max Drawdown — return per unit of worst pain</span><span class="def-cn">年化收益除以最大回撤，衡量每单位"最大痛苦"换来的收益</span></div>
+      <div class="gloss-row"><span class="term">Volatility (Ann.) / 年化波动率</span><span class="def"><span class="def-en">StdDev of daily returns × sqrt(252) — annualized price swing</span><span class="def-cn">日收益标准差×√252，衡量价格波动幅度。15-25%为正常，>40%为高波动</span></div>
+      <div class="gloss-row"><span class="term">Momentum / 动量因子</span><span class="def"><span class="def-en">Past winners tend to keep winning (Jegadeesh-Titman 1993)</span><span class="def-cn">过去涨的股票未来一段时间继续涨。学术验证最强的因子之一</span></div>
+      <div class="gloss-row"><span class="term">Reversal / 反转因子</span><span class="def"><span class="def-en">Short-term losers rebound (1-5 day horizon)</span><span class="def-cn">短期(1-5天)跌太多会反弹。与动量互补，不同时间尺度</span></div>
+      <div class="gloss-row"><span class="term">Value Factor / 价值因子</span><span class="def"><span class="def-en">Cheap stocks (low P/E, P/B) outperform expensive ones (Fama-French 1992)</span><span class="def-cn">便宜的股票长期跑赢贵的。账面市值比(BP)和盈利市值比(EP)是经典指标</span></div>
+      <div class="gloss-row"><span class="term">Ledoit-Wolf Shrinkage</span><span class="def"><span class="def-en">Statistical method to improve covariance estimation by shrinking toward a structured target</span><span class="def-cn">通过向结构化目标收缩来改进协方差估计的统计方法，减少估计误差</span></div>
+      <div class="gloss-row"><span class="term">Walk-Forward CV / 前向验证</span><span class="def"><span class="def-en">Time-series cross-validation that respects temporal order (no peeking at future)</span><span class="def-cn">尊重时间顺序的交叉验证方法，绝不用未来数据训练（防前视偏差）</span></div>
+      <div class="gloss-row"><span class="term">Barra Risk Model</span><span class="def"><span class="def-en">Industry-standard multi-factor risk model decomposing total risk into systematic + specific</span><span class="def-cn">行业标准的多因子风险模型，将总风险分解为系统性风险+特质风险</span></div>
+      <div class="gloss-row"><span class="term">Almgren-Chriss Impact</span><span class="def"><span class="def-en">Square-root market impact model for estimating trade cost before execution</span><span class="def-cn">平方根市场冲击模型，用于在交易前估计大单对价格的影响</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ Theme Toggle (T881) ============
+(function initTheme() {
+  const saved = localStorage.getItem('onionquant-theme');
+  if (saved === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    document.getElementById('themeBtn').textContent = '☀️ Light';
+  }
+})();
+
+function toggleTheme() {
+  const el = document.documentElement;
+  const btn = document.getElementById('themeBtn');
+  if (el.getAttribute('data-theme') === 'light') {
+    el.removeAttribute('data-theme');
+    btn.textContent = '🌙 Dark';
+    localStorage.setItem('onionquant-theme', 'dark');
+  } else {
+    el.setAttribute('data-theme', 'light');
+    btn.textContent = '☀️ Light';
+    localStorage.setItem('onionquant-theme', 'light');
+  }
+}
+
+// ============ State ============
+let allFactorNames = [];
+let activeFactorFilter = [];
+let refreshTimers = {factors:30, signals:30, ic:60, risk:60, market:30};
+
+// ============ SSE ============
+let es;
+function connectSSE() {
+  es = new EventSource('/sse');
+  es.addEventListener('factor_update', e => { try { fetchFactors(); } catch(_){} });
+  es.addEventListener('risk_update', e => { try { fetchRisk(); } catch(_){} });
+  es.onopen = () => {
+    document.getElementById('connDot').className = 'conn-dot conn-ok';
+    document.getElementById('connLabel').textContent = 'live';
+  };
+  es.onerror = () => {
+    document.getElementById('connDot').className = 'conn-dot conn-err';
+    document.getElementById('connLabel').textContent = 'reconnecting';
+    setTimeout(connectSSE, 5000);
+  };
+}
+
+// ============ Countdown Timer ============
+let countdown = 30;
+function startCountdown() {
+  setInterval(() => {
+    countdown--;
+    if (countdown <= 0) countdown = 30;
+    document.getElementById('refreshCountdown').textContent = countdown + 's';
+  }, 1000);
+}
+
+// ============ Animation Helpers ============
+function flashElement(el) {
+  if (!el) return;
+  el.classList.remove('status-changed');
+  void el.offsetWidth; // force reflow
+  el.classList.add('status-changed');
+}
+
+function animateMetric(el, oldVal, newVal) {
+  if (!el || oldVal === newVal) return;
+  el.classList.remove('metric-up', 'metric-down');
+  void el.offsetWidth;
+  el.classList.add(newVal > oldVal ? 'metric-up' : 'metric-down');
+}
+
+function flashPanel(panelId) {
+  const el = document.getElementById(panelId);
+  if (!el) return;
+  el.classList.remove('status-changed');
+  void el.offsetWidth;
+  el.classList.add('status-changed');
+}
+
+// ============ API Fetch ============
+async function fetchFactors() {
+  try {
+    const r = await fetch('/api/quant/factors');
+    if (!r.ok) throw new Error('no data');
+    const d = await r.json();
+    document.getElementById('dataSource').textContent = d.source || 'unknown';
+    document.getElementById('dataSource').style.color = d.source === 'live' ? 'var(--green)' : 'var(--gold)';
+    renderHeatmap(d);
+  } catch(e) {
+    document.getElementById('heatmapContent').innerHTML = '<div class="empty">No factor data yet. Run factor_calculator.py to populate.</div>';
+  }
+}
+
+async function fetchSignals() {
+  try {
+    const r = await fetch('/api/quant/signals');
+    if (!r.ok) throw new Error('no data');
+    const d = await r.json();
+    renderSignals(d);
+  } catch(e) {
+    document.getElementById('longSignals').innerHTML = '<div class="empty">Run factor_combiner.py to generate signals.</div>';
+    document.getElementById('shortSignals').innerHTML = '<div class="empty">Run factor_combiner.py to generate signals.</div>';
+  }
+}
+
+async function fetchIC() {
+  try {
+    const r = await fetch('/api/quant/ic_trend');
+    if (!r.ok) throw new Error('no data');
+    const d = await r.json();
+    renderIC(d);
+  } catch(e) {
+    document.getElementById('icFallback').style.display = 'block';
+  }
+}
+
+async function fetchRisk() {
+  try {
+    const r = await fetch('/api/quant/risk');
+    if (!r.ok) throw new Error('no data');
+    const d = await r.json();
+    renderRisk(d);
+  } catch(e) {}
+}
+
+async function fetchMarket() {
+  try {
+    const r = await fetch('/api/quant/market');
+    if (!r.ok) throw new Error('no data');
+    const d = await r.json();
+    renderMarket(d);
+  } catch(e) {
+    document.getElementById('marketContent').innerHTML = '<div class="empty">Run yfinance_fetcher.py to populate market data.</div>';
+  }
+}
+
+// ============ Log Viewer (T871) ============
+let logLevelFilter = '';
+
+async function fetchLogs() {
+  try {
+    const url = logLevelFilter ? `/api/logs?level=${logLevelFilter}&limit=40` : '/api/logs?limit=40';
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('no data');
+    const d = await r.json();
+    renderLogs(d.logs || []);
+  } catch(e) {
+    document.getElementById('logContent').innerHTML = '<div class="empty">Log buffer empty.</div>';
+  }
+}
+
+// ============ Data Health (T869) ============
+async function fetchDataHealth() {
+  try {
+    const r = await fetch('/api/data/health');
+    if (!r.ok) throw new Error('no data');
+    const d = await r.json();
+    renderDataHealth(d);
+  } catch(e) {
+    document.getElementById('dataHealthContent').innerHTML = '<div class="empty">Data health unavailable.</div>';
+  }
+}
+
+function renderDataHealth(d) {
+  const statusEl = document.getElementById('healthStatus');
+  statusEl.textContent = d.status;
+  const panel = document.getElementById('dataHealthPanel');
+
+  // Status-driven panel border color
+  panel.style.borderColor = d.status === 'fresh' ? 'var(--green)' :
+    d.status === 'aging' ? '#f59e0b' : d.status === 'stale' ? 'var(--red)' : 'var(--border)';
+
+  document.getElementById('dhLastFetch').textContent = d.last_fetch ?
+    new Date(d.last_fetch).toLocaleString() : 'never';
+  document.getElementById('dhStaleness').innerHTML = d.staleness_minutes != null ?
+    `${d.staleness_minutes}m ago ${d.staleness_warning ? '<span style="color:#ef4444;">⚠ stale</span>' : '<span style="color:#10b981;">✓</span>'}` : '—';
+  document.getElementById('dhTickers').textContent = d.ticker_count || '—';
+  document.getElementById('dhDateRange').textContent = d.date_range || '—';
+}
+
+// ============ WeChat Push Status (T882) ============
+async function fetchWechatStatus() {
+  try {
+    const r = await fetch('/api/wechat/status');
+    if (!r.ok) throw new Error('no data');
+    const d = await r.json();
+    renderWechatStatus(d);
+  } catch(e) {
+    document.getElementById('wcStatus').textContent = 'unavailable';
+  }
+}
+
+function renderWechatStatus(d) {
+  const panel = document.getElementById('wechatPanel');
+  const label = document.getElementById('wechatStatusLabel');
+
+  if (!d.configured) {
+    label.textContent = 'not configured';
+    panel.style.borderColor = 'var(--border)';
+    document.getElementById('wcStatus').innerHTML = '<span style="color:#f59e0b;">Credentials missing</span>';
+    document.getElementById('wcPushCount').textContent = '—';
+    document.getElementById('wcLastPush').textContent = '—';
+    return;
+  }
+
+  if (d.connected) {
+    label.textContent = 'connected';
+    panel.style.borderColor = 'var(--green)';
+    document.getElementById('wcStatus').innerHTML = '<span style="color:#10b981;">Connected ✓</span>';
+  } else {
+    label.textContent = 'connecting...';
+    panel.style.borderColor = '#f59e0b';
+    document.getElementById('wcStatus').innerHTML = '<span style="color:#f59e0b;">Connecting...</span>';
+  }
+
+  document.getElementById('wcPushCount').textContent = d.push_count || 0;
+  document.getElementById('wcLastPush').textContent = d.last_push ?
+    new Date(d.last_push).toLocaleString() : 'never';
+
+  const errEl = document.getElementById('wcError');
+  if (d.last_error) {
+    errEl.style.display = 'block';
+    errEl.textContent = 'Last error: ' + d.last_error;
+  } else {
+    errEl.style.display = 'none';
+  }
+}
+
+// ============ Equity Curve (T896) ============
+async function fetchEquityCurve() {
+  try {
+    const r = await fetch('/api/backtest/equity');
+    if (!r.ok) throw new Error('no data');
+    const d = await r.json();
+    renderEquityCurve(d);
+  } catch(e) {
+    document.getElementById('equitySource').textContent = 'unavailable';
+  }
+}
+
+function renderEquityCurve(d) {
+  const canvas = document.getElementById('equityCanvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 220 * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = '220px';
+  ctx.scale(dpr, dpr);
+  const w = rect.width, h = 220;
+
+  const eq = d.equity || [];
+  const dd = d.drawdown || [];
+  if (!eq.length) return;
+
+  document.getElementById('equitySource').textContent = d.source === 'live' ? 'live' : 'generated';
+
+  ctx.clearRect(0, 0, w, h);
+  const pad = {top: 20, right: 20, bottom: 30, left: 55};
+  const pw = w - pad.left - pad.right;
+  const ph1 = (h - pad.top - pad.bottom) * 0.6;
+  const ph2 = (h - pad.top - pad.bottom) * 0.30;
+
+  // Equity line
+  const eqMin = Math.min(...eq), eqMax = Math.max(...eq), eqRange = eqMax - eqMin || 1;
+  ctx.strokeStyle = '#10b981';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  eq.forEach((v, i) => {
+    const x = pad.left + (i / (eq.length - 1)) * pw;
+    const y = pad.top + ph1 - ((v - eqMin) / eqRange) * ph1;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // Drawdown fill
+  if (dd.length) {
+    const baseY = pad.top + ph1 + 10;
+    ctx.fillStyle = 'rgba(239,68,68,0.15)';
+    ctx.beginPath();
+    dd.forEach((v, i) => {
+      const x = pad.left + (i / (dd.length - 1)) * pw;
+      const y = baseY + Math.abs(v) * ph2 * 2;
+      i === 0 ? ctx.moveTo(x, baseY) : ctx.lineTo(x, y);
+    });
+    for (let i = dd.length - 1; i >= 0; i--) {
+      ctx.lineTo(pad.left + (i / (dd.length - 1)) * pw, baseY);
+    }
+    ctx.fill();
+    ctx.strokeStyle = '#ef4444';
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    dd.forEach((v, i) => {
+      const x = pad.left + (i / (dd.length - 1)) * pw;
+      const y = baseY + Math.abs(v) * ph2 * 2;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  }
+
+  // Labels
+  ctx.fillStyle = '#64748b';
+  ctx.font = '9px sans-serif';
+  ctx.fillText('Equity', pad.left, pad.top - 4);
+  ctx.fillText('DD', pad.left, pad.top + ph1 + 20);
+  ctx.fillText(eqMin.toFixed(2), pad.left, pad.top + ph1);
+  ctx.fillText(eqMax.toFixed(2), pad.left, pad.top + 4 + 9);
+}
+
+// ============ Risk Limits (T900) ============
+async function fetchRiskLimits() {
+  try {
+    const r = await fetch('/api/risk/limits');
+    if (!r.ok) throw new Error('no data');
+    const d = await r.json();
+    renderRiskLimits(d);
+  } catch(e) {
+    document.getElementById('riskLimitsContent').innerHTML = '<div class="empty">Risk limits unavailable.</div>';
+  }
+}
+
+function renderRiskLimits(d) {
+  const panel = document.getElementById('riskLimitsPanel');
+  const source = document.getElementById('riskLimitsSource');
+  const content = document.getElementById('riskLimitsContent');
+  source.textContent = d.source === 'live' ? 'live' : 'generated';
+  panel.style.borderColor = d.breaches > 0 ? 'var(--red)' : 'var(--border)';
+
+  content.innerHTML = (d.alerts || []).map(a => {
+    const icon = a.breached ? '🔴' : '✅';
+    const color = a.breached ? 'var(--red)' : 'var(--green)';
+    return `<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;padding:4px 6px;border-radius:4px;${a.breached ? 'background:rgba(239,68,68,0.08);' : ''}">
+      <span>${icon} <b>${a.name}</b></span>
+      <span style="color:${color};font-weight:600;">${typeof a.value === 'number' ? (a.value*100).toFixed(1)+'%' : a.value}</span>
+      <span style="color:var(--muted);font-size:0.82em;">limit: ${(a.limit*100).toFixed(0)}%</span>
+    </div>`;
+  }).join('');
+}
+
+// ============ Department Activity (T899) ============
+async function fetchDeptActivity() {
+  try {
+    const r = await fetch('/api/departments');
+    if (!r.ok) throw new Error('no data');
+    const d = await r.json();
+    renderDeptActivity(d);
+  } catch(e) {
+    document.getElementById('deptActivityContent').innerHTML = '<span class="empty">Dept data unavailable.</span>';
+  }
+}
+
+function renderDeptActivity(d) {
+  const source = document.getElementById('deptActivitySource');
+  const content = document.getElementById('deptActivityContent');
+  source.textContent = `${d.count || 0} departments`;
+
+  const depts = d.departments || [];
+  if (!depts.length) { content.innerHTML = '<span class="empty">No departments.</span>'; return; }
+
+  const statusColors = {
+    done: 'var(--green)', working: 'var(--accent)', thinking: '#f59e0b',
+    waiting: 'var(--muted)', blocked: 'var(--red)',
+  };
+  const statusIcons = {
+    done: '✅', working: '🔵', thinking: '💭', waiting: '⏳', blocked: '🔴',
+  };
+
+  content.innerHTML = depts.map(d => {
+    const color = statusColors[d.status] || 'var(--muted)';
+    const icon = statusIcons[d.status] || '❓';
+    const name = (d.name || d.id).replace(/^#\s*/, '').substring(0, 20);
+    return `<div style="background:rgba(59,130,246,0.05);border:1px solid var(--border);border-left:3px solid ${color};border-radius:6px;padding:6px 10px;min-width:130px;">
+      <div style="font-weight:600;margin-bottom:2px;">${icon} ${name}</div>
+      <div style="color:var(--muted);font-size:0.85em;">${d.status} | done:${d.done} | ip:${d.in_progress} | blk:${d.blocked}</div>
+    </div>`;
+  }).join('');
+}
+
+// ============ Portfolio Optimization (T947) — multi-method ============
+let optMethod = 'mv';
+
+async function fetchOptimization() {
+  try {
+    const r = await fetch('/api/quant/optimize?method=' + encodeURIComponent(optMethod));
+    if (!r.ok) throw new Error('no data');
+    const d = await r.json();
+    renderOptimization(d);
+  } catch(e) {
+    document.getElementById('optContent').innerHTML = '<div class="empty">Optimization unavailable.</div>';
+  }
+}
+
+function renderOptimization(d) {
+  const panel = document.getElementById('optPanel');
+  const source = document.getElementById('optSource');
+  const content = document.getElementById('optContent');
+  source.textContent = (d.source === 'live' ? 'live · ' : 'generated · ') + (d.method || optMethod).toUpperCase();
+  panel.style.borderColor = d.source === 'live' ? 'var(--green)' : 'var(--border)';
+
+  let html = '';
+  if (d.metrics && Object.keys(d.metrics).length) {
+    const m = d.metrics;
+    html += `<div style="display:flex;gap:10px;margin-bottom:10px;font-size:0.8em;flex-wrap:wrap;">
+      <span>Ret: <b style="color:var(--green);">${(m.expected_return*100).toFixed(1)}%</b></span>
+      <span>Risk: <b style="color:#f59e0b;">${(m.expected_risk*100).toFixed(1)}%</b></span>
+      <span>Sharpe: <b style="color:var(--accent);">${(m.sharpe||0).toFixed(2)}</b></span>
+    </div>`;
+  }
+
+  if (d.error) {
+    html += `<div style="font-size:0.72em;color:var(--red);">Error: ${d.error}</div>`;
+  }
+
+  if (d.weights && d.weights.length) {
+    const maxW = Math.max(...d.weights.map(w => Math.abs(w.weight)));
+    html += d.weights.map(w => {
+      const pct = maxW > 0 ? Math.abs(w.weight) / maxW * 100 : 0;
+      const color = w.weight > 0 ? 'var(--green)' : 'var(--red)';
+      return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;">
+        <span style="width:48px;font-size:0.78em;">${w.ticker}</span>
+        <div style="flex:1;height:12px;background:var(--border);border-radius:3px;overflow:hidden;">
+          <div style="height:100%;width:${pct}%;background:${color};border-radius:3px;opacity:0.8;"></div>
+        </div>
+        <span style="width:48px;text-align:right;font-size:0.75em;color:${color};">${(w.weight*100).toFixed(1)}%</span>
+      </div>`;
+    }).join('');
+  }
+
+  content.innerHTML = html || '<div class="empty">No weights computed.</div>';
+}
+
+// Method tab switching
+document.addEventListener('DOMContentLoaded', function() {
+  var tabs = document.getElementById('methodTabs');
+  if (tabs) {
+    tabs.addEventListener('click', function(e) {
+      var btn = e.target.closest('.method-tab');
+      if (!btn) return;
+      optMethod = btn.dataset.method;
+      tabs.querySelectorAll('.method-tab').forEach(function(b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      fetchOptimization();
+    });
+  }
+});
+
+// ============ Parameter Sweep Heatmap (T906) ============
+async function fetchParamSweep() {
+  try {
+    const r = await fetch('/api/backtest/param_sweep');
+    if (!r.ok) throw new Error('no data');
+    const d = await r.json();
+    renderParamSweep(d);
+  } catch(e) {
+    document.getElementById('sweepSource').textContent = 'unavailable';
+  }
+}
+
+function renderParamSweep(d) {
+  const canvas = document.getElementById('sweepCanvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const w = rect.width, h = 200;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, w, h);
+
+  const matrix = d.heatmap || [];
+  const xLabels = d.x_labels || [];
+  const yLabels = d.y_labels || [];
+  if (!matrix.length) return;
+
+  document.getElementById('sweepSource').textContent = d.source === 'live' ? 'live' : 'generated';
+  if (d.best) {
+    document.getElementById('sweepBest').textContent =
+      `Best: lookback=${d.best.lookback}, threshold=${d.best.threshold}, Sharpe=${d.best.sharpe}`;
+  }
+
+  const pad = {top: 5, right: 10, bottom: 20, left: 32};
+  const pw = w - pad.left - pad.right;
+  const ph = h - pad.top - pad.bottom;
+  const nRows = matrix.length;
+  const nCols = matrix[0]?.length || 0;
+  if (!nRows || !nCols) return;
+  const cw = pw / nCols;
+  const ch = ph / nRows;
+
+  // Find value range
+  const allVals = matrix.flat();
+  const vMin = Math.min(...allVals);
+  const vMax = Math.max(...allVals);
+  const vRange = vMax - vMin || 1;
+
+  // Draw cells
+  matrix.forEach((row, ri) => {
+    row.forEach((val, ci) => {
+      const t = (val - vMin) / vRange;
+      // Red (low) → Yellow (mid) → Green (high)
+      const r = Math.round(239 - t * 160);
+      const g = Math.round(68 + t * 150);
+      const b = Math.round(68 + t * 10);
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillRect(pad.left + ci * cw, pad.top + ri * ch, cw - 1, ch - 1);
+    });
+  });
+
+  // Labels
+  ctx.fillStyle = '#94a3b8';
+  ctx.font = '8px sans-serif';
+  yLabels.forEach((label, i) => {
+    ctx.fillText(label, 2, pad.top + i * ch + ch/2 + 3);
+  });
+  xLabels.forEach((label, i) => {
+    ctx.fillText(label, pad.left + i * cw + cw/2 - 10, h - 4);
+  });
+  ctx.fillText('threshold →', pad.left + pw/2 - 20, h - 4);
+}
+
+// ============ Strategy Comparison (T893 + T949 radar/equity) ============
+var stratCompareData = null;
+var stratViewMode = 'table';
+
+function switchStratView(mode) {
+  stratViewMode = mode;
+  document.getElementById('scTabTable').classList.toggle('active', mode === 'table');
+  document.getElementById('scTabRadar').classList.toggle('active', mode === 'radar');
+  document.getElementById('scTabEquity').classList.toggle('active', mode === 'equity');
+  document.getElementById('stratCompTable').style.display = mode === 'table' ? '' : 'none';
+  document.getElementById('stratCompRadar').style.display = mode === 'radar' ? '' : 'none';
+  document.getElementById('stratCompEquity').style.display = mode === 'equity' ? '' : 'none';
+  if (mode === 'radar' && stratCompareData) drawRadarChart(stratCompareData);
+  if (mode === 'equity' && stratCompareData) drawEquityCurves(stratCompareData);
+}
+
+async function fetchStrategyCompare() {
+  try {
+    const r = await fetch('/api/quant/strategies/compare');
+    if (!r.ok) throw new Error('no data');
+    const d = await r.json();
+    stratCompareData = d;
+    renderStrategyCompare(d);
+  } catch(e) {
+    document.getElementById('stratCompTable').innerHTML = '<div class="empty">Strategy comparison unavailable.</div>';
+  }
+}
+
+function renderStrategyCompare(d) {
+  const panel = document.getElementById('strategyCompPanel');
+  const source = document.getElementById('stratCompSource');
+  source.textContent = d.source === 'live' ? 'live' : 'generated';
+  panel.style.borderColor = d.source === 'live' ? 'var(--green)' : 'var(--border)';
+
+  if (!d.strategies || !d.strategies.length) {
+    document.getElementById('stratCompTable').innerHTML = '<div class="empty">No strategies to compare.</div>';
+    return;
+  }
+
+  const bestName = d.best?.name;
+
+  let html = '<div style="overflow-x:auto;"><table style="width:100%;font-size:0.78em;border-collapse:collapse;">';
+  html += '<tr style="border-bottom:1px solid var(--border);color:var(--muted);">';
+  html += '<th style="text-align:left;padding:4px;">Strategy</th>';
+  html += '<th style="text-align:right;padding:4px;">Sharpe</th>';
+  html += '<th style="text-align:right;padding:4px;">Return</th>';
+  html += '<th style="text-align:right;padding:4px;">MaxDD</th>';
+  html += '<th style="text-align:right;padding:4px;">Win%</th>';
+  html += '</tr>';
+
+  const sorted = [...d.strategies].sort((a, b) => (b.sharpe_ratio || 0) - (a.sharpe_ratio || 0));
+  for (const s of sorted) {
+    const isBest = s.strategy === bestName;
+    const sharpe = (s.sharpe_ratio || 0).toFixed(2);
+    const ret = ((s.total_return || 0) * 100).toFixed(1) + '%';
+    const mdd = ((s.max_drawdown || 0) * 100).toFixed(1) + '%';
+    const wr = s.win_rate ? (s.win_rate * 100).toFixed(0) + '%' : '—';
+    const sColor = sharpe > 0.8 ? 'var(--green)' : sharpe > 0.4 ? '#f59e0b' : 'var(--muted)';
+    html += `<tr style="border-bottom:1px solid var(--border);${isBest ? 'background:rgba(240,185,11,0.06);' : ''}">
+      <td style="padding:4px;">${isBest ? '⭐ ' : ''}${s.strategy}</td>
+      <td style="text-align:right;padding:4px;color:${sColor};font-weight:600;">${sharpe}</td>
+      <td style="text-align:right;padding:4px;">${ret}</td>
+      <td style="text-align:right;padding:4px;color:var(--red);">${mdd}</td>
+      <td style="text-align:right;padding:4px;">${wr}</td>
+    </tr>`;
+  }
+  html += '</table></div>';
+  document.getElementById('stratCompTable').innerHTML = html;
+
+  if (stratViewMode === 'radar') drawRadarChart(d);
+  if (stratViewMode === 'equity') drawEquityCurves(d);
+}
+
+function drawRadarChart(d) {
+  var canvas = document.getElementById('radarCanvas');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  var metrics = [
+    {key: 'sharpe_ratio', label: 'Sharpe', max: 1.5},
+    {key: 'sortino_ratio', label: 'Sortino', max: 2.0},
+    {key: 'calmar_ratio', label: 'Calmar', max: 2.5},
+    {key: 'win_rate', label: 'Win Rate', max: 0.8},
+    {key: 'profit_factor', label: 'Profit F.', max: 2.5},
+    {key: 'total_return', label: 'Return', max: 0.25},
+  ];
+
+  var cx = W / 2, cy = H / 2, r = Math.min(W, H) * 0.35;
+  var n = metrics.length;
+  var colors = ['#f0b90b', '#3b82f6', '#22c55e', '#ef4444'];
+
+  // Grid rings
+  for (var ring = 1; ring <= 4; ring++) {
+    ctx.beginPath();
+    for (var i = 0; i < n; i++) {
+      var angle = -Math.PI / 2 + (2 * Math.PI * i) / n;
+      var rr = r * ring / 4;
+      var x = cx + rr * Math.cos(angle);
+      var y = cy + rr * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+  }
+
+  // Axis lines
+  for (var i = 0; i < n; i++) {
+    var angle = -Math.PI / 2 + (2 * Math.PI * i) / n;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+
+    // Labels
+    var lx = cx + (r + 22) * Math.cos(angle);
+    var ly = cy + (r + 22) * Math.sin(angle);
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(metrics[i].label, lx, ly);
+  }
+
+  // Strategy polygons
+  for (var si = 0; si < d.strategies.length; si++) {
+    var s = d.strategies[si];
+    ctx.beginPath();
+    for (var i = 0; i < n; i++) {
+      var m = metrics[i];
+      var val = Math.max(0, Math.min(1, (s[m.key] || 0) / m.max));
+      var angle = -Math.PI / 2 + (2 * Math.PI * i) / n;
+      var rr = r * val;
+      var x = cx + rr * Math.cos(angle);
+      var y = cy + rr * Math.sin(angle);
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.strokeStyle = colors[si % colors.length];
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.fillStyle = colors[si % colors.length].replace(')', ',0.12)').replace('rgb', 'rgba');
+    if (colors[si % colors.length].startsWith('#')) {
+      ctx.fillStyle = colors[si % colors.length] + '1F';
+    }
+    ctx.fill();
+  }
+
+  // Legend
+  var ly = H - 12;
+  for (var si = 0; si < d.strategies.length; si++) {
+    var s = d.strategies[si];
+    var x = 10 + si * 110;
+    ctx.fillStyle = colors[si % colors.length];
+    ctx.fillRect(x, ly - 4, 10, 10);
+    ctx.fillStyle = '#d1d5db';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(s.strategy, x + 14, ly + 4);
+  }
+}
+
+function drawEquityCurves(d) {
+  var canvas = document.getElementById('equityCanvas');
+  var ctx = canvas.getContext('2d');
+  var W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  if (!d.equity_curves || !Object.keys(d.equity_curves).length) {
+    ctx.fillStyle = '#9ca3af';
+    ctx.font = '12px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('No equity curve data available', W/2, H/2);
+    return;
+  }
+
+  var margin = {top: 20, right: 40, bottom: 30, left: 55};
+  var pw = W - margin.left - margin.right;
+  var ph = H - margin.top - margin.bottom;
+
+  // Find global min/max
+  var allValues = [];
+  for (var k in d.equity_curves) {
+    allValues = allValues.concat(d.equity_curves[k].values);
+  }
+  var gmin = Math.min.apply(null, allValues);
+  var gmax = Math.max.apply(null, allValues);
+  var pad = (gmax - gmin) * 0.05;
+  gmin -= pad; gmax += pad;
+
+  function xScale(i, len) { return margin.left + (i / (len - 1)) * pw; }
+  function yScale(v) { return margin.top + ph - ((v - gmin) / (gmax - gmin)) * ph; }
+
+  // Grid
+  var nGrid = 5;
+  for (var g = 0; g <= nGrid; g++) {
+    var gy = margin.top + (ph * g / nGrid);
+    ctx.beginPath();
+    ctx.moveTo(margin.left, gy);
+    ctx.lineTo(W - margin.right, gy);
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 0.5;
+    ctx.stroke();
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'right';
+    var gval = gmax - (gmax - gmin) * g / nGrid;
+    ctx.fillText('$' + (gval/1000).toFixed(0) + 'k', margin.left - 6, gy + 3);
+  }
+
+  // Equity lines
+  var colors = ['#f0b90b', '#3b82f6', '#22c55e', '#ef4444'];
+  var ci = 0;
+  for (var k in d.equity_curves) {
+    var eq = d.equity_curves[k];
+    var vals = eq.values;
+    ctx.beginPath();
+    for (var i = 0; i < vals.length; i++) {
+      var sx = xScale(i, vals.length);
+      var sy = yScale(vals[i]);
+      if (i === 0) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy);
+    }
+    ctx.strokeStyle = colors[ci % colors.length];
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ci++;
+  }
+
+  // Legend
+  ci = 0;
+  var lx = W - margin.right - 100;
+  for (var k in d.equity_curves) {
+    ctx.fillStyle = colors[ci % colors.length];
+    ctx.fillRect(lx, margin.top + 2 + ci * 16, 10, 10);
+    ctx.fillStyle = '#d1d5db';
+    ctx.font = '9px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(k, lx + 14, margin.top + 10 + ci * 16);
+    ci++;
+  }
+}
+
+// ============ Enhanced Risk (T890) ============
+async function fetchRiskEnhanced() {
+  try {
+    const r = await fetch('/api/quant/risk/enhanced');
+    if (!r.ok) throw new Error('no data');
+    const d = await r.json();
+    renderRiskEnhanced(d);
+  } catch(e) {
+    document.getElementById('riskEnhancedContent').innerHTML = '<div class="empty">Risk analysis unavailable.</div>';
+  }
+}
+
+function renderRiskEnhanced(d) {
+  const panel = document.getElementById('riskEnhancedPanel');
+  const source = document.getElementById('riskEnhancedSource');
+  const content = document.getElementById('riskEnhancedContent');
+  source.textContent = d.source === 'live' ? 'live' : 'generated';
+  panel.style.borderColor = d.source === 'live' ? 'var(--green)' : 'var(--border)';
+
+  let html = '';
+
+  // VaR backtest
+  if (d.var_backtest) {
+    const vb = d.var_backtest;
+    const vColor = vb.verdict === 'PASS' ? 'var(--green)' : 'var(--red)';
+    html += `<div style="margin-bottom:10px;padding:8px;background:rgba(59,130,246,0.05);border-radius:6px;">
+      <div style="font-weight:600;color:var(--gold);margin-bottom:4px;">VaR Backtest (Kupiec)</div>
+      <div>Exceedances: <b>${vb.exceedances}</b> / expected ${vb.expected} (ratio: ${vb.ratio})</div>
+      <div>Kupiec p-value: <b>${vb.kupiec_pvalue}</b>
+        <span style="color:${vColor};font-weight:600;"> ${vb.verdict}</span></div>
+    </div>`;
+  }
+
+  // Stress scores
+  if (d.stress_scores) {
+    html += '<div style="font-weight:600;color:var(--gold);margin-bottom:4px;">Stress Scenarios</div>';
+    for (const [name, data] of Object.entries(d.stress_scores)) {
+      const si = data.sharpe_impact || 0;
+      const siColor = si > -1 ? 'var(--green)' : si > -2 ? '#f59e0b' : 'var(--red)';
+      html += `<div style="display:flex;justify-content:space-between;margin-bottom:3px;font-size:0.82em;">
+        <span>${name}</span>
+        <span style="color:${siColor};">Sharpe Δ${si.toFixed(2)} | VaR95 Δ${(data.var95_impact||0).toFixed(3)}</span>
+      </div>`;
+    }
+  }
+
+  content.innerHTML = html || '<div class="empty">No data.</div>';
+}
+
+// ============ Factor Decay (T884) ============
+async function fetchDecayAlerts() {
+  try {
+    const r = await fetch('/api/factor/decay');
+    if (!r.ok) throw new Error('no data');
+    const d = await r.json();
+    renderDecayAlerts(d);
+  } catch(e) {
+    document.getElementById('decayContent').innerHTML = '<div class="empty">Decay check unavailable.</div>';
+  }
+}
+
+function renderDecayAlerts(d) {
+  const panel = document.getElementById('decayPanel');
+  const statusEl = document.getElementById('decayStatus');
+  const content = document.getElementById('decayContent');
+
+  if (d.status !== 'ok') {
+    statusEl.textContent = 'error';
+    content.innerHTML = '<div class="empty">Decay check failed.</div>';
+    return;
+  }
+
+  if (d.count === 0) {
+    statusEl.textContent = 'all stable ✓';
+    panel.style.borderColor = 'var(--green)';
+    content.innerHTML = '<div style="color:#10b981;">All factors stable. No decay alerts.</div>';
+  } else {
+    statusEl.textContent = `${d.critical} critical, ${d.warning} warning`;
+    panel.style.borderColor = d.critical > 0 ? 'var(--red)' : '#f59e0b';
+    content.innerHTML = d.alerts.map(a =>
+      `<div style="margin-bottom:4px;border-left:3px solid ${a.severity==='critical'?'var(--red)':'#f59e0b'};padding-left:8px;">
+        <span style="color:var(--gold);font-weight:600;">${a.factor}</span>
+        <span style="color:var(--muted);font-size:0.85em;">${a.type}</span>
+        <span style="color:${a.severity==='critical'?'var(--red)':'#f59e0b'};float:right;">${a.severity}</span>
+        <div style="color:var(--muted);font-size:0.8em;">${a.detail}</div>
+      </div>`
+    ).join('');
+  }
+}
+
+// ============ Sensitivity Analysis (T887) ============
+async function fetchSensitivity() {
+  try {
+    const r = await fetch('/api/strategy/sensitivity');
+    if (!r.ok) throw new Error('no data');
+    const d = await r.json();
+    renderSensitivity(d);
+  } catch(e) {
+    document.getElementById('sensitivityContent').innerHTML = '<div class="empty">Sensitivity analysis unavailable.</div>';
+  }
+}
+
+function renderSensitivity(d) {
+  const content = document.getElementById('sensitivityContent');
+  if (!d.results || !d.results.length) {
+    content.innerHTML = '<div class="empty">No results.</div>';
+    return;
+  }
+  const sorted = [...d.results].sort((a, b) => Math.abs(b.elasticity) - Math.abs(a.elasticity));
+  const colors = {high: 'var(--red)', medium: '#f59e0b', low: 'var(--muted)'};
+  content.innerHTML = sorted.map(r => {
+    const absE = Math.abs(r.elasticity);
+    const tier = absE > 0.5 ? 'high' : absE > 0.1 ? 'medium' : 'low';
+    const barWidth = Math.min(absE * 100, 100);
+    return `<div style="margin-bottom:6px;">
+      <div style="display:flex;justify-content:space-between;font-size:0.82em;">
+        <span>${r.param}</span>
+        <span style="color:${colors[tier]};font-weight:600;">E=${r.elasticity?.toFixed(3)||'—'}</span>
+      </div>
+      <div style="height:3px;background:var(--border);border-radius:2px;margin-top:2px;">
+        <div style="height:100%;width:${barWidth}%;background:${colors[tier]};border-radius:2px;"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============ Log Viewer (T871) ============
+function renderLogs(logs) {
+  const el = document.getElementById('logContent');
+  if (!logs.length) { el.innerHTML = '<div class="empty">No log records yet.</div>'; return; }
+  const colors = {ERROR:'#ef4444',WARNING:'#f59e0b',INFO:'#94a3b8',DEBUG:'#64748b'};
+  el.innerHTML = logs.map(l =>
+    `<div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.6;">
+      <span style="color:#64748b;font-size:0.85em;">${l.time.slice(11,19)}</span>
+      <span style="color:${colors[l.level]||'#94a3b8'};font-weight:600;margin:0 6px;">${l.level.padEnd(7)}</span>
+      <span style="color:#e2e8f0;">${l.msg}</span>
+    </div>`
+  ).join('');
+}
+
+function toggleLogLevel() {
+  const levels = ['', 'WARNING', 'ERROR', 'INFO', 'DEBUG'];
+  const idx = levels.indexOf(logLevelFilter);
+  logLevelFilter = levels[(idx + 1) % levels.length];
+  document.getElementById('logLevelLabel').textContent = logLevelFilter || 'all';
+  fetchLogs();
+}
+
+// ============ Render ============
+function renderHeatmap(d) {
+  const factors = d.factors || [];
+  const stocks = d.stocks || [];
+  const data = d.data || {};
+
+  // Populate factor filter dropdown
+  if (allFactorNames.length === 0 && factors.length > 0) {
+    allFactorNames = [...factors];
+    const sel = document.getElementById('factorFilter');
+    factors.forEach(f => {
+      const opt = document.createElement('option');
+      opt.value = f; opt.textContent = f; opt.selected = true;
+      sel.appendChild(opt);
+    });
+    activeFactorFilter = [...factors];
+  }
+
+  const displayFactors = activeFactorFilter.length > 0
+    ? factors.filter(f => activeFactorFilter.includes(f))
+    : factors;
+
+  if (!stocks.length || !displayFactors.length) {
+    document.getElementById('heatmapContent').innerHTML = '<div class="empty">No factor data available</div>';
+    return;
+  }
+
+  let html = '<div class="heatmap-wrap"><div style="display:flex;">';
+  html += '<div style="min-width:70px;"></div>';
+  for (const s of stocks.slice(0,30)) {
+    html += `<div class="heatmap-col-label" style="width:48px;display:inline-block;">${s.slice(0,6)}</div>`;
+  }
+  html += '</div>';
+
+  for (const f of displayFactors.slice(0,25)) {
+    html += '<div style="white-space:nowrap;">';
+    html += `<span class="heatmap-row-label">${f}</span>`;
+    for (const s of stocks.slice(0,30)) {
+      const v = (data[f] || {})[s];
+      if (v === undefined || v === null || isNaN(v)) {
+        html += '<span class="heatmap-cell" style="background:#1a1f2e;"></span>';
+      } else {
+        const intensity = Math.min(Math.abs(v) / 3, 1);
+        const color = v > 0
+          ? `rgba(16,185,129,${intensity})`
+          : `rgba(239,68,68,${intensity})`;
+        html += `<span class="heatmap-cell" style="background:${color};" title="${f} / ${s}: ${v.toFixed(3)}"></span>`;
+      }
+    }
+    html += '</div>';
+  }
+  html += '</div>';
+  const hc = document.getElementById('heatmapContent');
+  hc.innerHTML = html;
+  flashElement(hc);
+}
+
+function onFactorFilter() {
+  const sel = document.getElementById('factorFilter');
+  activeFactorFilter = Array.from(sel.selectedOptions).map(o => o.value);
+  fetchFactors();
+}
+
+function renderSignals(d) {
+  const longs = (d.longs || []).slice(0,15);
+  const shorts = (d.shorts || []).slice(0,15);
+
+  let lhtml = '<table class="sig-table"><tr><th>Ticker</th><th>Score</th><th>Strength</th></tr>';
+  for (const s of longs) {
+    const pct = Math.min(s.score / 3 * 100, 100);
+    lhtml += `<tr><td class="long">${s.ticker||'?'}</td><td>${(s.score||0).toFixed(3)}</td>`
+      + `<td><div class="score-bar"><div class="fill-long" style="width:${Math.abs(pct)}%"></div></div></td></tr>`;
+  }
+  lhtml += '</table>';
+  const lel = document.getElementById('longSignals'); lel.innerHTML = lhtml || '<div class="empty">No signals</div>'; flashElement(lel);
+
+  let shtml = '<table class="sig-table"><tr><th>Ticker</th><th>Score</th><th>Strength</th></tr>';
+  for (const s of shorts) {
+    const pct = Math.min(Math.abs(s.score) / 3 * 100, 100);
+    shtml += `<tr><td class="short">${s.ticker||'?'}</td><td>${(s.score||0).toFixed(3)}</td>`
+      + `<td><div class="score-bar"><div class="fill-short" style="width:${Math.abs(pct)}%"></div></div></td></tr>`;
+  }
+  shtml += '</table>';
+  const sel = document.getElementById('shortSignals'); sel.innerHTML = shtml || '<div class="empty">No signals</div>'; flashElement(sel);
+}
+
+function renderIC(d) {
+  const canvas = document.getElementById('icCanvas');
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 250 * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = '250px';
+  ctx.scale(dpr, dpr);
+
+  const w = rect.width;
+  const h = 250;
+  ctx.clearRect(0, 0, w, h);
+
+  const series = d.series || {};
+  const keys = Object.keys(series);
+  if (!keys.length) {
+    document.getElementById('icFallback').style.display = 'block';
+    canvas.style.cursor = 'default';
+    return;
+  }
+  document.getElementById('icFallback').style.display = 'none';
+
+  const colors = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4'];
+  const pad = {top:10, right:10, bottom:30, left:50};
+  const pw = w - pad.left - pad.right;
+  const ph = h - pad.top - pad.bottom;
+
+  // Store line data for hover interaction
+  const lineData = [];
+
+  // Axes
+  ctx.strokeStyle = '#1e293b';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad.left, pad.top); ctx.lineTo(pad.left, pad.top+ph);
+  ctx.lineTo(pad.left+pw, pad.top+ph);
+  ctx.stroke();
+
+  // Zero line
+  const zeroY = pad.top + ph/2;
+  ctx.strokeStyle = '#333';
+  ctx.beginPath();
+  ctx.moveTo(pad.left, zeroY); ctx.lineTo(pad.left+pw, zeroY);
+  ctx.stroke();
+
+  // Y-axis labels
+  ctx.fillStyle = '#555'; ctx.font = '9px sans-serif';
+  ctx.fillText('+0.1', 2, pad.top + ph*0.1);
+  ctx.fillText('0', 28, zeroY + 3);
+  ctx.fillText('-0.1', 2, pad.top + ph*0.9);
+
+  // Data lines
+  let ci = 0;
+  for (const [name, values] of Object.entries(series)) {
+    if (!values || values.length < 2) continue;
+    const color = colors[ci % colors.length];
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    const points = [];
+    let first = true;
+    for (let i = 0; i < values.length; i++) {
+      const x = pad.left + (i / (values.length-1)) * pw;
+      const y = zeroY - (values[i] || 0) * (ph/2);
+      points.push({x, y, val: values[i], idx: i});
+      if (first) { ctx.moveTo(x, y); first = false; }
+      else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+    lineData.push({name, color, points, values});
+    ci++;
+  }
+
+  // Legend
+  ctx.font = '10px sans-serif';
+  ci = 0;
+  let lx = pad.left;
+  for (const name of keys.slice(0,8)) {
+    ctx.fillStyle = colors[ci % colors.length];
+    ctx.fillRect(lx, h-20, 8, 8);
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillText(name, lx+10, h-10);
+    lx += ctx.measureText(name).width + 24;
+    ci++;
+  }
+
+  // Hover tooltip
+  canvas.style.cursor = 'crosshair';
+  canvas.onmousemove = function(e) {
+    const mx = e.offsetX;
+    const my = e.offsetY;
+    let tooltip = document.getElementById('icTooltip');
+    if (!tooltip) {
+      tooltip = document.createElement('div');
+      tooltip.id = 'icTooltip';
+      tooltip.className = 'ic-tooltip';
+      canvas.parentElement.appendChild(tooltip);
+    }
+
+    // Find nearest x point across all lines
+    let bestDist = 20;
+    let bestInfo = null;
+    for (const ld of lineData) {
+      for (const pt of ld.points) {
+        const dist = Math.abs(pt.x - mx);
+        if (dist < bestDist) {
+          bestDist = dist;
+          const dateLabel = ld.values.length > 0 ? `T-${ld.values.length - pt.idx}` : '';
+          bestInfo = {name: ld.name, val: pt.val.toFixed(4), color: ld.color, label: dateLabel};
+        }
+      }
+    }
+    if (bestInfo) {
+      tooltip.style.display = 'block';
+      tooltip.style.left = (mx + 10) + 'px';
+      tooltip.style.top = (my - 25) + 'px';
+      tooltip.innerHTML = `<span style="color:${bestInfo.color};">● ${bestInfo.name}</span>: ${bestInfo.val} <span style="color:#555;">${bestInfo.label}</span>`;
+    } else {
+      tooltip.style.display = 'none';
+    }
+  };
+  canvas.onmouseleave = function() {
+    const tooltip = document.getElementById('icTooltip');
+    if (tooltip) tooltip.style.display = 'none';
+  };
+}
+
+let prevRiskValues = {};
+function renderRisk(d) {
+  const metrics = [
+    {key:'sharpe', label:'Sharpe', fmt:v => v.toFixed(2), cls:v => v>1?'green':v>0?'gold':'red'},
+    {key:'sortino', label:'Sortino', fmt:v => v.toFixed(2), cls:v => v>1?'green':v>0?'gold':'red'},
+    {key:'max_drawdown', label:'Max DD', fmt:v => (v*100).toFixed(1)+'%', cls:v => v>-0.1?'green':v>-0.2?'gold':'red'},
+    {key:'var95', label:'VaR 95%', fmt:v => (v*100).toFixed(2)+'%', cls:v => v<0.02?'green':v<0.05?'gold':'red'},
+    {key:'annual_volatility', label:'Volatility', fmt:v => (v*100).toFixed(1)+'%', cls:v => v<0.15?'green':v<0.3?'gold':'red'},
+    {key:'calmar', label:'Calmar', fmt:v => v.toFixed(2), cls:v => v>1?'green':v>0?'gold':'red'},
+  ];
+
+  let html = '';
+  for (const m of metrics) {
+    const v = d[m.key];
+    const prev = prevRiskValues[m.key];
+    const val = v !== undefined && v !== null ? m.fmt(v) : '—';
+    const dir = (v !== undefined && prev !== undefined) ? (v > prev ? 'metric-up' : v < prev ? 'metric-down' : '') : '';
+    html += `<div class="risk-card"><span class="val ${m.cls(v||0)} smooth-val ${dir}">${val}</span><span class="lbl">${m.label}</span></div>`;
+    if (v !== undefined && v !== null) prevRiskValues[m.key] = v;
+  }
+  const grid = document.getElementById('riskGrid');
+  grid.innerHTML = html;
+  flashElement(grid);
+}
+
+let prevMarketPrices = {};
+function renderMarket(d) {
+  const rows = (d.stocks || []).slice(0,20);
+  let html = '<table class="mkt-table"><tr><th>Ticker</th><th>Price</th><th>Chg%</th><th>Vol</th></tr>';
+  for (const r of rows) {
+    const chg = r.change_pct || 0;
+    const prevP = prevMarketPrices[r.ticker];
+    const priceDir = (prevP !== undefined && r.price !== prevP) ? (r.price > prevP ? 'metric-up' : 'metric-down') : '';
+    const cls = chg > 0 ? 'mkt-up' : chg < 0 ? 'mkt-down' : '';
+    html += `<tr><td>${r.ticker||'?'}</td><td class="smooth-val ${priceDir}">${(r.price||0).toFixed(2)}</td>`
+      + `<td class="${cls}">${chg>0?'+':''}${chg.toFixed(2)}%</td>`
+      + `<td>${((r.volume||0)/1e6).toFixed(1)}M</td></tr>`;
+    if (r.price !== undefined) prevMarketPrices[r.ticker] = r.price;
+  }
+  html += '</table>';
+  document.getElementById('marketContent').innerHTML = html;
+}
+
+// ============ Beginner Banner ============
+function dismissBanner() {
+  document.getElementById('beginnerBanner').style.display = 'none';
+  // Save to localStorage so it stays hidden
+  try { localStorage.setItem('onionquant-banner-dismissed', '1'); } catch(e) {}
+}
+// Re-show banner if not dismissed
+(function() {
+  try {
+    if (localStorage.getItem('onionquant-banner-dismissed') === '1') {
+      document.addEventListener('DOMContentLoaded', function() {
+        var b = document.getElementById('beginnerBanner');
+        if (b) b.style.display = 'none';
+      });
+    }
+  } catch(e) {}
+})();
+
+// ============ Help Toggle ============
+function toggleHelp(id) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  el.classList.toggle('show');
+}
+
+// ============ Executive Summary ============
+// Collects data from other panels and generates plain-language summary
+var _summaryData = {};
+
+function updateSummaryData(key, data) {
+  _summaryData[key] = data;
+  generateSummary();
+}
+
+function generateSummary() {
+  var el = document.getElementById('summaryContent');
+  var tsEl = document.getElementById('summaryTimestamp');
+  if (!el) return;
+
+  // Gather available data
+  var risk = _summaryData.risk || {};
+  var signals = _summaryData.signals || {};
+  var decay = _summaryData.decay || {};
+  var stratComp = _summaryData.stratComp || {};
+  var market = _summaryData.market || {};
+  var health = _summaryData.health || {};
+  var equity = _summaryData.equity || {};
+
+  tsEl.textContent = new Date().toLocaleTimeString();
+
+  // Determine overall status
+  var sharpe = risk.sharpe;
+  var maxdd = risk.max_drawdown;
+  var signalCount = (signals.longs && signals.longs.length || 0) + (signals.shorts && signals.shorts.length || 0);
+  var decayCount = decay.count || 0;
+  var criticalDecay = decay.critical || 0;
+
+  // Score each dimension: green=2, yellow=1, red=0
+  var scores = [];
+  var items = [];
+
+  // Sharpe assessment
+  if (sharpe !== undefined && sharpe !== null) {
+    if (sharpe > 1.5) { scores.push(2); items.push({icon:'✅', txt:'夏普比率 ' + sharpe.toFixed(2) + ' (优秀，>1.5)', cls:'green'}); }
+    else if (sharpe > 1.0) { scores.push(2); items.push({icon:'👍', txt:'夏普比率 ' + sharpe.toFixed(2) + ' (合格，>1.0)', cls:'green'}); }
+    else if (sharpe > 0.5) { scores.push(1); items.push({icon:'⚠️', txt:'夏普比率 ' + sharpe.toFixed(2) + ' (偏低，<1.0)', cls:'gold'}); }
+    else { scores.push(0); items.push({icon:'🔴', txt:'夏普比率 ' + sharpe.toFixed(2) + ' (危险，<0.5)', cls:'red'}); }
+  }
+
+  // MaxDD assessment
+  if (maxdd !== undefined && maxdd !== null) {
+    var ddPct = maxdd * 100;
+    if (ddPct > -8) { scores.push(2); items.push({icon:'✅', txt:'最大回撤 ' + ddPct.toFixed(1) + '% (温和)', cls:'green'}); }
+    else if (ddPct > -20) { scores.push(1); items.push({icon:'⚠️', txt:'最大回撤 ' + ddPct.toFixed(1) + '% (需关注)', cls:'gold'}); }
+    else { scores.push(0); items.push({icon:'🔴', txt:'最大回撤 ' + ddPct.toFixed(1) + '% (高风险)', cls:'red'}); }
+  }
+
+  // Signal assessment
+  if (signalCount > 0) {
+    if (signalCount >= 10) { scores.push(2); items.push({icon:'✅', txt:'活跃信号 ' + signalCount + ' 个', cls:'green'}); }
+    else if (signalCount >= 5) { scores.push(1); items.push({icon:'⚠️', txt:'信号偏少 ' + signalCount + ' 个', cls:'gold'}); }
+    else { scores.push(0); items.push({icon:'🔴', txt:'信号极少 ' + signalCount + ' 个', cls:'red'}); }
+  }
+
+  // Decay assessment
+  if (decayCount !== undefined) {
+    if (criticalDecay > 0) { scores.push(0); items.push({icon:'🔴', txt:'因子衰减告警 ' + criticalDecay + ' 个严重', cls:'red'}); }
+    else if (decayCount > 0) { scores.push(1); items.push({icon:'⚠️', txt:'因子衰减告警 ' + decayCount + ' 个', cls:'gold'}); }
+    else { scores.push(2); items.push({icon:'✅', txt:'因子状态稳定，无衰减', cls:'green'}); }
+  }
+
+  // Health assessment
+  if (health.status) {
+    if (health.status === 'fresh') { items.push({icon:'✅', txt:'数据健康 (新鲜)', cls:'green'}); }
+    else if (health.status === 'aging') { items.push({icon:'⚠️', txt:'数据老化中 (需刷新)', cls:'gold'}); }
+    else { items.push({icon:'🔴', txt:'数据过期 (需更新)', cls:'red'}); }
+  }
+
+  // Calculate overall score
+  var avgScore = scores.length > 0 ? scores.reduce(function(a,b){return a+b;}, 0) / scores.length : 1.5;
+  var statusColor, statusEmoji, statusText, statusDesc;
+
+  if (avgScore >= 1.7) {
+    statusColor = 'var(--green)'; statusEmoji = '🟢'; statusText = '策略运行良好'; statusDesc = '各项指标正常，可继续按现有策略执行。定期检查因子热力图确认信号未衰减。';
+  } else if (avgScore >= 1.0) {
+    statusColor = '#f59e0b'; statusEmoji = '🟡'; statusText = '需要关注'; statusDesc = '部分指标不够理想但未到危险级别。建议检查"风险指标"面板找薄弱点，观察因子热力图是否有因子转向红色。';
+  } else {
+    statusColor = 'var(--red)'; statusEmoji = '🔴'; statusText = '需要排查'; statusDesc = '有指标出现严重警告。请优先看"风险指标"面板中红色数字，再看"因子衰减"面板。不要盲目加仓，先搞清楚哪里出了问题。';
+  }
+
+  var html = '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;">';
+  html += '<div style="font-size:2em;">' + statusEmoji + '</div>';
+  html += '<div style="flex:1;min-width:200px;">';
+  html += '<div style="font-size:1.2em;font-weight:700;color:' + statusColor + ';">' + statusText + '</div>';
+  html += '<div style="color:var(--muted);font-size:0.9em;">' + statusDesc + '</div>';
+  html += '</div></div>';
+
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:6px;">';
+  for (var i = 0; i < items.length; i++) {
+    var item = items[i];
+    var color = item.cls === 'green' ? 'var(--green)' : item.cls === 'gold' ? '#f59e0b' : 'var(--red)';
+    html += '<div style="padding:4px 8px;background:rgba(59,130,246,0.03);border-radius:4px;border-left:2px solid ' + color + ';">';
+    html += '<span style="color:' + color + ';margin-right:6px;">' + item.icon + '</span>';
+    html += '<span style="font-size:0.85em;">' + item.txt + '</span>';
+    html += '</div>';
+  }
+  html += '</div>';
+
+  if (items.length === 0) {
+    html = '<div class="loading">正在收集数据... 请等待其他面板加载完毕。首次加载可能需要30秒。</div>';
+  } else {
+    html += '<div style="margin-top:8px;font-size:0.72em;color:var(--muted);">' +
+      '以上总结基于已加载的数据自动生成。点击快速跳转链接查看各面板详情和更多解释。' +
+      '</div>';
+  }
+
+  el.innerHTML = html;
+}
+
+// Hook into existing render functions to feed summary data
+var _origRenderRisk = renderRisk;
+renderRisk = function(d) {
+  _origRenderRisk(d);
+  updateSummaryData('risk', d);
+};
+var _origRenderSignals = renderSignals;
+renderSignals = function(d) {
+  _origRenderSignals(d);
+  updateSummaryData('signals', d);
+};
+var _origRenderDecayAlerts = renderDecayAlerts;
+renderDecayAlerts = function(d) {
+  _origRenderDecayAlerts(d);
+  updateSummaryData('decay', d);
+};
+var _origRenderStrategyCompare = renderStrategyCompare;
+renderStrategyCompare = function(d) {
+  _origRenderStrategyCompare(d);
+  updateSummaryData('stratComp', d);
+};
+var _origRenderDataHealth = renderDataHealth;
+renderDataHealth = function(d) {
+  _origRenderDataHealth(d);
+  updateSummaryData('health', d);
+};
+
+// ============ Stock Recommendations ============
+async function fetchRecommendations() {
+  try {
+    const r = await fetch('/api/quant/recommendations');
+    if (!r.ok) throw new Error('no data');
+    const d = await r.json();
+    renderRecommendations(d);
+  } catch(e) {
+    document.getElementById('recommendationsContent').innerHTML = '<div class="empty">推荐引擎暂不可用。请运行数据管道后重试。</div>';
+  }
+}
+
+function renderRecommendations(d) {
+  var panel = document.getElementById('recommendationsPanel');
+  var sourceEl = document.getElementById('recsSource');
+  var content = document.getElementById('recommendationsContent');
+
+  if (d.source === 'live') {
+    sourceEl.textContent = 'live · ' + (d.factors_used || '?') + ' factors';
+    panel.style.borderColor = 'var(--green)';
+  } else {
+    sourceEl.textContent = 'simulated';
+    panel.style.borderColor = '#f59e0b';
+  }
+
+  if (d.error) {
+    content.innerHTML = '<div style="color:var(--red);font-size:0.9em;">⚠ ' + d.error + '</div>' +
+      (d.summary ? '<div style="color:var(--muted);margin-top:4px;">' + d.summary + '</div>' : '');
+    return;
+  }
+
+  var recs = d.recommendations || [];
+  if (!recs.length) {
+    content.innerHTML = '<div class="empty">暂无推荐。数据不足或因子未加载。</div>';
+    return;
+  }
+
+  // Summary bar
+  var html = '<div style="margin-bottom:10px;padding:8px 12px;background:rgba(240,185,11,0.06);border-radius:6px;font-size:0.85em;">' +
+    '<span style="color:var(--gold);">📊 </span>' + (d.summary || '') + '</div>';
+
+  // Recommendations
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:8px;">';
+
+  for (var i = 0; i < recs.length; i++) {
+    var r = recs[i];
+    var isLong = r.signal_raw === 1;
+    var bgColor = isLong ? 'rgba(16,185,129,0.04)' : 'rgba(239,68,68,0.04)';
+    var borderColor = isLong ? 'var(--green)' : 'var(--red)';
+    var badgeColor = isLong ? 'var(--green)' : 'var(--red)';
+    var badgeText = isLong ? '📈 看涨' : '📉 看跌';
+    var convColors = {high: 'var(--red)', medium: '#f59e0b', low: 'var(--muted)'};
+    var convLabels = {high: '⚠ 高置信度', medium: '中等置信度', low: '低置信度'};
+    var convKey = r.conviction === '高' ? 'high' : r.conviction === '中' ? 'medium' : 'low';
+
+    html += '<div style="background:' + bgColor + ';border:1px solid var(--border);border-left:3px solid ' + borderColor + ';border-radius:8px;padding:10px;">';
+    // Header row
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
+    html += '<span style="font-size:1.1em;font-weight:700;">' + r.ticker + '</span>';
+    html += '<span style="color:' + badgeColor + ';font-weight:600;font-size:0.9em;">' + badgeText + ' · Score: ' + r.score.toFixed(2) + '</span>';
+    html += '</div>';
+
+    // Conviction
+    html += '<div style="font-size:0.75em;color:' + (convColors[convKey] || 'var(--muted)') + ';margin-bottom:8px;">' +
+      (convLabels[convKey] || '') + '</div>';
+
+    // Plain language reason
+    html += '<div style="margin-bottom:8px;font-size:0.82em;line-height:1.6;">' +
+      '<span style="color:var(--gold);">💬 </span>' + (r.reason || '') + '</div>';
+
+    // Factor attribution
+    if (r.top_factors && r.top_factors.length) {
+      html += '<div style="font-size:0.72em;color:var(--muted);margin-bottom:4px;">因子归因:</div>';
+      html += '<div style="display:flex;gap:4px;flex-wrap:wrap;">';
+      for (var fi = 0; fi < r.top_factors.length; fi++) {
+        var f = r.top_factors[fi];
+        var fColor = f.z_score > 0.3 ? 'var(--green)' : f.z_score < -0.3 ? 'var(--red)' : 'var(--muted)';
+        html += '<span style="padding:2px 8px;border-radius:10px;background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.15);color:' + fColor + ';">' +
+          f.display_name + ' ' + f.direction + '</span>';
+      }
+      html += '</div>';
+    }
+
+    // Category contributions
+    if (r.category_contributions && Object.keys(r.category_contributions).length) {
+      html += '<div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;font-size:0.7em;">';
+      var cats = Object.keys(r.category_contributions);
+      for (var ci = 0; ci < cats.length; ci++) {
+        var c = r.category_contributions[cats[ci]];
+        var cColor = c.direction === '看涨' ? 'var(--green)' : c.direction === '看跌' ? 'var(--red)' : 'var(--muted)';
+        html += '<span style="color:' + cColor + ';">' + cats[ci] + ': ' + c.direction + ' (z=' + c.average_z_score.toFixed(2) + ')</span>';
+      }
+      html += '</div>';
+    }
+
+    html += '</div>';
+  }
+
+  html += '</div>';
+  content.innerHTML = html;
+  flashElement(content);
+}
+
+// ============ Glossary Toggle ============
+function toggleGlossary() {
+  const el = document.getElementById('glossContent');
+  const btn = document.getElementById('glossToggle');
+  if (el.style.display === 'none') { el.style.display = ''; btn.textContent = '收起 ▲'; }
+  else { el.style.display = 'none'; btn.textContent = '展开 ▼'; }
+}
+
+// ============ Init ============
+startCountdown();
+connectSSE();
+fetchFactors(); fetchSignals(); fetchIC(); fetchRisk(); fetchMarket();
+setInterval(fetchFactors, 30000);
+setInterval(fetchSignals, 30000);
+setInterval(fetchIC, 60000);
+setInterval(fetchRisk, 60000);
+setInterval(fetchMarket, 30000);
+fetchLogs(); setInterval(fetchLogs, 20000);
+fetchDataHealth(); setInterval(fetchDataHealth, 120000);
+fetchWechatStatus(); setInterval(fetchWechatStatus, 15000);
+fetchDecayAlerts(); setInterval(fetchDecayAlerts, 300000);
+fetchSensitivity(); setInterval(fetchSensitivity, 600000);
+fetchRiskEnhanced(); setInterval(fetchRiskEnhanced, 60000);
+fetchStrategyCompare(); setInterval(fetchStrategyCompare, 300000);
+fetchEquityCurve(); setInterval(fetchEquityCurve, 60000);
+fetchOptimization(); setInterval(fetchOptimization, 300000);
+fetchDeptActivity(); setInterval(fetchDeptActivity, 60000);
+fetchRiskLimits(); setInterval(fetchRiskLimits, 45000);
+fetchParamSweep(); setInterval(fetchParamSweep, 600000);
+fetchRecommendations(); setInterval(fetchRecommendations, 120000);
+</script>
+</body>
+</html>

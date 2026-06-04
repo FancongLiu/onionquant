@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OnionQuant · 研报面板</title>
+<style>
+:root {
+  --bg: #0f1117; --surface: #1a1d27; --border: #2a2d3a;
+  --text: #e1e4ea; --muted: #8b8fa3; --green: #10b981;
+  --red: #ef4444; --yellow: #f59e0b; --blue: #3b82f6;
+  --purple: #8b5cf6; --orange: #f97316;
+}
+[data-theme="light"] {
+  --bg: #f8f9fb; --surface: #fff; --border: #e2e5ec;
+  --text: #1a1d2d; --muted: #6b7094;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; padding: 20px; max-width: 1100px; margin: 0 auto; }
+h1 { font-size: 1.5rem; margin-bottom: 4px; }
+h2 { font-size: 1.15rem; margin: 20px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+h3 { font-size: 1rem; margin: 14px 0 6px; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.status-bar { font-size: 0.8rem; color: var(--muted); display: flex; gap: 16px; align-items: center; }
+.live-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; display: inline-block; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.priority-badge { font-size: 0.7rem; padding: 1px 6px; border-radius: 3px; font-weight: 600; }
+.p0 { background: var(--red); color: #fff; }
+.p1 { background: var(--orange); color: #fff; }
+.p2 { background: var(--muted); color: #fff; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+.card.priority { border-left: 3px solid var(--red); }
+.card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+th { color: var(--muted); font-weight: 500; font-size: 0.78rem; text-transform: uppercase; }
+.up { color: var(--green); }
+.down { color: var(--red); }
+.risk-tag { font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; margin-right: 4px; display: inline-block; margin-bottom: 4px; }
+.risk-critical { background: rgba(239,68,68,0.15); color: var(--red); }
+.risk-warning { background: rgba(245,158,11,0.12); color: var(--yellow); }
+.risk-info { background: rgba(59,130,246,0.12); color: var(--blue); }
+.chart-mini { width: 100%; height: 60px; margin-top: 8px; }
+.verdict-box { padding: 10px 14px; border-radius: 6px; margin-top: 8px; font-weight: 600; font-size: 0.9rem; }
+.verdict-bull { background: rgba(16,185,129,0.1); color: var(--green); border: 1px solid rgba(16,185,129,0.3); }
+.verdict-bear { background: rgba(239,68,68,0.1); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+.verdict-neutral { background: rgba(139,143,163,0.1); color: var(--muted); border: 1px solid rgba(139,143,163,0.3); }
+.empty { color: var(--muted); font-size: 0.9rem; padding: 20px; text-align: center; }
+.news-item { padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+.news-item:last-child { border-bottom: none; }
+.news-time { color: var(--muted); font-size: 0.78rem; }
+.refresh-btn { font-size: 0.78rem; padding: 3px 10px; border: 1px solid var(--border); border-radius: 4px; background: var(--surface); color: var(--text); cursor: pointer; }
+.refresh-btn:hover { border-color: var(--blue); }
+@media (max-width: 768px) { .card-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>🧅 OnionQuant · 研报面板</h1>
+    <div class="status-bar">
+      <span class="live-dot"></span> 实时追踪中 ·
+      <span id="updateTime">--</span> ·
+      自动刷新 <span id="countdown">60s</span>
+    </div>
+  </div>
+  <button class="refresh-btn" onclick="refreshAll()">↻ 刷新</button>
+</div>
+
+<!-- 🔴 DXYZ 专区 (P0 — 董事长全仓) -->
+<h2><span class="priority-badge p0">P0</span> DXYZ · Destiny Tech100 <span style="color:var(--green);font-size:0.9rem;">全仓跟踪</span></h2>
+<div id="dxyzSection"></div>
+
+<!-- 🟡 SK Hynix 追踪 (P1 — 董事长关注) -->
+<h2><span class="priority-badge p1">P1</span> 海力士 (000660.KR) · SK Hynix <span style="color:var(--muted);font-size:0.8rem;">HBM龙头</span></h2>
+<div id="hynixSection"></div>
+
+<!-- 🟢 存储/半导体/航天/光模块 概览 -->
+<h2>📊 研报关注标的概览</h2>
+<div id="overviewSection"></div>
+
+<!-- 📰 核心事件时间线 -->
+<h2>📅 催化剂日历</h2>
+<div id="catalystSection"></div>
+
+<script>
+const REFRESH_INTERVAL = 60000;
+let countdown = 60;
+
+function escHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s ?? '';
+  return d.innerHTML;
+}
+
+async function fetchData() {
+  try {
+    const [dxyz, hynix, overview, catalysts] = await Promise.all([
+      fetch('/api/research/dxyz').then(r => r.json()).catch(() => null),
+      fetch('/api/research/hynix').then(r => r.json()).catch(() => null),
+      fetch('/api/research/overview').then(r => r.json()).catch(() => null),
+      fetch('/api/research/catalysts').then(r => r.json()).catch(() => null),
+    ]);
+    renderDXYZ(dxyz);
+    renderHynix(hynix);
+    renderOverview(overview);
+    renderCatalysts(catalysts);
+    document.getElementById('updateTime').textContent = new Date().toLocaleTimeString();
+  } catch (e) {
+    console.error('Fetch error:', e);
+  }
+}
+
+function renderDXYZ(data) {
+  const el = document.getElementById('dxyzSection');
+  if (!data || data.error) {
+    el.innerHTML = '<div class="empty">DXYZ 数据加载中...</div>';
+    return;
+  }
+  const risks = (data.risks || []).map(r =>
+    '<span class="risk-tag risk-' + escHtml(String(r.severity)) + '">' + escHtml(r.label) + '</span>'
+  ).join('');
+  const catalysts = (data.catalysts || []).map(c =>
+    '<div class="news-item"><strong>' + escHtml(c.title) + '</strong><br><span class="news-time">' + escHtml(c.time) + '</span> — ' + escHtml(c.desc) + '</div>'
+  ).join('');
+  el.innerHTML = `
+    <div class="card priority">
+      <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div>
+          <strong style="font-size:1.1rem;">$${escHtml(String(data.price))}</strong>
+          <span class="${data.change_pct >= 0 ? 'up' : 'down'}" style="margin-left:8px;">
+            ${data.change_pct >= 0 ? '▲' : '▼'} ${escHtml(String(Math.abs(data.change_pct).toFixed(2)))}%
+          </span>
+          <span style="color:var(--muted);font-size:0.8rem;margin-left:8px;">今日</span>
+        </div>
+        <div style="text-align:right;font-size:0.85rem;color:var(--muted);">
+          NAV溢价: <strong style="color:var(--yellow);">${escHtml(String(data.nav_premium))}%</strong><br>
+          RSI: <strong style="color:${data.rsi > 80 ? 'var(--red)' : 'var(--muted)'};">${escHtml(String(data.rsi))}</strong>
+        </div>
+      </div>
+      <div style="margin-top:8px;">${risks}</div>
+      <div class="verdict-box ${escHtml(data.verdict_class || 'verdict-neutral')}">${escHtml(data.verdict || '观望')}</div>
+    </div>
+    <div class="card">
+      <h3>📰 关键催化</h3>
+      ${catalysts || '<div class="empty">暂无新催化</div>'}
+    </div>
+    <div class="card">
+      <h3>📝 AI 分析摘要</h3>
+      <p style="font-size:0.88rem;color:var(--muted);">${escHtml(data.summary || '加载中...')}</p>
+    </div>
+  `;
+}
+
+function renderHynix(data) {
+  const el = document.getElementById('hynixSection');
+  if (!data || data.error) {
+    el.innerHTML = '<div class="empty">海力士数据加载中...</div>';
+    return;
+  }
+  el.innerHTML = `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div>
+          <strong style="font-size:1.1rem;">₩${escHtml(String(data.price))}</strong>
+          <span class="${data.change_pct >= 0 ? 'up' : 'down'}" style="margin-left:8px;">
+            ${data.change_pct >= 0 ? '▲' : '▼'} ${escHtml(String(Math.abs(data.change_pct).toFixed(2)))}%
+          </span>
+        </div>
+        <div style="text-align:right;font-size:0.85rem;color:var(--muted);">
+          HBM市占: <strong>${escHtml(String(data.hbm_share))}%</strong><br>
+          营业利润率: <strong>${escHtml(String(data.op_margin))}%</strong>
+        </div>
+      </div>
+      <p style="margin-top:8px;font-size:0.88rem;color:var(--muted);">${escHtml(data.summary || '')}</p>
+      <div class="verdict-box verdict-bull">${escHtml(data.verdict || '买入 — HBM双寡头格局稳固')}</div>
+    </div>
+  `;
+}
+
+function renderOverview(data) {
+  const el = document.getElementById('overviewSection');
+  if (!data || !data.stocks) {
+    el.innerHTML = '<div class="empty">加载中...</div>';
+    return;
+  }
+  let rows = data.stocks.map(s =>
+    '<tr>' +
+      '<td>' + escHtml(s.ticker) + '</td>' +
+      '<td>$' + escHtml(String(s.price)) + '</td>' +
+      '<td class="' + (s.change_pct >=0 ? 'up' : 'down') + '">' + (s.change_pct >=0 ? '+' : '') + escHtml(String(s.change_pct.toFixed(1))) + '%</td>' +
+      '<td>' + escHtml(s.signal || '—') + '</td>' +
+    '</tr>'
+  ).join('');
+  el.innerHTML = `
+    <div class="card">
+      <table>
+        <tr><th>标的</th><th>价格</th><th>涨跌</th><th>信号</th></tr>
+        ${rows}
+      </table>
+      <div class="verdict-box verdict-neutral" style="margin-top:10px;">${escHtml(data.focus_note || '')}</div>
+    </div>
+  `;
+}
+
+function renderCatalysts(data) {
+  const el = document.getElementById('catalystSection');
+  if (!data || !data.events) {
+    el.innerHTML = '<div class="empty">加载中...</div>';
+    return;
+  }
+  let items = data.events.map(e =>
+    '<tr>' +
+      '<td>' + escHtml(e.date) + '</td>' +
+      '<td><span class="priority-badge ' + escHtml(e.priority) + '">' + escHtml(String(e.priority).toUpperCase()) + '</span></td>' +
+      '<td><strong>' + escHtml(e.title) + '</strong></td>' +
+      '<td>' + escHtml(e.tickers.join(', ')) + '</td>' +
+    '</tr>'
+  ).join('');
+  el.innerHTML = `<div class="card"><table>
+    <tr><th>日期</th><th>级别</th><th>事件</th><th>关联标的</th></tr>
+    ${items}
+  </table></div>`;
+}
+
+function refreshAll() {
+  countdown = 60;
+  fetchData();
+}
+
+setInterval(() => {
+  countdown--;
+  document.getElementById('countdown').textContent = countdown + 's';
+  if (countdown <= 0) { refreshAll(); }
+}, 1000);
+
+// SSE listener for live updates
+const evtSource = new EventSource('/sse');
+evtSource.addEventListener('research_update', () => {
+  fetchData();
+  countdown = 60;
+});
+
+fetchData();
+</script>
+</body>
+</html>

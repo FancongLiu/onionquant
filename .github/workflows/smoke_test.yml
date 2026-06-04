@@ -1,0 +1,49 @@
+name: Smoke Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'quant_framework/**'
+      - 'infrastructure/**'
+      - 'tests/**'
+      - '.github/workflows/smoke_test.yml'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pytest pytest-cov
+          pip install numpy pandas scipy scikit-learn statsmodels matplotlib seaborn pyyaml python-dotenv
+          pip install riskfolio-lib empyrical-reloaded alphalens-reloaded pyqlib pandas-ta pandera
+          pip install fastapi uvicorn aiohttp
+          # core quant deps only — skip yfinance/openbb/docker/dagster (need network/services)
+
+      - name: Run smoke tests
+        run: pytest tests/test_smoke.py -q -k "not yfinance" --tb=short --cov=quant_framework --cov-report=term-missing
+
+      - name: Generate badge
+        if: always()
+        run: |
+          mkdir -p badges
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "{\"schemaVersion\":1,\"label\":\"tests\",\"message\":\"passing\",\"color\":\"green\"}" > badges/tests.json
+          else
+            echo "{\"schemaVersion\":1,\"label\":\"tests\",\"message\":\"failing\",\"color\":\"red\"}" > badges/tests.json
+          fi

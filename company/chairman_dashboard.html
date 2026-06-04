@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OnionQuant · System Monitor</title>
+<link rel="stylesheet" href="/static/css/dashboard.css">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.6/dist/vis-network.min.js"></script>
+<script>mermaid.initialize({theme:'dark', startOnLoad:true, securityLevel:'loose'});</script>
+</head>
+<body>
+
+<!-- ─── Topbar ─── -->
+<div class="topbar">
+  <div class="logo">🧅 OnionQuant · System Monitor</div>
+  <div class="live-bar">
+    <a href="/office" style="color:var(--accent);text-decoration:none;font-weight:600;font-size:0.85em;">👑 董事办</a>
+    <a href="/monitor" style="color:var(--gold);text-decoration:none;font-weight:600;font-size:0.85em;">🧅 主控台</a>
+    <a href="/quant" style="color:var(--accent);text-decoration:none;font-weight:600;font-size:0.85em;">📊 量化面板</a>
+    <span class="stat"><span class="conn-dot conn-err" id="connDot"></span><span class="lbl" id="connLabel">连接中…</span></span>
+    <span class="stat"><span class="lbl">部门:</span><span class="val" id="statDepts">—</span></span>
+    <span class="stat"><span class="lbl">员工:</span><span class="val" id="statEmployees">—</span></span>
+    <span class="stat"><span class="lbl">任务完成:</span><span class="val" id="statDone">—</span></span>
+    <button onclick="toggleTheme()" style="cursor:pointer;background:var(--border);border:none;color:var(--text);padding:4px 10px;border-radius:14px;font-size:0.8em;" title="Toggle theme">🌓</button>
+    <label class="toggle-label" title="自动批准：非安全问题自动通过，无需等待批准">
+      <span class="toggle-text">🤖 自动批准 <span id="toggleStatus" style="color:var(--green);font-weight:700;">ON</span></span>
+      <input type="checkbox" id="autoApproveToggle" checked onchange="onAutoApproveToggle()">
+      <span class="toggle-switch"></span>
+    </label>
+    <span class="stat"><span class="lbl" id="clock">—</span></span>
+  </div>
+</div>
+
+<!-- ─── Main ─── -->
+<div class="main-layout">
+
+
+  <!-- System Monitor description -->
+  <div style="grid-column:1/-1;background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:12px 18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+    <div>
+      <span style="color:var(--accent);font-weight:700;font-size:0.9em;">System Monitor</span>
+      <span style="color:var(--muted);font-size:0.75em;margin-left:12px;">Pipeline health, task tracking, org status, events</span>
+    </div>
+    <a href="/office" style="background:linear-gradient(135deg,#f0b90b,#d4a30b);border:none;border-radius:8px;padding:8px 18px;color:#000;font-weight:700;font-size:0.85em;text-decoration:none;white-space:nowrap;">Chairman Office</a>
+  </div>
+
+  <!-- View Toggle & Departments -->
+  <div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <span class="section-title" style="margin-bottom:0;">🏢 16 部门 · 组织架构 (点击查看)</span>
+      <div style="display:flex;gap:6px;">
+        <div class="view-toggle">
+          <button id="btnGridView" class="active" onclick="setViewMode('grid')">🖱️ 网格</button>
+          <button id="btnStageView" onclick="setViewMode('stage')">🎮 舞台</button>
+        </div>
+        <button onclick="showKnowledgeGraph()" style="background:linear-gradient(135deg,#8b5cf6,#6366f1);border:none;border-radius:6px;color:#fff;cursor:pointer;font-size:0.68em;padding:4px 10px;">🕸️ 知识图谱</button>
+        <button onclick="expandAllDepts()" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-size:0.68em;padding:3px 8px;">🔽</button>
+        <button onclick="collapseAllDepts()" style="background:none;border:1px solid var(--border);border-radius:6px;color:var(--muted);cursor:pointer;font-size:0.68em;padding:3px 8px;">🔼</button>
+      </div>
+    </div>
+    <!-- Grid View -->
+    <div id="gridView"><div class="dept-compact-grid" id="deptGrid"></div><div id="orgTreePanel"></div></div>
+    <!-- Live Stage View -->
+    <div class="live-stage" id="stageView">
+      <div class="stage-characters" id="stageCharacters"></div>
+      <div class="stage-floor"></div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="panel-box">
+      <h4>📋 任务进度 · TASK_TRACKER</h4>
+      <div id="taskPanel">加载中…</div>
+    </div>
+
+    <div class="panel-box log-panel">
+      <h4>📡 实时事件流 (SSE)</h4>
+      <div id="logContainer">等待 SSE 连接…</div>
+    </div>
+
+    <div class="panel-box milestone-panel">
+      <h4>📅 里程碑 · 大事件</h4>
+      <div id="milestoneList"><div class="empty-hint">运行中，每30分钟更新一次...</div></div>
+    </div>
+
+    <div class="panel-box">
+      <h4>🔗 快捷入口</h4>
+      <a href="/office" style="display:block;background:linear-gradient(135deg,#f0b90b,#d4a30b);border-radius:8px;padding:10px;color:#000;font-weight:700;text-align:center;text-decoration:none;font-size:0.78em;margin-bottom:6px;">👑 前往董事办 — 发送指令 + Agent来信</a>
+      <a href="/quant" style="display:block;background:linear-gradient(135deg,#3b82f6,#1d4ed8);border-radius:8px;padding:8px;color:#fff;font-weight:600;text-align:center;text-decoration:none;font-size:0.72em;">📊 量化面板</a>
+    </div>
+
+    <button onclick="showArchitecture()" style="background:linear-gradient(135deg,#3b82f6,#1d4ed8);border:none;border-radius:8px;padding:10px;color:#fff;font-weight:700;cursor:pointer;">🏗️ 查看系统架构图</button>
+  </div>
+
+</div>
+
+<!-- Architecture Modal (Zoomable) -->
+<div class="modal-overlay" id="archModal">
+  <div class="modal-content" style="max-width:95vw;width:1100px;">
+    <button class="modal-close" onclick="closeArchitecture()">✕</button>
+    <h3 style="color:var(--gold);margin-bottom:6px;">🏗️ OnionQuant · 系统架构</h3>
+    <div class="mermaid-zoom-bar">
+      <button onclick="zoomMermaid(-0.2)" title="缩小">🔍−</button>
+      <button onclick="zoomMermaid(0.2)" title="放大">🔍+</button>
+      <button onclick="resetMermaidZoom()" title="重置">🔄 重置</button>
+      <span class="zoom-val" id="zoomLevel">100%</span>
+      <span style="font-size:0.7em;color:var(--muted);">👆 支持 Ctrl+滚轮缩放</span>
+    </div>
+    <div class="mermaid-scroll" id="mermaidScroll">
+      <div class="mermaid-diagram" id="archDiagram" style="min-width:800px;min-height:400px;transform-origin:top left;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Knowledge Graph Modal -->
+<div class="modal-overlay" id="kgModal">
+  <div class="modal-content kg-modal-content">
+    <button class="modal-close" onclick="document.getElementById('kgModal').classList.remove('active')">✕</button>
+    <h3 style="color:var(--gold);margin-bottom:10px;">🕸️ OnionQuant · 知识图谱 (Knowledge Graph)</h3>
+    <div class="kg-container" id="kgContainer"></div>
+    <div style="font-size:0.7em;color:var(--muted);margin-top:6px;">👆 拖动节点 · 滚轮缩放 · 点击查看详情 · 16部门 + 技术栈关联</div>
+  </div>
+</div>
+
+<!-- Department Detail Modal -->
+<div class="modal-overlay" id="deptModal">
+  <div class="modal-content">
+    <button class="modal-close" onclick="document.getElementById('deptModal').classList.remove('active')">✕</button>
+    <div id="deptModalContent"></div>
+  </div>
+</div>
+
+<script src="/static/js/dashboard.js?v=20260518_1055"></script>
+</body>
+</html>

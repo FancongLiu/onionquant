@@ -1,0 +1,6 @@
+[lint]
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]  # re-exports are API surface
+"company/server.py" = ["E402"]  # sys.stdout reconfigure before imports
+"tests/*.py" = ["E402"]  # sys.path.insert before imports
+"quant_framework/strategies/intraday_momentum.py" = ["E402"]  # backtrader import guard

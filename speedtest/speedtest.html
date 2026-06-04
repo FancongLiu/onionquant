@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SpeedTest Pro — 网络测速 & IP 检测</title>
+<style>
+:root {
+  --bg: #0a0e14; --surface: #12171f; --border: #1e2837;
+  --text: #c9d1d9; --text2: #6b7280; --accent: #3b82f6;
+  --green: #10b981; --yellow: #f59e0b; --red: #ef4444; --purple: #8b5cf6;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  color: var(--text); background: var(--bg);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { min-height:100vh; display:flex; flex-direction:column; }
+
+/* Header */
+.header {
+  text-align:center; padding: 32px 20px 16px;
+  background: linear-gradient(180deg, rgba(59,130,246,0.08) 0%, transparent 100%);
+}
+.header h1 { font-size:1.8rem; font-weight:700; margin-bottom:4px; }
+.header h1 span { color:var(--accent); }
+.header .sub { color:var(--text2); font-size:0.85rem; }
+
+/* Container */
+.container { max-width:1000px; margin:0 auto; padding:0 20px 40px; width:100%; }
+
+/* ======== IP Panel ======== */
+.ip-panel {
+  background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  padding:20px 24px; margin-bottom:20px;
+}
+.ip-panel h2 { font-size:1rem; color:var(--accent); margin-bottom:14px; }
+.ip-grid {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:10px;
+}
+.ip-item {
+  background:var(--bg); border-radius:8px; padding:12px 14px;
+  display:flex; flex-direction:column; gap:2px;
+}
+.ip-item .label { font-size:0.7rem; color:var(--text2); text-transform:uppercase; letter-spacing:0.5px; }
+.ip-item .value { font-size:1rem; font-weight:600; word-break:break-all; }
+.ip-item .value.ip-addr { color:var(--green); font-family:'SF Mono','Cascadia Code',monospace; font-size:1.1rem; }
+.ip-badge {
+  display:inline-block; padding:2px 8px; border-radius:4px;
+  font-size:0.7rem; font-weight:600;
+}
+.ip-badge.vpn { background:rgba(139,92,246,0.2); color:var(--purple); }
+.ip-badge.direct { background:rgba(16,185,129,0.2); color:var(--green); }
+
+/* ======== Speed Panel ======== */
+.speed-panel {
+  background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  padding:20px 24px; margin-bottom:20px;
+}
+.speed-panel h2 { font-size:1rem; color:var(--accent); margin-bottom:14px; }
+.speed-gauges {
+  display:grid; grid-template-columns:repeat(3,1fr); gap:16px;
+  margin-bottom:20px;
+}
+@media(max-width:640px){ .speed-gauges{grid-template-columns:1fr;} }
+
+.gauge {
+  background:var(--bg); border-radius:12px; padding:24px 16px; text-align:center;
+  border:1px solid var(--border); position:relative; overflow:hidden;
+}
+.gauge .icon { font-size:1.4rem; margin-bottom:4px; }
+.gauge .metric { font-size:2.4rem; font-weight:800; line-height:1.1; }
+.gauge .unit { font-size:0.8rem; color:var(--text2); margin-top:2px; }
+.gauge .label { font-size:0.75rem; color:var(--text2); margin-top:6px; text-transform:uppercase; letter-spacing:0.5px; }
+.gauge.ping .metric { color:var(--green); }
+.gauge.down .metric { color:var(--accent); }
+.gauge.up .metric { color:var(--purple); }
+.gauge.running .metric { animation: pulse 0.8s ease-in-out infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* ======== Buttons ======== */
+.btn-row { display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-bottom:16px; }
+.btn {
+  padding:10px 24px; border-radius:8px; font-size:0.9rem; font-weight:600;
+  cursor:pointer; border:1px solid transparent; transition:all 0.2s;
+  font-family:inherit;
+}
+.btn-start {
+  background:var(--accent); color:#fff; border-color:var(--accent);
+  font-size:1rem; padding:12px 36px;
+}
+.btn-start:hover { background:#2563eb; }
+.btn-start:disabled { opacity:0.5; cursor:not-allowed; }
+.btn-outline {
+  background:transparent; color:var(--text); border-color:var(--border);
+}
+.btn-outline:hover { background:var(--border); }
+.btn-sm { padding:6px 14px; font-size:0.8rem; }
+
+/* ======== History Table ======== */
+.history-panel {
+  background:var(--surface); border:1px solid var(--border); border-radius:12px;
+  padding:20px 24px; margin-bottom:20px;
+}
+.history-panel h2 { font-size:1rem; color:var(--accent); margin-bottom:14px; }
+table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+th { text-align:left; padding:10px 8px; border-bottom:2px solid var(--border); color:var(--text2); font-weight:600; }
+td { padding:9px 8px; border-bottom:1px solid var(--border); }
+tr:hover { background:rgba(59,130,246,0.03); }
+.tag {
+  display:inline-block; padding:2px 8px; border-radius:3px;
+  font-size:0.7rem; font-weight:600;
+}
+.tag.vpn { background:rgba(139,92,246,0.2); color:var(--purple); }
+.tag.direct { background:rgba(16,185,129,0.2); color:var(--green); }
+.empty { text-align:center; color:var(--text2); padding:30px; font-size:0.9rem; }
+
+/* ======== Progress ======== */
+.progress-bar {
+  height:3px; background:var(--border); border-radius:3px;
+  margin-bottom:16px; overflow:hidden; opacity:0; transition:opacity 0.3s;
+}
+.progress-bar.active { opacity:1; }
+.progress-fill {
+  height:100%; background:linear-gradient(90deg,var(--accent),var(--purple));
+  width:0%; border-radius:3px; transition:width 0.3s;
+}
+
+/* ======== Log ======== */
+.log { font-size:0.78rem; color:var(--text2); max-height:120px; overflow-y:auto; }
+.log .ok { color:var(--green); }
+.log .warn { color:var(--yellow); }
+.log .err { color:var(--red); }
+
+/* Footer */
+.footer {
+  text-align:center; padding:16px; color:var(--text2); font-size:0.75rem;
+  border-top:1px solid var(--border); margin-top:auto;
+}
+
+/* Toast */
+.toast {
+  position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+  background:var(--surface); border:1px solid var(--border);
+  padding:10px 20px; border-radius:8px; font-size:0.85rem;
+  opacity:0; transition:opacity 0.3s; pointer-events:none; z-index:10;
+}
+.toast.show { opacity:1; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚡ Speed<span>Test</span> Pro</h1>
+  <p class="sub">IP 检测 · 延迟测试 · 下载/上传测速 · VPN 对比</p>
+</div>
+
+<div class="container">
+
+<!-- ============ IP INFO ============ -->
+<div class="ip-panel">
+  <h2>🌐 IP 地址信息 <button class="btn btn-outline btn-sm" onclick="refreshIP()" style="float:right">刷新</button></h2>
+  <div class="ip-grid" id="ipGrid">
+    <div class="ip-item"><span class="label">IP 地址</span><span class="value ip-addr" id="ipAddr">--</span></div>
+    <div class="ip-item"><span class="label">国家/地区</span><span class="value" id="ipCountry">--</span></div>
+    <div class="ip-item"><span class="label">城市</span><span class="value" id="ipCity">--</span></div>
+    <div class="ip-item"><span class="label">ISP 运营商</span><span class="value" id="ipISP">--</span></div>
+    <div class="ip-item"><span class="label">ASN / 组织</span><span class="value" id="ipOrg">--</span></div>
+    <div class="ip-item"><span class="label">标签</span><span class="value" id="ipTag">--</span></div>
+  </div>
+</div>
+
+<!-- ============ SPEED TEST ============ -->
+<div class="speed-panel">
+  <h2>🚀 网络测速</h2>
+  <div class="progress-bar" id="progress"><div class="progress-fill" id="progressFill"></div></div>
+  <div class="speed-gauges">
+    <div class="gauge ping" id="gaugePing">
+      <div class="icon">📡</div>
+      <div class="metric" id="pingVal">--</div>
+      <div class="unit">ms</div>
+      <div class="label">延迟 (Ping)</div>
+    </div>
+    <div class="gauge down" id="gaugeDown">
+      <div class="icon">⬇️</div>
+      <div class="metric" id="downVal">--</div>
+      <div class="unit">Mbps</div>
+      <div class="label">下载速度</div>
+    </div>
+    <div class="gauge up" id="gaugeUp">
+      <div class="icon">⬆️</div>
+      <div class="metric" id="upVal">--</div>
+      <div class="unit">Mbps</div>
+      <div class="label">上传速度</div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-start" id="btnStart" onclick="startSpeedTest()">▶ 开始测速</button>
+    <button class="btn btn-outline btn-sm" onclick="testPingOnly()">📡 仅测延迟</button>
+    <button class="btn btn-outline btn-sm" onclick="clearHistory()">🗑 清除记录</button>
+  </div>
+  <div class="log" id="log"></div>
+</div>
+
+<!-- ============ HISTORY ============ -->
+<div class="history-panel">
+  <h2>📋 测试记录 <span style="font-weight:normal;font-size:0.8rem;color:var(--text2)">（切换 VPN 后重新测速对比）</span></h2>
+  <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>时间</th><th>IP</th><th>位置</th><th>ISP</th><th>延迟</th><th>下载</th><th>上传</th><th>标签</th><th>操作</th></tr></thead>
+      <tbody id="historyBody"><tr><td colspan="9" class="empty">暂无记录，点击「开始测速」</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+</div>
+
+<div class="footer">
+  SpeedTest Pro · Claude Code Agent · 纯前端实现 · 无需服务器
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ==============================
+// IP Detection
+// ==============================
+const IP_APIS = [
+  { url: 'https://ipapi.co/json/', key: d => ({ ip: d.ip, country: d.country_name, city: d.city, isp: d.org, org: d.org, region: d.region, timezone: d.timezone }) },
+  { url: 'https://api.ip.sb/geoip', key: d => ({ ip: d.ip, country: d.country, city: d.city, isp: d.isp, org: d.organization, region: d.region, timezone: d.timezone }) },
+  { url: 'https://ipinfo.io/json', key: d => ({ ip: d.ip, country: d.country, city: d.city, isp: d.org, org: d.org, region: d.region, timezone: d.timezone }) },
+  { url: 'https://api.ipify.org?format=json', key: d => ({ ip: d.ip, country: null, city: null, isp: null, org: null, region: null }) },
+];
+
+async function detectIP() {
+  for (const api of IP_APIS) {
+    try {
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 5000);
+      const resp = await fetch(api.url, { signal: ctrl.signal });
+      clearTimeout(timeout);
+      if (!resp.ok) continue;
+      const data = await resp.json();
+      const info = api.key(data);
+      if (info.ip) return info;
+    } catch(e) { continue; }
+  }
+  return { ip: '检测失败', country: '--', city: '--', isp: '--', org: '--', region: '--' };
+}
+
+async function refreshIP() {
+  document.getElementById('ipAddr').textContent = '检测中...';
+  const info = await detectIP();
+  document.getElementById('ipAddr').textContent = info.ip || '--';
+  document.getElementById('ipCountry').textContent = info.country || '--';
+  document.getElementById('ipCity').textContent = [info.city, info.region].filter(Boolean).join(', ') || '--';
+  document.getElementById('ipISP').textContent = info.isp || '--';
+  document.getElementById('ipOrg').textContent = info.org || '--';
+  const tag = document.getElementById('ipTag');
+  const ispLower = (info.isp || '').toLowerCase();
+  const orgLower = (info.org || '').toLowerCase();
+  const vpnKw = ['vpn', 'proxy', 'hosting', 'cloud', 'digitalocean', 'vultr', 'linode', 'aws', 'azure', 'google cloud', 'oracle cloud', 'm247', 'datacamp', 'datacenter', 'mullvad', 'nord', 'express', 'surfshark', 'private internet', 'cyberghost', 'proton'];
+  const isVPN = vpnKw.some(kw => ispLower.includes(kw) || orgLower.includes(kw));
+  tag.innerHTML = isVPN ? '<span class="ip-badge vpn">疑似 VPN/代理</span>' : '<span class="ip-badge direct">直连</span>';
+  return info;
+}
+
+// ==============================
+// Latency Test (Ping simulation)
+// ==============================
+const PING_ENDPOINTS = [
+  'https://www.google.com/generate_204',
+  'https://www.cloudflare.com/cdn-cgi/trace',
+  'https://www.baidu.com/favicon.ico',
+  'https://github.com/favicon.ico',
+  'https://www.microsoft.com/favicon.ico',
+];
+
+async function testLatency(rounds = 3) {
+  const allResults = [];
+  const log = document.getElementById('log');
+  log.innerHTML = '<span class="ok">📡 测试延迟中...</span>';
+
+  for (const endpoint of PING_ENDPOINTS) {
+    const times = [];
+    for (let i = 0; i < rounds; i++) {
+      const t0 = performance.now();
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 5000);
+        await fetch(endpoint, { method: 'HEAD', mode: 'no-cors', signal: ctrl.signal, cache: 'no-store' });
+        clearTimeout(t);
+      } catch(e) { /* no-cors may throw but request still went through */ }
+      const elapsed = performance.now() - t0;
+      times.push(elapsed);
+    }
+    const avg = times.reduce((a,b) => a+b, 0) / times.length;
+    const host = new URL(endpoint).hostname;
+    allResults.push({ host, avg, times });
+  }
+
+  // Best 3 servers' average
+  const sorted = allResults.sort((a,b) => a.avg - b.avg);
+  const best = sorted.slice(0, 3);
+  const pingMs = best.reduce((a,b) => a + b.avg, 0) / best.length;
+
+  log.innerHTML = best.map(r =>
+    `<span class="ok">✓ ${r.host}: ${r.avg.toFixed(0)}ms</span>`
+  ).join('<br>');
+
+  return Math.round(pingMs * 10) / 10;
+}
+
+// ==============================
+// Download Speed Test
+// ==============================
+const DOWNLOAD_FILES = [
+  { url: 'https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js', size: 87437 },
+  { url: 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js', size: 81404 },
+  { url: 'https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js', size: 73889 },
+  { url: 'https://cdn.jsdelivr.net/npm/moment@2.30.1/min/moment.min.js', size: 57341 },
+  { url: 'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js', size: 218075 },
+];
+
+async function testDownload(onProgress) {
+  const log = document.getElementById('log');
+  let totalBytes = 0;
+  let totalTime = 0;
+  const speeds = [];
+
+  for (let round = 0; round < 3; round++) {
+    for (const file of DOWNLOAD_FILES) {
+      const t0 = performance.now();
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 15000);
+        const resp = await fetch(file.url + '?t=' + Date.now(), {
+          signal: ctrl.signal, cache: 'no-store'
+        });
+        clearTimeout(t);
+        const data = await resp.arrayBuffer();
+        const elapsed = (performance.now() - t0) / 1000;
+        const speedBps = (data.byteLength * 8) / elapsed;
+        const speedMbps = speedBps / 1e6;
+        speeds.push(speedMbps);
+        totalBytes += data.byteLength;
+        totalTime += elapsed;
+        if (onProgress) onProgress(Math.min(100, (speeds.length / (DOWNLOAD_FILES.length * 3)) * 100));
+      } catch(e) {
+        log.innerHTML += `<br><span class="err">✗ ${file.url.split('/').pop()}: ${e.message}</span>`;
+      }
+    }
+  }
+
+  if (speeds.length === 0) return 0;
+  // Use harmonic-like approach: total bytes / total time for stability
+  const avgSpeed = (totalBytes * 8) / (totalTime * 1e6);
+  return Math.round(avgSpeed * 100) / 100;
+}
+
+// ==============================
+// Upload Speed Test
+// ==============================
+async function testUpload(onProgress) {
+  const log = document.getElementById('log');
+  const sizes = [50000, 100000, 200000]; // 50KB, 100KB, 200KB
+  const speeds = [];
+  let totalBytes = 0;
+  let totalTime = 0;
+
+  for (let round = 0; round < 2; round++) {
+    for (const size of sizes) {
+      const data = new Uint8Array(size);
+      crypto.getRandomValues(data);
+      const blob = new Blob([data]);
+      const form = new FormData();
+      form.append('file', blob, 'speedtest.bin');
+
+      const t0 = performance.now();
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 15000);
+        const resp = await fetch('https://httpbin.org/post', {
+          method: 'POST', body: form, signal: ctrl.signal, cache: 'no-store'
+        });
+        clearTimeout(t);
+        await resp.text();
+        const elapsed = (performance.now() - t0) / 1000;
+        const speedMbps = (size * 8) / (elapsed * 1e6);
+        speeds.push(speedMbps);
+        totalBytes += size;
+        totalTime += elapsed;
+        if (onProgress) onProgress(Math.min(100, (speeds.length / (sizes.length * 2)) * 100));
+      } catch(e) {
+        log.innerHTML += `<br><span class="err">✗ Upload ${size}B: ${e.message}</span>`;
+      }
+    }
+  }
+
+  if (speeds.length === 0) return 0;
+  const avgSpeed = (totalBytes * 8) / (totalTime * 1e6);
+  return Math.round(avgSpeed * 100) / 100;
+}
+
+// ==============================
+// Main Speed Test
+// ==============================
+let testRunning = false;
+
+async function startSpeedTest() {
+  if (testRunning) return;
+  testRunning = true;
+  const btn = document.getElementById('btnStart');
+  btn.disabled = true;
+  btn.textContent = '⏳ 测试中...';
+
+  const progress = document.getElementById('progress');
+  const progressFill = document.getElementById('progressFill');
+  progress.classList.add('active');
+  progressFill.style.width = '0%';
+
+  const log = document.getElementById('log');
+  log.innerHTML = '';
+
+  // Phase 1: IP
+  log.innerHTML = '<span class="ok">🌐 获取 IP 信息...</span>';
+  document.getElementById('pingVal').textContent = '...';
+  document.getElementById('downVal').textContent = '...';
+  document.getElementById('upVal').textContent = '...';
+
+  const ipInfo = await refreshIP();
+  log.innerHTML += '<br><span class="ok">✓ IP: ' + ipInfo.ip + '</span>';
+  progressFill.style.width = '10%';
+
+  // Phase 2: Ping
+  log.innerHTML += '<br><span class="ok">📡 测试延迟...</span>';
+  const ping = await testLatency(4);
+  document.getElementById('pingVal').textContent = ping;
+  document.getElementById('gaugePing').classList.remove('running');
+  const pingColor = ping < 50 ? 'var(--green)' : ping < 150 ? 'var(--yellow)' : 'var(--red)';
+  document.getElementById('pingVal').style.color = pingColor;
+  log.innerHTML += `<br><span class="ok">✓ 延迟: ${ping} ms</span>`;
+  progressFill.style.width = '30%';
+
+  // Phase 3: Download
+  log.innerHTML += '<br><span class="ok">⬇️ 测试下载速度...</span>';
+  const download = await testDownload(pct => {
+    progressFill.style.width = (30 + pct * 0.35) + '%';
+  });
+  document.getElementById('downVal').textContent = download;
+  document.getElementById('gaugeDown').classList.remove('running');
+  log.innerHTML += `<br><span class="ok">✓ 下载: ${download} Mbps</span>`;
+  progressFill.style.width = '70%';
+
+  // Phase 4: Upload
+  log.innerHTML += '<br><span class="ok">⬆️ 测试上传速度...</span>';
+  const upload = await testUpload(pct => {
+    progressFill.style.width = (70 + pct * 0.28) + '%';
+  });
+  document.getElementById('upVal').textContent = upload;
+  document.getElementById('gaugeUp').classList.remove('running');
+  log.innerHTML += `<br><span class="ok">✓ 上传: ${upload} Mbps</span>`;
+  progressFill.style.width = '100%';
+
+  // Done
+  setTimeout(() => { progress.classList.remove('active'); progressFill.style.width = '0%'; }, 500);
+  btn.disabled = false;
+  btn.textContent = '▶ 开始测速';
+  testRunning = false;
+
+  log.innerHTML += '<br><span class="ok">✅ 测试完成!</span>';
+
+  // Detect VPN
+  const ispLower = (ipInfo.isp || '').toLowerCase();
+  const orgLower = (ipInfo.org || '').toLowerCase();
+  const vpnKw = ['vpn', 'proxy', 'hosting', 'cloud', 'digitalocean', 'vultr', 'linode', 'aws', 'azure', 'google cloud', 'oracle cloud', 'm247', 'datacamp', 'datacenter', 'mullvad', 'nord', 'express', 'surfshark', 'private internet', 'cyberghost', 'proton'];
+  const isVPN = vpnKw.some(kw => ispLower.includes(kw) || orgLower.includes(kw));
+  const tagLabel = isVPN ? 'VPN' : '直连';
+
+  // Save record
+  saveRecord({
+    time: new Date().toLocaleString('zh-CN'),
+    ip: ipInfo.ip,
+    location: [ipInfo.city, ipInfo.country].filter(Boolean).join(', ') || '--',
+    isp: ipInfo.isp || '--',
+    ping, download, upload,
+    tag: tagLabel
+  });
+
+  showToast('✅ 测速完成 · 下载 ' + download + ' Mbps · 上传 ' + upload + ' Mbps');
+}
+
+async function testPingOnly() {
+  const log = document.getElementById('log');
+  log.innerHTML = '';
+  const t0 = performance.now();
+  const ping = await testLatency(5);
+  document.getElementById('pingVal').textContent = ping;
+  const pingColor = ping < 50 ? 'var(--green)' : ping < 150 ? 'var(--yellow)' : 'var(--red)';
+  document.getElementById('pingVal').style.color = pingColor;
+  const total = Math.round((performance.now() - t0) / 100) / 10;
+  log.innerHTML += `<br><span class="ok">✅ 延迟测试完成，耗时 ${total}s</span>`;
+}
+
+// ==============================
+// History (localStorage)
+// ==============================
+const HISTORY_KEY = 'speedtest_history_claude';
+
+function loadHistory() {
+  try { return JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]'); }
+  catch(e) { return []; }
+}
+
+function saveRecord(record) {
+  const history = loadHistory();
+  history.unshift(record);
+  if (history.length > 20) history.length = 20;
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  renderHistory();
+}
+
+function deleteRecord(idx) {
+  const history = loadHistory();
+  history.splice(idx, 1);
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  renderHistory();
+  showToast('已删除');
+}
+
+function clearHistory() {
+  if (!confirm('确定清除所有测试记录？')) return;
+  localStorage.removeItem(HISTORY_KEY);
+  renderHistory();
+  showToast('记录已清除');
+}
+
+function renderHistory() {
+  const history = loadHistory();
+  const tbody = document.getElementById('historyBody');
+  if (history.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" class="empty">暂无记录，点击「开始测速」</td></tr>';
+    return;
+  }
+  tbody.innerHTML = history.map((r, i) => `
+    <tr>
+      <td style="white-space:nowrap;font-size:0.8rem">${r.time}</td>
+      <td style="font-family:monospace;font-size:0.8rem">${r.ip}</td>
+      <td>${r.location}</td>
+      <td style="max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.isp}">${r.isp}</td>
+      <td style="font-weight:600;color:${r.ping < 50 ? 'var(--green)' : r.ping < 150 ? 'var(--yellow)' : 'var(--red)'}">${r.ping} ms</td>
+      <td style="font-weight:600">${r.download} Mbps</td>
+      <td style="font-weight:600">${r.upload} Mbps</td>
+      <td><span class="tag ${r.tag === 'VPN' ? 'vpn' : 'direct'}">${r.tag}</span></td>
+      <td><button class="btn btn-outline btn-sm" onclick="deleteRecord(${i})" title="删除">✕</button></td>
+    </tr>
+  `).join('');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ==============================
+// Init
+// ==============================
+refreshIP();
+renderHistory();
+</script>
+</body>
+</html>

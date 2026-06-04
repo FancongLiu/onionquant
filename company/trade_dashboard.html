@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>📈 OnionQuant · Trading Desk</title>
+<style>
+:root {
+  --bg: #0a0e17; --panel: #111827; --border: #1e293b;
+  --gold: #f0b90b; --accent: #3b82f6; --green: #10b981;
+  --red: #ef4444; --text: #e2e8f0; --muted: #94a3b8;
+  --card-bg: #1a1f2e; --up: #10b981; --down: #ef4444;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Segoe UI','Microsoft YaHei',sans-serif; background:var(--bg); color:var(--text); height:100vh; overflow:hidden; }
+body::before { content:''; position:fixed; top:0; left:0; width:100%; height:100%;
+  background:radial-gradient(ellipse at 50% 0%,#1a2a4a 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,#0a1a2a 0%,transparent 50%);
+  pointer-events:none; z-index:0; }
+
+/* Topbar */
+.topbar { position:sticky; top:0; z-index:100; height:44px; background:rgba(17,24,39,0.95); backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--border); padding:0 16px; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.topbar .logo { font-size:1.1em; font-weight:700; background:linear-gradient(135deg,var(--gold),#f59e0b); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.topbar nav { display:flex; gap:4px; font-size:0.78em; }
+.topbar nav a { color:var(--muted); text-decoration:none; padding:4px 10px; border-radius:6px; white-space:nowrap; }
+.topbar nav a:hover { color:var(--gold); }
+.topbar nav a.active { color:var(--gold); background:rgba(240,185,11,0.1); font-weight:600; }
+.topbar .status { display:flex; gap:12px; align-items:center; font-size:0.72em; }
+.topbar .status span { color:var(--muted); }
+.topbar .status .live-dot { width:7px; height:7px; border-radius:50%; background:var(--green); animation:pulse 1.5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+/* Layout */
+.main-grid { position:relative; z-index:1; display:grid; grid-template-columns:280px 1fr 300px; grid-template-rows:1fr auto; height:calc(100vh - 44px); gap:8px; padding:8px; }
+.pos-col { display:flex; flex-direction:column; gap:8px; overflow-y:auto; }
+.watch-col { display:flex; flex-direction:column; gap:8px; overflow-y:auto; }
+.event-col { display:flex; flex-direction:column; gap:8px; overflow-y:auto; }
+.cmd-row { grid-column:1/-1; display:flex; gap:8px; align-items:center; padding:8px 12px;
+  background:linear-gradient(135deg,rgba(240,185,11,0.08),rgba(240,185,11,0.02));
+  border:2px solid var(--gold); border-radius:12px; }
+
+/* Cards */
+.card { background:var(--card-bg); border:1px solid var(--border); border-radius:10px; padding:12px; }
+.card h4 { font-size:0.78em; color:var(--accent); margin-bottom:8px; letter-spacing:0.5px; display:flex; align-items:center; gap:6px; }
+
+/* Position Card */
+.pos-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+.pos-ticker { font-size:1.5em; font-weight:800; color:var(--gold); }
+.pos-name { font-size:0.72em; color:var(--muted); }
+.pos-price-row { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:4px; }
+.pos-price { font-size:1.4em; font-weight:700; }
+.pos-change { font-size:0.85em; font-weight:600; padding:2px 8px; border-radius:6px; }
+.pos-change.up { color:var(--up); background:rgba(16,185,129,0.1); }
+.pos-change.down { color:var(--down); background:rgba(239,68,68,0.1); }
+.pos-meta { font-size:0.7em; color:var(--muted); display:grid; grid-template-columns:1fr 1fr; gap:4px; }
+.pos-meta div { display:flex; justify-content:space-between; }
+.pos-meta strong { color:var(--text); }
+.pnl-positive { color:var(--up); font-weight:700; }
+.pnl-negative { color:var(--down); font-weight:700; }
+.pos-signal { margin-top:8px; padding:6px 10px; border-radius:6px; font-size:0.72em; font-weight:600; text-align:center; }
+.signal-buy { background:rgba(16,185,129,0.15); color:var(--up); }
+.signal-sell { background:rgba(239,68,68,0.15); color:var(--down); }
+.signal-hold { background:rgba(240,185,11,0.15); color:var(--gold); }
+
+/* Watchlist Table */
+.watch-table { width:100%; border-collapse:collapse; font-size:0.76em; }
+.watch-table th { text-align:left; color:var(--muted); font-weight:500; padding:4px 8px; border-bottom:1px solid var(--border); font-size:0.85em; }
+.watch-table td { padding:5px 8px; border-bottom:1px solid rgba(255,255,255,0.03); }
+.watch-table .ticker-cell { font-weight:700; font-family:monospace; font-size:0.95em; }
+.watch-table .price-cell { font-weight:600; text-align:right; }
+.watch-table .chg-up { color:var(--up); }
+.watch-table .chg-down { color:var(--down); }
+.watch-table .sig-tag { font-size:0.7em; padding:2px 6px; border-radius:8px; font-weight:600; }
+.sig-long { background:rgba(16,185,129,0.15); color:var(--up); }
+.sig-short { background:rgba(239,68,68,0.15); color:var(--down); }
+.sig-neutral { background:rgba(148,163,184,0.1); color:var(--muted); }
+.watch-table tbody tr { cursor:pointer; transition:background 0.15s; }
+.watch-table tbody tr:hover { background:rgba(59,130,246,0.06); }
+
+/* Catalyst Timeline */
+.cat-item { display:flex; gap:8px; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.03); font-size:0.74em; align-items:flex-start; }
+.cat-date { font-family:monospace; font-weight:700; color:var(--gold); white-space:nowrap; min-width:50px; }
+.cat-p0 { border-left:3px solid var(--red); padding-left:6px; }
+.cat-p1 { border-left:3px solid var(--accent); padding-left:6px; }
+.cat-title { font-weight:600; }
+.cat-tickers { color:var(--muted); font-size:0.85em; margin-top:2px; }
+.cat-countdown { font-family:monospace; font-size:0.8em; color:var(--accent); white-space:nowrap; }
+
+/* Monitor Log */
+.monitor-log { flex:1; overflow-y:auto; font-family:monospace; font-size:0.7em; min-height:80px; max-height:200px; }
+.monitor-log .log-line { padding:2px 0; color:var(--muted); border-bottom:1px solid rgba(255,255,255,0.02); }
+.monitor-log .log-line .ts { color:#555; margin-right:8px; }
+.monitor-log .log-line .action-buy { color:var(--up); }
+.monitor-log .log-line .action-sell { color:var(--down); }
+.monitor-log .log-line .action-alert { color:var(--red); font-weight:700; }
+
+/* Cmd Bar */
+.cmd-row textarea { flex:1; background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px 14px;
+  color:var(--text); font-size:0.88em; outline:none; resize:none; font-family:inherit; line-height:1.4; min-height:44px; }
+.cmd-row textarea:focus { border-color:var(--gold); box-shadow:0 0 12px rgba(240,185,11,0.15); }
+.cmd-row textarea::placeholder { color:#555; }
+.cmd-row button { background:linear-gradient(135deg,#f0b90b,#d4a30b); border:none; border-radius:8px; padding:10px 20px;
+  color:#000; font-weight:700; font-size:0.85em; cursor:pointer; white-space:nowrap; transition:all 0.2s; }
+.cmd-row button:hover { transform:scale(1.03); box-shadow:0 0 16px rgba(240,185,11,0.4); }
+.cmd-status { font-size:0.68em; color:var(--muted); min-width:80px; text-align:right; }
+
+/* Skeleton */
+.skeleton { background:linear-gradient(90deg,var(--border) 25%,transparent 50%,var(--border) 75%); background-size:200% 100%; animation:shimmer 1.5s infinite; border-radius:4px; }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+@media (max-width:900px) {
+  .main-grid { grid-template-columns:1fr; grid-template-rows:auto; }
+  .watch-col { order:-1; }
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="logo">OnionQuant Trading</div>
+  <nav>
+    <a href="/office">Office</a>
+    <a href="/trade" class="active">Trading</a>
+    <a href="/quant">Quant</a>
+    <a href="/factors">Factors</a>
+    <a href="/research">Research</a>
+    <a href="/monitor">System</a>
+  </nav>
+  <div class="status">
+    <span class="live-dot"></span>
+    <span id="clock">—</span>
+    <span id="sessionTag" style="color:var(--gold)">PRE-MARKET</span>
+  </div>
+</div>
+
+<div class="main-grid">
+
+  <!-- LEFT: Position + Risk -->
+  <div class="pos-col">
+    <div class="card" id="positionCard">
+      <h4>💼 持仓</h4>
+      <div id="positionContent"><div class="skeleton" style="height:120px"></div></div>
+    </div>
+    <div class="card" id="riskCard">
+      <h4>🛡️ 风险指标</h4>
+      <div id="riskContent" style="font-size:0.72em;color:var(--muted);">加载中...</div>
+    </div>
+  </div>
+
+  <!-- CENTER: Watchlist + Monitor Log -->
+  <div class="watch-col">
+    <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:0;">
+      <h4>📊 监控列表 <span style="font-size:0.75em;color:var(--muted);font-weight:400" id="watchCount">15 标的</span></h4>
+      <div style="overflow-y:auto;flex:1;" id="watchlistContainer">
+        <div class="skeleton" style="height:200px"></div>
+      </div>
+    </div>
+    <div class="card">
+      <h4>📋 监控日志</h4>
+      <div class="monitor-log" id="monitorLog">
+        <div class="log-line"><span class="ts">—</span>等待启动...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: Catalysts + AI Status -->
+  <div class="event-col">
+    <div class="card">
+      <h4>⚡ 催化时间线</h4>
+      <div id="catalystList"><div class="skeleton" style="height:100px"></div></div>
+    </div>
+    <div class="card">
+      <h4>🤖 Agent 状态</h4>
+      <div id="agentStatus" style="font-size:0.72em;color:var(--muted);">
+        <div>CEO Office: <span style="color:var(--green)">Active</span></div>
+        <div>Strategy: <span style="color:var(--gold)">Monitoring</span></div>
+        <div>Last scan: <span id="lastScan">—</span></div>
+        <div>Inbox pending: <span id="inboxPending">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM: Command Bar -->
+  <div class="cmd-row">
+    <textarea id="cmdInput" placeholder="📝 输入交易指令 — 例如: DXYZ 止损上移 $45 / MU 买入 10 股 / 刷新监控..." rows="1"></textarea>
+    <button onclick="sendCommand()" id="sendBtn">📨 Send</button>
+    <div class="cmd-status" id="cmdStatus"></div>
+  </div>
+</div>
+
+<script>
+// ============ INIT ============
+const TOKEN = window.DASHBOARD_TOKEN || '';
+function api(path) { return path + (path.includes('?')?'&':'?') + 'token=' + encodeURIComponent(TOKEN); }
+
+let monitorLog = [];
+let lastPrices = {};
+
+// Clock + session
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('zh-CN');
+  const hET = (now.getUTCHours() - 4 + 24) % 24;
+  const dET = now.getUTCDay();
+  let session = 'WEEKEND';
+  if (dET >= 1 && dET <= 5) {
+    if (hET < 4) session = 'OVERNIGHT';
+    else if (hET < 9.5) session = 'PRE-MARKET';
+    else if (hET < 16) session = 'REGULAR';
+    else if (hET < 20) session = 'AFTER-HOURS';
+    else session = 'OVERNIGHT';
+  }
+  document.getElementById('sessionTag').textContent = session;
+}
+setInterval(updateClock, 30000); updateClock();
+
+// ============ POSITION ============
+function fetchPosition() {
+  fetch(api('/api/research/dxyz'))
+    .then(r => r.json()).then(d => {
+      if (d.error) return;
+      const entry = 47.62, shares = 588;
+      const price = d.price || 0;
+      const pnl = (price - entry) * shares;
+      const pnlPct = entry ? ((price - entry) / entry * 100) : 0;
+      const verdictMap = { 'verdict-neutral': 'signal-hold', 'verdict-buy': 'signal-buy', 'verdict-sell': 'signal-sell' };
+      const sigClass = verdictMap[d.verdict_class] || 'signal-hold';
+
+      document.getElementById('positionContent').innerHTML = `
+        <div class="pos-header">
+          <div><div class="pos-ticker">DXYZ</div><div class="pos-name">Destiny Tech100</div></div>
+          <div style="text-align:right"><div style="font-size:0.65em;color:var(--muted)">Starship V3</div><div style="font-size:0.7em;color:var(--gold)">明天 18:30 ET</div></div>
+        </div>
+        <div class="pos-price-row">
+          <span class="pos-price">$${price.toFixed(2)}</span>
+          <span class="pos-change ${pnlPct >= 0 ? 'up' : 'down'}">${pnlPct >= 0 ? '+' : ''}${pnlPct.toFixed(2)}%</span>
+        </div>
+        <div class="pos-meta">
+          <div><span>成本</span><strong>$${entry.toFixed(2)}</strong></div>
+          <div><span>持仓</span><strong>${shares} 股</strong></div>
+          <div><span>市值</span><strong>$${(price * shares).toLocaleString()}</strong></div>
+          <div><span>浮盈</span><strong class="${pnl >= 0 ? 'pnl-positive' : 'pnl-negative'}">$${pnl.toLocaleString()}</strong></div>
+        </div>
+        <div class="pos-signal ${sigClass}">${d.verdict || '持有观察'}</div>
+        ${d.risks ? d.risks.filter(r=>r.severity==='critical').slice(0,2).map(r=>`<div style="font-size:0.68em;color:var(--red);margin-top:4px;">⚠ ${r.label}</div>`).join('') : ''}
+      `;
+      document.getElementById('riskContent').innerHTML = d.risks
+        ? d.risks.map(r => `<div style="display:flex;justify-content:space-between;margin:2px 0;"><span>${r.label}</span><span style="color:${r.severity==='critical'?'var(--red)':r.severity==='warning'?'var(--gold)':'var(--muted)'}">${r.severity}</span></div>`).join('')
+        : '等待数据...';
+    }).catch(() => {});
+}
+
+// ============ WATCHLIST ============
+function fetchWatchlist() {
+  fetch(api('/api/research/overview'))
+    .then(r => r.json()).then(d => {
+      if (!d.stocks) return;
+      const signals = {'DXYZ':'HOLD','MU':'BUY','NVDA':'HOLD','SNDK':'HOLD','STX':'BUY','WDC':'SELL','RKLB':'HOLD','LUNR':'HOLD','ASTS':'HOLD','RDW':'HOLD','LITE':'BUY','COHR':'HOLD','AVGO':'BUY','MRVL':'HOLD','AMD':'HOLD'};
+      const sigClass = {'BUY':'sig-long','SELL':'sig-short','HOLD':'sig-neutral'};
+
+      document.getElementById('watchlistContainer').innerHTML = `
+        <table class="watch-table">
+          <thead><tr><th>标的</th><th>价格</th><th>涨跌</th><th>信号</th></tr></thead>
+          <tbody>
+            ${d.stocks.map(s => {
+              const chg = s.change_pct || 0;
+              const sig = signals[s.ticker] || 'HOLD';
+              return `<tr onclick="quickCmd('${s.ticker}')" title="点击查看 ${s.ticker}">
+                <td class="ticker-cell">${s.ticker}</td>
+                <td class="price-cell">$${s.price.toFixed(2)}</td>
+                <td class="${chg >= 0 ? 'chg-up' : 'chg-down'}">${chg >= 0 ? '+' : ''}${chg.toFixed(1)}%</td>
+                <td><span class="sig-tag ${sigClass[sig] || 'sig-neutral'}">${sig}</span></td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+      document.getElementById('watchCount').textContent = d.stocks.length + ' 标的';
+      lastPrices = Object.fromEntries(d.stocks.map(s => [s.ticker, s.price]));
+      addLog('📊 行情刷新', 'info');
+    }).catch(() => {});
+}
+
+// ============ CATALYSTS ============
+function fetchCatalysts() {
+  fetch(api('/api/research/catalysts'))
+    .then(r => r.json()).then(d => {
+      if (!d.events) return;
+      const now = new Date();
+      document.getElementById('catalystList').innerHTML = d.events.map(e => {
+        const countdown = getCountdown(e.date, now);
+        return `<div class="cat-item cat-${e.priority}">
+          <span class="cat-date">${e.date}</span>
+          <div style="flex:1">
+            <div class="cat-title">${e.priority === 'p0' ? '🔴 ' : '🔵 '}${e.title}</div>
+            <div class="cat-tickers">${(e.tickers||[]).join(', ')}</div>
+          </div>
+          <span class="cat-countdown">${countdown}</span>
+        </div>`;
+      }).join('');
+    }).catch(() => {});
+}
+
+function getCountdown(dateStr, now) {
+  const m = dateStr.match(/(\d+)\/(\d+)/);
+  if (!m) return '';
+  const mon = parseInt(m[1]), day = parseInt(m[2]);
+  const target = new Date(2026, mon - 1, day);
+  const diffH = (target - now) / 3600000;
+  if (diffH < 0) return '已过';
+  if (diffH < 24) return Math.round(diffH) + 'h';
+  return Math.round(diffH / 24) + 'd';
+}
+
+// ============ AGENT STATUS ============
+function fetchAgentStatus() {
+  fetch(api('/api/status'))
+    .then(r => r.json()).then(d => {
+      document.getElementById('inboxPending').textContent = d.inbox_pending || 0;
+    }).catch(() => {});
+}
+
+// ============ MONITOR LOG ============
+function addLog(msg, type) {
+  const now = new Date().toTimeString().slice(0,8);
+  monitorLog.unshift({ts:now, msg:msg, type:type});
+  if (monitorLog.length > 50) monitorLog.length = 50;
+  renderLog();
+}
+function renderLog() {
+  document.getElementById('monitorLog').innerHTML = monitorLog.slice(0, 30).map(l =>
+    `<div class="log-line"><span class="ts">${l.ts}</span><span class="action-${l.type||'info'}">${l.msg.slice(0,120)}</span></div>`
+  ).join('');
+}
+
+// ============ COMMAND ============
+function sendCommand() {
+  const cmd = document.getElementById('cmdInput').value.trim();
+  if (!cmd) return;
+  fetch(api('/api/inbox'), {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({text: '[TRADE DESK] ' + cmd, source: 'trade_dashboard'})
+  }).then(r => r.json()).then(d => {
+    if (d.ok) {
+      document.getElementById('cmdStatus').innerHTML = '<span style="color:var(--green)">Sent ✓</span>';
+      addLog('📨 指令已发送: ' + cmd.slice(0,60), 'info');
+      setTimeout(() => document.getElementById('cmdStatus').textContent = '', 3000);
+    }
+  });
+  document.getElementById('cmdInput').value = '';
+}
+function quickCmd(ticker) {
+  document.getElementById('cmdInput').value = ticker + ' ';
+  document.getElementById('cmdInput').focus();
+}
+document.getElementById('cmdInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendCommand(); }
+});
+
+// ============ SSE ============
+function connectSSE() {
+  const es = new EventSource(api('/sse'));
+  es.addEventListener('outbox_new', () => { addLog('📬 新 Agent 消息', 'alert'); fetchAgentStatus(); });
+  es.addEventListener('inbox_new', () => { addLog('📥 新指令确认', 'info'); fetchAgentStatus(); });
+  es.addEventListener('factor_alert', (e) => {
+    try { const d = JSON.parse(e.data); addLog(`⚠ Factor Alert: ${d.critical||0} critical`, 'alert'); } catch(er) {}
+  });
+  es.onerror = () => setTimeout(connectSSE, 10000);
+}
+
+// ============ INIT ============
+fetchPosition();
+fetchWatchlist();
+fetchCatalysts();
+fetchAgentStatus();
+connectSSE();
+addLog('🚀 Trading Desk 启动', 'info');
+addLog(`📡 数据源: yfinance · 15 标的 · 自适应间隔`, 'info');
+
+// Poll intervals
+setInterval(fetchPosition, 30000);
+setInterval(fetchWatchlist, 30000);
+setInterval(fetchCatalysts, 120000);
+setInterval(fetchAgentStatus, 30000);
+</script>
+</body>
+</html>

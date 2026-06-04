@@ -1,0 +1,21 @@
+{
+  "protocol": "董事长持仓模拟交易追踪",
+  "last_updated": "2026-05-18T14:00:00+08:00",
+  "current_position": {
+    "ticker": "DXYZ",
+    "entry_price": 47.62,
+    "shares": null,
+    "total_value": 27607.62,
+    "as_of_price": 52.68,
+    "as_of_time": "2026-05-18 盘前 (北京时间)",
+    "unrealized_pnl": 2976,
+    "unrealized_pnl_pct": 10.6
+  },
+  "trade_log": [],
+  "agent_recommendations": [],
+  "performance": {
+    "simulated_pnl": 0,
+    "actual_pnl": 0,
+    "total_trades": 0
+  }
+}

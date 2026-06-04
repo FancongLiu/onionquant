@@ -1,0 +1,47 @@
+# canslim_config.yaml — CAN SLIM 三级漏斗筛选配置
+# 参考: William O'Neil CAN SLIM 方法论 + IBD 标准阈值
+# 创建日期: 2026-05-17
+
+screener:
+  # ── Level 1: 量化初筛 ──────────────────────────────────────
+  level1:
+    min_eps_growth_q: 25.0    # 当季EPS增长(%); IBD标准≥25%
+    min_eps_growth_a: 25.0    # 年度EPS增长(%); 近3年复合≥25%
+    min_rs: 80.0              # 相对强度评级(0-100); IBD标准≥80
+    min_volume: 10000000.0    # 日均成交量(美元); 确保流动性
+    require_inst_own_growth: false  # 是否要求机构持股增长(可选)
+
+  # ── Level 2: 质量+成长 ────────────────────────────────────
+  level2:
+    min_roe: 15.0             # ROE(%); IBD推荐≥17%
+    min_gross_margin: 40.0    # 毛利率(%); 高毛利=护城河
+    min_rev_growth: 20.0      # 营收增速(%); IBD允许≥0%
+    # 负债权益比模式: "industry"(vs行业均值) / "median"(vs全市场中位数) / "absolute"(固定上限)
+    debt_to_equity_mode: "industry"
+    max_debt_to_equity: 2.0   # 负债权益比上限(仅absolute模式生效)
+
+  # ── Level 3: 动量+技术 ────────────────────────────────────
+  level3:
+    max_dist_52w_high: 15.0   # 距52周高点距离(%); IBD标准<15%
+    check_absolute_momentum: true   # 检查绝对动量(12m收益>0)
+    check_relative_momentum: true   # 检查相对动量(6m收益>benchmark)
+
+  # ── 评分权重 ──────────────────────────────────────────────
+  scoring:
+    weights:
+      eps_growth_quarterly: 0.20
+      eps_growth_annual_3y: 0.15
+      rs_rating: 0.15
+      roe: 0.10
+      gross_margin: 0.05
+      revenue_growth: 0.10
+      return_12m: 0.10
+      return_6m: 0.10
+      inst_ownership_growth: 0.05
+
+  # ── 全局选项 ──────────────────────────────────────────────
+  industry_neutral: false   # 是否按行业内部分位数打分(行业中性化)
+  funnel:
+    enable_level1: true     # Level 1 开关
+    enable_level2: true     # Level 2 开关
+    enable_level3: true     # Level 3 开关
