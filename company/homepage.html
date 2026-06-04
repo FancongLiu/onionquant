@@ -339,7 +339,7 @@
 <aside class="sidebar" id="sidebar">
   <div class="sidebar-inner">
     <div class="sidebar-profile">
-      <div class="avatar">LF</div>
+      <div class="avatar"><img src="/static/images/profile.jpg" alt="刘范聪" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"></div>
       <div class="name">刘范聪</div>
       <div class="title">AI 全栈工程师</div>
       <div class="loc">上海 · 中国</div>
@@ -407,15 +407,34 @@
 
 <!-- Hero -->
 <section style="padding-top:12px;">
-  <h1 style="font-size:2.2rem;font-weight:800;letter-spacing:-1px;margin-bottom:6px;
-    background:linear-gradient(135deg,var(--text) 0%,var(--accent) 100%);
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
-    刘范聪
-  </h1>
-  <p style="font-size:1.05rem;color:var(--sub);margin-bottom:10px;">
-    AI 全栈工程师 — Multi-Agent 系统架构 · LLM 应用开发 · 自动化数据分析
-  </p>
-  <p style="font-size:0.9rem;color:var(--muted);max-width:560px;line-height:1.8;">
+  <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;margin-bottom:18px;">
+    <img src="/static/images/profile.jpg" alt="刘范聪"
+      style="width:100px;height:100px;border-radius:50%;object-fit:cover;border:3px solid rgba(124,172,248,0.3);flex-shrink:0;"
+      onerror="this.style.display='none'">
+    <div style="flex:1;min-width:220px;">
+      <h1 style="font-size:2.2rem;font-weight:800;letter-spacing:-1px;margin-bottom:2px;
+        background:linear-gradient(135deg,var(--text) 0%,var(--accent) 100%);
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+        刘范聪
+      </h1>
+      <p style="font-size:1.02rem;color:var(--sub);margin-bottom:8px;">
+        AI 全栈工程师 · Multi-Agent 系统架构 · LLM 应用开发
+      </p>
+      <div style="display:flex;gap:18px;flex-wrap:wrap;font-size:0.92rem;">
+        <a href="tel:13297373078" style="color:var(--accent);text-decoration:none;font-weight:600;">
+          📱 13297373078
+        </a>
+        <a href="https://github.com/FancongLiu" target="_blank" rel="noopener"
+          style="color:var(--accent);text-decoration:none;font-weight:600;">
+          🔗 github.com/FancongLiu
+        </a>
+        <a href="mailto:liufancong2002@163.com" style="color:var(--sub);text-decoration:none;">
+          📧 liufancong2002@163.com
+        </a>
+      </div>
+    </div>
+  </div>
+  <p style="font-size:0.9rem;color:var(--muted);max-width:600px;line-height:1.8;">
     独立设计并实现 <strong>OnionQuant</strong> — 将 AI Agent 组织为类公司层级结构的自动化数据分析平台。
     CEO 负责任务分解，15+ 个虚拟部门 Agent 并行协作，覆盖从数据采集到分析报告的完整链路。
   </p>
