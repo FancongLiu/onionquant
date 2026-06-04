@@ -807,8 +807,18 @@
 
 <script>
 /* ─── Login ─── */
-function showLogin() { document.getElementById('loginModal').classList.add('open'); document.getElementById('loginUser').focus(); }
-function hideLogin() { document.getElementById('loginModal').classList.remove('open'); document.getElementById('loginErr').style.display='none'; }
+var _loginAbort = null;
+
+function showLogin() {
+  document.getElementById('loginModal').classList.add('open');
+  document.getElementById('loginUser').focus();
+}
+
+function hideLogin() {
+  if (_loginAbort) { _loginAbort.abort(); _loginAbort = null; }
+  document.getElementById('loginModal').classList.remove('open');
+  document.getElementById('loginErr').style.display = 'none';
+}
 
 async function doLogin(e) {
   e.preventDefault();
@@ -816,10 +826,13 @@ async function doLogin(e) {
   var pass = document.getElementById('loginPass').value;
   var err = document.getElementById('loginErr');
   err.style.display = 'none';
+  if (_loginAbort) _loginAbort.abort();
+  _loginAbort = new AbortController();
 
   try {
     var resp = await fetch('/api/status', {
-      headers: { 'Authorization': 'Basic ' + btoa(user + ':' + pass) }
+      headers: { 'Authorization': 'Basic ' + btoa(user + ':' + pass) },
+      signal: _loginAbort.signal
     });
     if (resp.ok) {
       sessionStorage.setItem('oq_user', user);
@@ -830,9 +843,12 @@ async function doLogin(e) {
       err.style.display = 'block';
     }
   } catch(ex) {
-    err.textContent = '网络错误，请检查连接后重试';
-    err.style.display = 'block';
+    if (ex.name !== 'AbortError') {
+      err.textContent = '网络错误，请检查连接后重试';
+      err.style.display = 'block';
+    }
   }
+  _loginAbort = null;
 }
 
 document.getElementById('loginModal').addEventListener('click', function(e) {
