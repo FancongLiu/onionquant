@@ -1,4 +1,5 @@
 """Dashboard & meta routes — data health, logs, snapshot, wechat."""
+
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -6,9 +7,15 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from .shared import (
-    PROJECT_ROOT, INBOX_DIR, OUTBOX_DIR,
-    wechat_status, WECHAT_CONFIGURED, WECHAT_CORP_ID,
-    WECHAT_SECRET, WECHAT_AGENT_ID, notify_all,
+    PROJECT_ROOT,
+    INBOX_DIR,
+    OUTBOX_DIR,
+    wechat_status,
+    WECHAT_CONFIGURED,
+    WECHAT_CORP_ID,
+    WECHAT_SECRET,
+    WECHAT_AGENT_ID,
+    notify_all,
 )
 
 router = APIRouter(tags=["dashboard"])
@@ -17,6 +24,7 @@ router = APIRouter(tags=["dashboard"])
 @router.get("/api/logs")
 async def api_logs(level: str = "", limit: int = 50):
     from quant_framework.logging_config import get_log_records
+
     level_filter = level.upper() if level else None
     return {"logs": get_log_records(level_filter, min(limit, 200))}
 
@@ -25,11 +33,18 @@ async def api_logs(level: str = "", limit: int = 50):
 async def api_data_health():
     data_dir = Path("data")
     health = {
-        "status": "unknown", "last_fetch": None, "staleness_minutes": None,
-        "staleness_warning": False, "ticker_count": 0, "date_range": None, "source": "none",
+        "status": "unknown",
+        "last_fetch": None,
+        "staleness_minutes": None,
+        "staleness_warning": False,
+        "ticker_count": 0,
+        "date_range": None,
+        "source": "none",
     }
 
-    parquet_files = sorted(data_dir.glob("market_data_*.parquet")) if data_dir.exists() else []
+    parquet_files = (
+        sorted(data_dir.glob("market_data_*.parquet")) if data_dir.exists() else []
+    )
     if parquet_files:
         latest = parquet_files[-1]
         stat = latest.stat()
@@ -51,8 +66,11 @@ async def api_data_health():
 
         try:
             import pandas as pd
+
             df = pd.read_parquet(latest)
-            health["ticker_count"] = df["ticker"].nunique() if "ticker" in df.columns else 0
+            health["ticker_count"] = (
+                df["ticker"].nunique() if "ticker" in df.columns else 0
+            )
             if "date" in df.columns:
                 dates = pd.to_datetime(df["date"])
                 health["date_range"] = f"{dates.min().date()} -> {dates.max().date()}"
@@ -71,7 +89,9 @@ async def api_data_health():
 async def dashboard_snapshot():
     snapshot = {"timestamp": datetime.now().isoformat()}
 
-    dept_dirs = [d for d in (PROJECT_ROOT / "company" / "departments").iterdir() if d.is_dir()]
+    dept_dirs = [
+        d for d in (PROJECT_ROOT / "company" / "departments").iterdir() if d.is_dir()
+    ]
     inbox_files = [f for f in INBOX_DIR.glob("*.md") if f.name != "README.md"]
     snapshot["status"] = {
         "departments": len(dept_dirs),
@@ -91,14 +111,20 @@ async def dashboard_snapshot():
     if price_files:
         try:
             import pandas as pd
+
             df = pd.concat([pd.read_parquet(f) for f in price_files[:5]])
             if "close" in df.columns and "ticker" in df.columns and len(df) > 100:
                 df["ret"] = df.groupby("ticker")["close"].pct_change()
                 returns = df["ret"].dropna()
                 if len(returns) > 200:
                     from quant_framework.risk.risk_metrics import (
-                        sharpe_ratio, sortino_ratio, max_drawdown, ann_vol, var_historical,
+                        sharpe_ratio,
+                        sortino_ratio,
+                        max_drawdown,
+                        ann_vol,
+                        var_historical,
                     )
+
                     eq = (1 + returns).cumprod().values
                     snapshot["risk"] = {
                         "sharpe": round(sharpe_ratio(returns.values), 2),
@@ -115,13 +141,20 @@ async def dashboard_snapshot():
 
     if not use_live:
         snapshot["risk"] = {
-            "sharpe": 1.24, "sortino": 1.67, "max_drawdown": -0.0872,
-            "var95": -0.0143, "annual_volatility": 0.152, "calmar": 1.42,
+            "sharpe": 1.24,
+            "sortino": 1.67,
+            "max_drawdown": -0.0872,
+            "var95": -0.0143,
+            "annual_volatility": 0.152,
+            "calmar": 1.42,
             "source": "generated",
         }
 
     snapshot["wechat"] = wechat_status
-    snapshot["data_health"] = {"status": "fresh" if use_live else "generated", "staleness_warning": not use_live}
+    snapshot["data_health"] = {
+        "status": "fresh" if use_live else "generated",
+        "staleness_warning": not use_live,
+    }
     return snapshot
 
 
@@ -136,6 +169,7 @@ async def wechat_test_push():
         return JSONResponse({"error": "WeChat not configured"}, status_code=400)
 
     import requests
+
     WECOM_API = "https://qyapi.weixin.qq.com/cgi-bin"
     try:
         token_resp = requests.get(
@@ -143,18 +177,23 @@ async def wechat_test_push():
             timeout=10,
         ).json()
         if token_resp.get("errcode") != 0:
-            return JSONResponse({"error": f"Token failed: {token_resp}"}, status_code=500)
+            return JSONResponse(
+                {"error": f"Token failed: {token_resp}"}, status_code=500
+            )
         token = token_resp["access_token"]
 
         body = {
             "touser": "@all",
             "msgtype": "text",
             "agentid": int(WECHAT_AGENT_ID),
-            "text": {"content": f"[Test] OnionQuant dashboard connected at {datetime.now().strftime('%H:%M:%S')}"},
+            "text": {
+                "content": f"[Test] OnionQuant dashboard connected at {datetime.now().strftime('%H:%M:%S')}"
+            },
         }
         resp = requests.post(
             f"{WECOM_API}/message/send?access_token={token}",
-            json=body, timeout=10,
+            json=body,
+            timeout=10,
         ).json()
 
         await notify_all("wechat_test", {"result": resp})
@@ -180,11 +219,15 @@ def list_research_reports(limit: int = 5):
     )[:limit]
     result = []
     for f in files:
-        result.append({
-            "name": f.name,
-            "updated": datetime.fromtimestamp(f.stat().st_mtime, tz=timezone.utc).isoformat(),
-            "size": f.stat().st_size,
-        })
+        result.append(
+            {
+                "name": f.name,
+                "updated": datetime.fromtimestamp(
+                    f.stat().st_mtime, tz=timezone.utc
+                ).isoformat(),
+                "size": f.stat().st_size,
+            }
+        )
     return {"reports": result}
 
 

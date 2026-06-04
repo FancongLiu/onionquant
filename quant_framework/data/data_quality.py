@@ -22,6 +22,7 @@ class QualityConfig:
 
 # ── 1. NaN Ratio Check ────────────────────────────────────
 
+
 def check_nan_ratio(
     df: pd.DataFrame,
     max_nan_ratio: float = 0.3,
@@ -60,6 +61,7 @@ def check_nan_ratio(
 
 # ── 2. Data Freshness Check ───────────────────────────────
 
+
 def check_freshness(
     df: pd.DataFrame,
     date_col: str = "date",
@@ -88,6 +90,7 @@ def check_freshness(
 
 
 # ── 3. Lookahead Bias Detection ───────────────────────────
+
 
 def check_lookahead_bias(
     df: pd.DataFrame,
@@ -124,7 +127,10 @@ def check_lookahead_bias(
     for col in valid_cols:
         ic, pval = spearmanr(clean[col], clean[forward_return_col])
         if abs(ic) > 0.3:
-            suspicious[col] = {"ic": round(float(ic), 4), "p_value": round(float(pval), 6)}
+            suspicious[col] = {
+                "ic": round(float(ic), 4),
+                "p_value": round(float(pval), 6),
+            }
 
     return {
         "n_factors_checked": len(valid_cols),
@@ -132,11 +138,12 @@ def check_lookahead_bias(
         "suspicious_factors": suspicious,
         "threshold": 0.3,
         "passed": len(suspicious) == 0,
-        "note": "High |IC| may indicate lookahead bias or genuine predictive power. Investigate suspicious factors."
+        "note": "High |IC| may indicate lookahead bias or genuine predictive power. Investigate suspicious factors.",
     }
 
 
 # ── 4. Outlier Detection ──────────────────────────────────
+
 
 def check_outliers(
     df: pd.DataFrame,
@@ -177,7 +184,9 @@ def check_outliers(
         "n_rows": len(clean),
         "n_cols": len(clean.columns),
         "total_outliers": total_outliers,
-        "outlier_ratio": round(float(total_outliers / (len(clean) * len(clean.columns))), 6),
+        "outlier_ratio": round(
+            float(total_outliers / (len(clean) * len(clean.columns))), 6
+        ),
         "n_bad_columns": len(bad_cols),
         "bad_columns": {k: int(v) for k, v in bad_cols.items()},
         "z_threshold": z_threshold,
@@ -186,6 +195,7 @@ def check_outliers(
 
 
 # ── 5. Data Completeness ──────────────────────────────────
+
 
 def check_completeness(
     df: pd.DataFrame,
@@ -231,16 +241,21 @@ def check_completeness(
                     if max_gap > 10:
                         gap_tickers[t] = max_gap
             results["n_gap_tickers"] = len(gap_tickers)
-            results["max_gaps"] = dict(sorted(gap_tickers.items(), key=lambda x: -x[1])[:5])
+            results["max_gaps"] = dict(
+                sorted(gap_tickers.items(), key=lambda x: -x[1])[:5]
+            )
 
-    results["passed"] = (results.get("n_thin_tickers", 0) == 0 and
-                         results.get("n_missing", 0) == 0 and
-                         results.get("n_gap_tickers", 0) == 0)
+    results["passed"] = (
+        results.get("n_thin_tickers", 0) == 0
+        and results.get("n_missing", 0) == 0
+        and results.get("n_gap_tickers", 0) == 0
+    )
 
     return results
 
 
 # ── 6. Full Pipeline ──────────────────────────────────────
+
 
 def run_quality_checks(
     df: pd.DataFrame,
@@ -261,14 +276,16 @@ def run_quality_checks(
     nan_check = check_nan_ratio(df, config.max_nan_ratio, group_col)
     freshness = check_freshness(df, date_col, config.max_staleness_days)
     outliers = check_outliers(df, factor_cols, config.outlier_z_threshold)
-    completeness = check_completeness(df, expected_tickers, group_col, date_col,
-                                      config.min_rows_per_ticker)
+    completeness = check_completeness(
+        df, expected_tickers, group_col, date_col, config.min_rows_per_ticker
+    )
 
     # Lookahead check
     lookahead = {}
     if factor_cols and forward_return_col in df.columns:
-        lookahead = check_lookahead_bias(df, factor_cols, forward_return_col,
-                                         config.lookahead_window, group_col)
+        lookahead = check_lookahead_bias(
+            df, factor_cols, forward_return_col, config.lookahead_window, group_col
+        )
 
     # Overall status
     checks = {
@@ -294,6 +311,7 @@ def run_quality_checks(
 
 
 # ── Markdown Report ───────────────────────────────────────
+
 
 def quality_report_markdown(result: Dict) -> str:
     """Generate markdown data quality report."""
@@ -380,8 +398,10 @@ def quality_report_markdown(result: Dict) -> str:
 
 # ── Demo ────────────────────────────────────────────────────
 
-def _make_demo_data(n: int = 252, n_tickers: int = 8, seed: int = 42
-                    ) -> Tuple[pd.DataFrame, List[str]]:
+
+def _make_demo_data(
+    n: int = 252, n_tickers: int = 8, seed: int = 42
+) -> Tuple[pd.DataFrame, List[str]]:
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2024-01-01", periods=n, freq="B")
     tickers = [f"STK{i}" for i in range(n_tickers)]
@@ -414,12 +434,16 @@ def main():
 
     config = QualityConfig(max_nan_ratio=0.3, max_staleness_days=5)
     result = run_quality_checks(
-        df, factor_cols=factor_cols, config=config,
+        df,
+        factor_cols=factor_cols,
+        config=config,
         forward_return_col="forward_return",
     )
 
     print(quality_report_markdown(result))
-    print(f"\nPassed: {result['passed']} ({result['n_checks_passed']}/{result['n_checks_total']})")
+    print(
+        f"\nPassed: {result['passed']} ({result['n_checks_passed']}/{result['n_checks_total']})"
+    )
 
 
 if __name__ == "__main__":

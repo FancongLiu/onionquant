@@ -8,6 +8,7 @@ Route modules extracted to company/routes/ (T914):
   routes/risk.py      — risk limit checks, alerts
   routes/dashboard.py — data health, logs, snapshot, wechat
 """
+
 import asyncio
 import base64
 import json
@@ -26,15 +27,18 @@ logger = logging.getLogger(__name__)
 from dotenv import load_dotenv
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-CTX_STATE_PATH = PROJECT_ROOT / "company" / "departments" / "execution" / "context_state.json"
+CTX_STATE_PATH = (
+    PROJECT_ROOT / "company" / "departments" / "execution" / "context_state.json"
+)
 sys.path.insert(0, str(PROJECT_ROOT))
 load_dotenv(PROJECT_ROOT / ".env")
 
 # Fix Windows GBK encoding for emoji output
-if sys.platform == 'win32':
+if sys.platform == "win32":
     import io
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -47,20 +51,43 @@ app = FastAPI(title="OnionQuant Dashboard")
 
 # Fully public — no auth ever
 PUBLIC_PATHS = {
-    "/", "/api/wechat/callback", "/wecom/callback",
+    "/",
+    "/api/wechat/callback",
+    "/wecom/callback",
 }
 
 # Read-only for GET (no password to view), POST/DELETE/PUT still need auth
 READ_ONLY_PATHS = {
-    "/office", "/monitor", "/quant", "/factors", "/trade", "/research",
-    "/api/research/dxyz", "/api/research/hynix", "/api/research/overview",
-    "/api/research/catalysts", "/api/sentiment/dxyz", "/api/sentiment/watchlist",
-    "/api/risk/limits", "/api/quant/factors", "/api/quant/signals",
-    "/api/quant/ic_trend", "/api/quant/risk", "/api/quant/recommendations",
-    "/api/quant/market", "/api/backtest/equity", "/api/dashboard/snapshot",
-    "/api/tasks", "/api/task-tracker/summary", "/api/milestones",
-    "/api/logs", "/api/data/health", "/api/wechat/status",
-    "/api/paper/portfolio", "/api/paper/history", "/api/research/reports",
+    "/office",
+    "/monitor",
+    "/quant",
+    "/factors",
+    "/trade",
+    "/research",
+    "/api/research/dxyz",
+    "/api/research/hynix",
+    "/api/research/overview",
+    "/api/research/catalysts",
+    "/api/sentiment/dxyz",
+    "/api/sentiment/watchlist",
+    "/api/risk/limits",
+    "/api/quant/factors",
+    "/api/quant/signals",
+    "/api/quant/ic_trend",
+    "/api/quant/risk",
+    "/api/quant/recommendations",
+    "/api/quant/market",
+    "/api/backtest/equity",
+    "/api/dashboard/snapshot",
+    "/api/tasks",
+    "/api/task-tracker/summary",
+    "/api/milestones",
+    "/api/logs",
+    "/api/data/health",
+    "/api/wechat/status",
+    "/api/paper/portfolio",
+    "/api/paper/history",
+    "/api/research/reports",
 }
 
 _AUTH_USER = os.getenv("DASHBOARD_USERNAME", "admin")
@@ -80,7 +107,9 @@ def _check_auth(request: Request) -> bool:
     try:
         decoded = base64.b64decode(auth[6:]).decode("utf-8")
         user, pwd = decoded.split(":", 1)
-        return secrets.compare_digest(user, _AUTH_USER) and secrets.compare_digest(pwd, _AUTH_PASS)
+        return secrets.compare_digest(user, _AUTH_USER) and secrets.compare_digest(
+            pwd, _AUTH_PASS
+        )
     except Exception:
         return False
 
@@ -90,7 +119,11 @@ async def auth_middleware(request: Request, call_next):
     path = request.url.path
 
     # Fully public paths — no auth ever
-    if path in PUBLIC_PATHS or path.startswith("/api/wechat") or path.startswith("/static/"):
+    if (
+        path in PUBLIC_PATHS
+        or path.startswith("/api/wechat")
+        or path.startswith("/static/")
+    ):
         request.state.authenticated = False
         return await call_next(request)
 
@@ -100,23 +133,33 @@ async def auth_middleware(request: Request, call_next):
 
     # Read-only: GET allowed without auth, mutations need auth
     if path in READ_ONLY_PATHS or any(
-        path.startswith(p) for p in ["/api/research/reports/", "/api/inbox/file/",
-                                      "/api/outbox/file/", "/api/quant/strategies/",
-                                      "/api/backtest/", "/api/factor/", "/api/strategy/",
-                                      "/api/research/", "/api/sentiment/"]
+        path.startswith(p)
+        for p in [
+            "/api/research/reports/",
+            "/api/inbox/file/",
+            "/api/outbox/file/",
+            "/api/quant/strategies/",
+            "/api/backtest/",
+            "/api/factor/",
+            "/api/strategy/",
+            "/api/research/",
+            "/api/sentiment/",
+        ]
     ):
         if request.method in ("GET", "HEAD", "OPTIONS"):
             return await call_next(request)
         if not is_auth:
-            return Response(content="Unauthorized — POST/PUT/DELETE require authentication",
-                           status_code=401)
+            return Response(
+                content="Unauthorized — POST/PUT/DELETE require authentication",
+                status_code=401,
+            )
 
     # All other paths (API mutations, etc.) require full auth
     if not is_auth:
         return Response(
             content="Unauthorized",
             status_code=401,
-            headers={"WWW-Authenticate": "Basic realm=\"OnionQuant Dashboard\""},
+            headers={"WWW-Authenticate": 'Basic realm="OnionQuant Dashboard"'},
         )
 
     return await call_next(request)
@@ -125,10 +168,16 @@ async def auth_middleware(request: Request, call_next):
 # ─── Shared state imports ────────────────────────────
 
 from company.routes.shared import (
-    INBOX_DIR, PROCESSED_DIR, OUTBOX_DIR,
-    subscribers, notify_all,
-    wechat_status, WECHAT_CONFIGURED, WECHAT_CORP_ID,
-    WECHAT_SECRET, WECHAT_AGENT_ID,
+    INBOX_DIR,
+    PROCESSED_DIR,
+    OUTBOX_DIR,
+    subscribers,
+    notify_all,
+    wechat_status,
+    WECHAT_CONFIGURED,
+    WECHAT_CORP_ID,
+    WECHAT_SECRET,
+    WECHAT_AGENT_ID,
 )
 
 # ─── Include route modules ───────────────────────────
@@ -147,9 +196,12 @@ app.include_router(wechat_router)
 
 # ─── Core API Routes ─────────────────────────────────
 
+
 @app.get("/api/status")
 async def get_status():
-    dept_dirs = [d for d in (PROJECT_ROOT / "company" / "departments").iterdir() if d.is_dir()]
+    dept_dirs = [
+        d for d in (PROJECT_ROOT / "company" / "departments").iterdir() if d.is_dir()
+    ]
     inbox_files = [f for f in INBOX_DIR.glob("*.md") if f.name != "README.md"]
     processed_files = list(PROCESSED_DIR.glob("*.md"))
     py_files = list((PROJECT_ROOT / "quant_framework").rglob("*.py"))
@@ -166,6 +218,7 @@ async def get_status():
 @app.get("/api/departments")
 async def get_departments():
     import re
+
     depts = []
     dept_base = PROJECT_ROOT / "company" / "departments"
     for d in sorted(dept_base.iterdir()):
@@ -194,37 +247,39 @@ async def get_departments():
                     line = f.readline()
                     if not line:
                         break
-                    m = re.search(r'\*\*状态\*\*:\s*(\w+)', line)
+                    m = re.search(r"\*\*状态\*\*:\s*(\w+)", line)
                     if m:
                         status = m.group(1)
-                    m = re.search(r'\*\*任务\*\*:\s*(\S+)', line)
+                    m = re.search(r"\*\*任务\*\*:\s*(\S+)", line)
                     if m:
                         task = m.group(1)
-                    m = re.search(r'\*\*完成\*\*:\s*(\d+)', line)
+                    m = re.search(r"\*\*完成\*\*:\s*(\d+)", line)
                     if m:
                         done = int(m.group(1))
-                    m = re.search(r'\*\*进行中\*\*:\s*(\d+)', line)
+                    m = re.search(r"\*\*进行中\*\*:\s*(\d+)", line)
                     if m:
                         in_progress = int(m.group(1))
-                    m = re.search(r'\*\*阻塞\*\*:\s*(\d+)', line)
+                    m = re.search(r"\*\*阻塞\*\*:\s*(\d+)", line)
                     if m:
                         blocked = int(m.group(1))
-                    m = re.search(r'\*\*更新\*\*:\s*(\S+)', line)
+                    m = re.search(r"\*\*更新\*\*:\s*(\S+)", line)
                     if m:
                         updated = m.group(1)
         except Exception:
             pass
 
-        depts.append({
-            "id": dept_id,
-            "name": name,
-            "status": status,
-            "task": task,
-            "done": done,
-            "in_progress": in_progress,
-            "blocked": blocked,
-            "updated": updated,
-        })
+        depts.append(
+            {
+                "id": dept_id,
+                "name": name,
+                "status": status,
+                "task": task,
+                "done": done,
+                "in_progress": in_progress,
+                "blocked": blocked,
+                "updated": updated,
+            }
+        )
 
     return {"departments": depts, "count": len(depts)}
 
@@ -251,6 +306,7 @@ async def post_inbox(request: Request):
 def _parse_msg_metadata(filename: str, text: str | None = None) -> dict:
     """Extract timestamp + subject from message filename and content."""
     import re
+
     meta = {"file": filename}
 
     # Parse timestamp from filename: MSG_20260518_103615.md
@@ -261,7 +317,9 @@ def _parse_msg_metadata(filename: str, text: str | None = None) -> dict:
 
     # Extract subject from content
     if text:
-        lines = [l.strip() for l in text.split("\n") if l.strip() and not l.startswith("#")]
+        lines = [
+            l.strip() for l in text.split("\n") if l.strip() and not l.startswith("#")
+        ]
         # Find the subject: first meaningful line after headers
         subject = ""
         for line in lines:
@@ -283,6 +341,7 @@ def _parse_msg_metadata(filename: str, text: str | None = None) -> dict:
 async def inbox_history(hours: int = 0):
     """List inbox/outbox messages. hours=2 filters to last 2 hours only."""
     from datetime import timedelta
+
     cutoff = None
     if hours > 0:
         cutoff = datetime.now() - timedelta(hours=hours)
@@ -322,7 +381,9 @@ async def inbox_history(hours: int = 0):
 
     # Also include outbox messages in the bulletin
     outbox_msgs = []
-    outbox_files = sorted(OUTBOX_DIR.glob("*.md"), key=lambda f: f.stat().st_mtime, reverse=True)[:80]
+    outbox_files = sorted(
+        OUTBOX_DIR.glob("*.md"), key=lambda f: f.stat().st_mtime, reverse=True
+    )[:80]
     for f in outbox_files:
         text = f.read_text(encoding="utf-8")[:500]
         out_meta = _parse_outbox_message(f.name, text)
@@ -354,12 +415,15 @@ async def inbox_read_file(filename: str):
             return {"ok": True, "file": filename, "content": text, "size": len(text)}
     return JSONResponse({"ok": False, "error": "not found"}, status_code=404)
 
+
 @app.post("/api/inbox/delete/{filename:path}")
 async def inbox_delete_file(filename: str):
     """Delete (move to processed) an inbox message. Chairman-requested feature."""
     fp = INBOX_DIR / filename
     if not fp.exists() or fp.suffix != ".md":
-        return JSONResponse({"ok": False, "error": "not found or not .md"}, status_code=404)
+        return JSONResponse(
+            {"ok": False, "error": "not found or not .md"}, status_code=404
+        )
     try:
         dest = PROCESSED_DIR / filename
         fp.rename(dest)
@@ -373,7 +437,9 @@ async def outbox_delete_file(filename: str):
     """Delete (move to processed) an outbox message."""
     fp = OUTBOX_DIR / filename
     if not fp.exists() or fp.suffix != ".md":
-        return JSONResponse({"ok": False, "error": "not found or not .md"}, status_code=404)
+        return JSONResponse(
+            {"ok": False, "error": "not found or not .md"}, status_code=404
+        )
     try:
         dest = PROCESSED_DIR / ("ARCHIVED_" + filename)
         fp.rename(dest)
@@ -396,8 +462,18 @@ async def outbox_read_file(filename: str):
 # ─── Outbox ──────────────────────────────────────────
 
 # All outbox file prefixes Claude CLI writes
-_OUTBOX_PREFIXES = ["ASK_", "NOTIFY_", "RESP_", "BRIEF_", "ALERT_", "RESEARCH_",
-                     "SUMMARY_", "SENTINEL_", "INFO_", "TEST_"]
+_OUTBOX_PREFIXES = [
+    "ASK_",
+    "NOTIFY_",
+    "RESP_",
+    "BRIEF_",
+    "ALERT_",
+    "RESEARCH_",
+    "SUMMARY_",
+    "SENTINEL_",
+    "INFO_",
+    "TEST_",
+]
 
 _OUTBOX_TYPE_MAP = {
     "ASK_": ("❓ 请示", "🔴"),
@@ -411,6 +487,7 @@ _OUTBOX_TYPE_MAP = {
     "INFO_": ("ℹ️ 信息", "🟢"),
     "TEST_": ("🧪 测试", "⚪"),
 }
+
 
 @app.get("/api/outbox")
 async def outbox_messages():
@@ -466,15 +543,22 @@ async def post_outbox(request: Request):
 {suggestion}
 
 ---
-**时间**：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**时间**：{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 """
     filepath.write_text(content, encoding="utf-8")
 
-    await notify_all("outbox_new", {
-        "file": filename, "title": title, "priority": priority,
-        "type": msg_type, "task_id": task_id, "preview": text[:200],
-        "body": text,
-    })
+    await notify_all(
+        "outbox_new",
+        {
+            "file": filename,
+            "title": title,
+            "priority": priority,
+            "type": msg_type,
+            "task_id": task_id,
+            "preview": text[:200],
+            "body": text,
+        },
+    )
 
     return {"ok": True, "file": filename}
 
@@ -495,7 +579,11 @@ async def outbox_respond(request: Request):
 
     original = outbox_path.read_text(encoding="utf-8")
 
-    action_label = {"approve": "✅ 已批准", "reject": "❌ 已拒绝", "defer": "⏳ 稍后处理"}.get(action, action)
+    action_label = {
+        "approve": "✅ 已批准",
+        "reject": "❌ 已拒绝",
+        "defer": "⏳ 稍后处理",
+    }.get(action, action)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     resp_filename = f"RESP_{timestamp}.md"
@@ -503,7 +591,7 @@ async def outbox_respond(request: Request):
 
 **原始问题**：{outbox_file}
 **决定**：{action_label}
-**附加说明**：{note if note else '(无)'}
+**附加说明**：{note if note else "(无)"}
 
 ## 原始消息
 {original[:1000]}
@@ -513,9 +601,14 @@ async def outbox_respond(request: Request):
     processed_name = f"RESOLVED_{timestamp}_{outbox_file}"
     outbox_path.rename(PROCESSED_DIR / processed_name)
 
-    await notify_all("outbox_responded", {
-        "file": outbox_file, "action": action, "response_file": resp_filename,
-    })
+    await notify_all(
+        "outbox_responded",
+        {
+            "file": outbox_file,
+            "action": action,
+            "response_file": resp_filename,
+        },
+    )
 
     return {"ok": True, "action": action, "response_file": resp_filename}
 
@@ -547,15 +640,16 @@ async def market_snapshot():
         mu_price = ""
         intc_price = ""
         import re
-        m_mu = re.search(r'MU[~$]+([\d.]+)', pos)
+
+        m_mu = re.search(r"MU[~$]+([\d.]+)", pos)
         if m_mu:
             mu_price = "$" + m_mu.group(1)
-        m_intc = re.search(r'INTC[~$]+([\d.]+)', pos)
+        m_intc = re.search(r"INTC[~$]+([\d.]+)", pos)
         if m_intc:
             intc_price = "$" + m_intc.group(1)
         # SOX from key_context
         sox_info = ctx.get("key_context", {}).get("macro", "")
-        m_sox = re.search(r'SOX\+?([\d.]+)%', sox_info)
+        m_sox = re.search(r"SOX\+?([\d.]+)%", sox_info)
         sox_disp = ("SOX +" + m_sox.group(1) + "% YTD") if m_sox else "--"
         return {
             "ok": True,
@@ -582,21 +676,29 @@ def _parse_outbox_message(filename: str, text: str) -> dict:
                 bracket_end = rest.find("]")
                 if bracket_end > 0:
                     msg_type = rest[1:bracket_end]
-                    title = rest[bracket_end + 1:].strip()
+                    title = rest[bracket_end + 1 :].strip()
         # Fallback: plain # Title without [TYPE] prefix (e.g. RESP files)
         if title == filename and line.startswith("# "):
             plain = line[2:].strip()
             if plain and len(plain) > 3:
                 title = plain[:80]
         if "**类型**" in line:
-            msg_type = line.split("**类型**：")[-1].strip() if "**类型**：" in line else msg_type
+            msg_type = (
+                line.split("**类型**：")[-1].strip()
+                if "**类型**：" in line
+                else msg_type
+            )
         if "**优先级**" in line:
             if "高" in line:
                 priority = "高"
             elif "低" in line:
                 priority = "低"
         if "**阻塞任务ID**" in line:
-            task_id = line.split("**阻塞任务ID**：")[-1].strip() if "**阻塞任务ID**：" in line else ""
+            task_id = (
+                line.split("**阻塞任务ID**：")[-1].strip()
+                if "**阻塞任务ID**：" in line
+                else ""
+            )
 
     # Extract timestamp from **时间**： line or filename
     timestamp = ""
@@ -617,6 +719,7 @@ def _parse_outbox_message(filename: str, text: str) -> dict:
     if timestamp:
         try:
             from datetime import datetime
+
             dt = datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
             ts_iso = dt.isoformat()
         except ValueError:
@@ -625,15 +728,19 @@ def _parse_outbox_message(filename: str, text: str) -> dict:
     if not ts_iso:
         try:
             from datetime import datetime, timezone, timedelta
+
             fp = OUTBOX_DIR / filename
             if fp.exists():
                 mtime = fp.stat().st_mtime
                 from datetime import datetime, timezone, timedelta
+
                 dt = datetime.fromtimestamp(mtime)
                 ts_iso = dt.isoformat()
                 if not timestamp:
                     tz_cn = timezone(timedelta(hours=8))
-                    timestamp = datetime.fromtimestamp(mtime, tz=tz_cn).strftime("%Y-%m-%d %H:%M:%S")
+                    timestamp = datetime.fromtimestamp(mtime, tz=tz_cn).strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
         except Exception:
             pass
 
@@ -642,13 +749,22 @@ def _parse_outbox_message(filename: str, text: str) -> dict:
     if not subject or subject == filename:
         for line in lines:
             stripped = line.strip()
-            if stripped and not stripped.startswith("#") and not stripped.startswith("**") and len(stripped) > 3:
+            if (
+                stripped
+                and not stripped.startswith("#")
+                and not stripped.startswith("**")
+                and len(stripped) > 3
+            ):
                 subject = stripped[:80]
                 break
 
     return {
-        "file": filename, "title": title, "subject": subject,
-        "priority": priority, "type": msg_type, "task_id": task_id,
+        "file": filename,
+        "title": title,
+        "subject": subject,
+        "priority": priority,
+        "type": msg_type,
+        "task_id": task_id,
         "preview": text[:200],
         "body": text,
         "size": len(text),
@@ -659,6 +775,7 @@ def _parse_outbox_message(filename: str, text: str) -> dict:
 
 # ─── Tasks ───────────────────────────────────────────
 
+
 @app.get("/api/tasks")
 async def api_tasks():
     tracker_path = PROJECT_ROOT / "TASK_TRACKER.md"
@@ -666,6 +783,7 @@ async def api_tasks():
         return {"completed": 0, "in_progress": 0, "updated": ""}
 
     import re
+
     text = tracker_path.read_text(encoding="utf-8")
     lines = text.split("\n")
 
@@ -677,11 +795,11 @@ async def api_tasks():
         if "🔵" in line and "|" in line:
             in_progress += 1
 
-    m_comp = re.search(r'\|\s*✅\s*已完成\s*\|\s*(\d+)\s*\|', text)
+    m_comp = re.search(r"\|\s*✅\s*已完成\s*\|\s*(\d+)\s*\|", text)
     if m_comp:
         completed = int(m_comp.group(1))
 
-    m_prog = re.search(r'\|\s*🔵\s*进行中\s*\|\s*(\d+)\s*\|', text)
+    m_prog = re.search(r"\|\s*🔵\s*进行中\s*\|\s*(\d+)\s*\|", text)
     if m_prog:
         in_progress = int(m_prog.group(1))
 
@@ -702,14 +820,15 @@ async def api_task_tracker_summary():
         return {"tasks": [], "summary": {"total": 0, "done": 0, "sprint25_pending": 0}}
 
     import re
+
     text = tracker_path.read_text(encoding="utf-8")
 
     # Parse summary table
     summary = {"total": 0, "done": 0, "sprint25_pending": 0}
-    m_done = re.search(r'\|\s*✅\s*已完成\s*\|\s*(\d+)\s*\|', text)
+    m_done = re.search(r"\|\s*✅\s*已完成\s*\|\s*(\d+)\s*\|", text)
     if m_done:
         summary["done"] = int(m_done.group(1))
-    m_s25 = re.search(r'\|\s*🟡\s*Sprint 25.*?\|\s*(\d+)\s*\(', text)
+    m_s25 = re.search(r"\|\s*🟡\s*Sprint 25.*?\|\s*(\d+)\s*\(", text)
     if m_s25:
         summary["sprint25_pending"] = int(m_s25.group(1))
 
@@ -722,39 +841,53 @@ async def api_task_tracker_summary():
         if in_sprint25 and line.startswith("| T105"):
             parts = [p.strip() for p in line.split("|") if p.strip()]
             if len(parts) >= 2:
-                tasks.append({
-                    "id": parts[0] if len(parts) > 0 else "",
-                    "content": parts[1] if len(parts) > 1 else "",
-                    "progress": "0%",
-                    "sprint": "Sprint 25",
-                })
+                tasks.append(
+                    {
+                        "id": parts[0] if len(parts) > 0 else "",
+                        "content": parts[1] if len(parts) > 1 else "",
+                        "progress": "0%",
+                        "sprint": "Sprint 25",
+                    }
+                )
         if in_sprint25 and line.strip() == "":
             in_sprint25 = False
 
-    summary["total"] = summary["done"] + summary["sprint25_pending"] + 50  # rough estimate
+    summary["total"] = (
+        summary["done"] + summary["sprint25_pending"] + 50
+    )  # rough estimate
 
-    return {"tasks": tasks, "summary": summary, "updated": datetime.fromtimestamp(tracker_path.stat().st_mtime).isoformat()}
+    return {
+        "tasks": tasks,
+        "summary": summary,
+        "updated": datetime.fromtimestamp(tracker_path.stat().st_mtime).isoformat(),
+    }
 
 
 @app.get("/api/milestones")
 async def api_milestones():
     """Extract milestones from TASK_TRACKER.md context_state.json, and outbox reports."""
     import re
+
     milestones = []
 
     # 1. From context_state.json
-    ctx_path = PROJECT_ROOT / "company" / "departments" / "execution" / "context_state.json"
+    ctx_path = (
+        PROJECT_ROOT / "company" / "departments" / "execution" / "context_state.json"
+    )
     if ctx_path.exists():
         try:
             import json
+
             ctx = json.loads(ctx_path.read_text(encoding="utf-8"))
             for action in ctx.get("pending_actions", [])[:15]:
                 # Extract date-like patterns or key events
-                milestones.append({
-                    "date": ctx.get("last_updated", "")[:10],
-                    "text": action[:120],
-                    "source": "context_state",
-                })
+                milestones.append(
+                    {
+                        "date": ctx.get("last_updated", "")[:10],
+                        "text": action[:120],
+                        "source": "context_state",
+                    }
+                )
         except Exception:
             pass
 
@@ -762,24 +895,32 @@ async def api_milestones():
     outbox_dir = PROJECT_ROOT / "company" / "chairman_outbox"
     if outbox_dir.exists():
         for f in sorted(outbox_dir.glob("ALERT_*.md"), reverse=True)[:5]:
-            milestones.append({
-                "date": f.stem.split("_")[-2] if "_" in f.stem else "",
-                "text": f"红队审查: {f.stem}",
-                "source": "outbox",
-            })
+            milestones.append(
+                {
+                    "date": f.stem.split("_")[-2] if "_" in f.stem else "",
+                    "text": f"红队审查: {f.stem}",
+                    "source": "outbox",
+                }
+            )
 
     # 3. Key hardcoded dates from TASK_TRACKER header
     tracker_path = PROJECT_ROOT / "TASK_TRACKER.md"
     if tracker_path.exists():
-        header = tracker_path.read_text(encoding="utf-8").split("\n")[2] if tracker_path.exists() else ""
+        header = (
+            tracker_path.read_text(encoding="utf-8").split("\n")[2]
+            if tracker_path.exists()
+            else ""
+        )
         # Extract dates like "5/20", "5/21", "6/12"
-        for m in re.finditer(r'(\d+/\d+)[:\s]*([^·,\n]{3,40})', header):
+        for m in re.finditer(r"(\d+/\d+)[:\s]*([^·,\n]{3,40})", header):
             date_str = f"2026-{m.group(1).replace('/', '-')}"
-            milestones.append({
-                "date": date_str,
-                "text": m.group(2).strip()[:80],
-                "source": "header",
-            })
+            milestones.append(
+                {
+                    "date": date_str,
+                    "text": m.group(2).strip()[:80],
+                    "source": "header",
+                }
+            )
 
     # Sort by date
     milestones.sort(key=lambda x: x.get("date", ""), reverse=True)
@@ -789,9 +930,11 @@ async def api_milestones():
 
 # ─── WeChat Watcher Thread ───────────────────────────
 
+
 def _wechat_watcher_thread():
     """Background thread: watches outbox and pushes to WeChat."""
     import requests
+
     WECOM_API = "https://qyapi.weixin.qq.com/cgi-bin"
     wechat_status["connected"] = True if WECHAT_CONFIGURED else False
 
@@ -827,7 +970,8 @@ def _wechat_watcher_thread():
                     }
                     resp = requests.post(
                         f"{WECOM_API}/message/send?access_token={token}",
-                        json=body, timeout=10,
+                        json=body,
+                        timeout=10,
                     ).json()
 
                     if resp.get("errcode") == 0:
@@ -837,11 +981,14 @@ def _wechat_watcher_thread():
                         try:
                             loop.call_soon_threadsafe(
                                 asyncio.ensure_future,
-                                notify_all("wechat_push", {
-                                    "file": f.name,
-                                    "success": True,
-                                    "timestamp": wechat_status["last_push"],
-                                }),
+                                notify_all(
+                                    "wechat_push",
+                                    {
+                                        "file": f.name,
+                                        "success": True,
+                                        "timestamp": wechat_status["last_push"],
+                                    },
+                                ),
                             )
                         except Exception:
                             pass
@@ -866,25 +1013,42 @@ def _factor_alert_thread():
             from scripts.run_pipeline import step1_fetch, step2_factors
 
             from company.routes.shared import QUANT_TICKERS
+
             tickers = QUANT_TICKERS[:15]
             df = step1_fetch(tickers, "2025-01-01")
             factors = step2_factors(df)
-            factor_cols = [c for c in factors.columns if c not in ("ticker", "date", "close")]
+            factor_cols = [
+                c for c in factors.columns if c not in ("ticker", "date", "close")
+            ]
 
             ic_df = _cs_ic_series(factors, factor_cols)
             if not ic_df.empty:
-                alerts = check_decay_alerts(ic_df, factor_df=factors, factor_cols=factor_cols[:12])
+                alerts = check_decay_alerts(
+                    ic_df, factor_df=factors, factor_cols=factor_cols[:12]
+                )
                 critical = [a for a in alerts if a.severity == "critical"]
                 if critical and loop and loop.is_running():
                     asyncio.run_coroutine_threadsafe(
-                        notify_all("factor_alert", {
-                            "type": "factor_decay",
-                            "critical": len(critical),
-                            "warnings": sum(1 for a in alerts if a.severity == "warning"),
-                            "alerts": [{"factor": a.factor, "severity": a.severity,
-                                        "type": a.alert_type, "detail": a.detail}
-                                       for a in alerts[:10]],
-                        }), loop,
+                        notify_all(
+                            "factor_alert",
+                            {
+                                "type": "factor_decay",
+                                "critical": len(critical),
+                                "warnings": sum(
+                                    1 for a in alerts if a.severity == "warning"
+                                ),
+                                "alerts": [
+                                    {
+                                        "factor": a.factor,
+                                        "severity": a.severity,
+                                        "type": a.alert_type,
+                                        "detail": a.detail,
+                                    }
+                                    for a in alerts[:10]
+                                ],
+                            },
+                        ),
+                        loop,
                     )
         except Exception as e:
             logger.warning(f"Factor alert thread error: {e}")
@@ -895,11 +1059,13 @@ _wechat_thread: threading.Thread | None = None
 
 # ─── Paper Trading ────────────────────────────────────
 
+
 @app.get("/api/paper/portfolio")
 async def api_paper_portfolio():
     """Virtual paper trading portfolio snapshot."""
     try:
         from quant_framework.execution.paper_tracker import PaperPortfolio
+
         pf = PaperPortfolio()
         return pf.get_summary()
     except Exception as e:
@@ -911,6 +1077,7 @@ async def api_paper_history():
     """Daily performance history."""
     try:
         from quant_framework.execution.paper_tracker import HISTORY_FILE
+
         if HISTORY_FILE.exists():
             return json.loads(HISTORY_FILE.read_text(encoding="utf-8"))
         return []
@@ -923,6 +1090,7 @@ async def api_paper_trade(request: Request):
     """Execute a virtual trade."""
     try:
         from quant_framework.execution.paper_tracker import PaperPortfolio
+
         body = await request.json()
         pf = PaperPortfolio()
         result = pf.execute_trade(
@@ -941,14 +1109,21 @@ async def api_alpaca_account():
     """Alpaca paper trading account summary."""
     try:
         from quant_framework.execution.broker_bridge import BrokerBridge
+
         bridge = BrokerBridge()
         positions = bridge.get_positions()
         account = bridge.get_account_summary()
         return {
             "account": account,
-            "positions": [{"symbol": p.symbol, "qty": p.qty,
-                           "market_value": p.market_value,
-                           "unrealized_pl": p.unrealized_pl} for p in positions],
+            "positions": [
+                {
+                    "symbol": p.symbol,
+                    "qty": p.qty,
+                    "market_value": p.market_value,
+                    "unrealized_pl": p.unrealized_pl,
+                }
+                for p in positions
+            ],
         }
     except Exception as e:
         return {"error": str(e)}
@@ -958,16 +1133,22 @@ async def api_alpaca_account():
 async def api_market_snapshot():
     """Compact market snapshot for sidebar — MU, INTC, SOX."""
     from datetime import datetime, timezone, timedelta
+
     tz_cn = timezone(timedelta(hours=8))
     result = {"ok": True, "updated": datetime.now(tz_cn).strftime("%H:%M:%S")}
     try:
         import yfinance as yf
+
         for sym, key in [("MU", "mu"), ("INTC", "intc"), ("SOX", "sox")]:
             try:
                 tk = yf.Ticker(sym)
                 info = tk.info or {}
                 px = info.get("currentPrice") or info.get("regularMarketPrice") or 0
-                prev = info.get("regularMarketPreviousClose") or info.get("previousClose") or px
+                prev = (
+                    info.get("regularMarketPreviousClose")
+                    or info.get("previousClose")
+                    or px
+                )
                 chg = ((px - prev) / prev * 100) if prev else 0
                 sign = "+" if chg >= 0 else ""
                 result[key] = f"${px:,.2f} {sign}{chg:.1f}%"
@@ -980,11 +1161,13 @@ async def api_market_snapshot():
 
 # ─── SSE ─────────────────────────────────────────────
 
+
 @app.get("/sse")
 async def sse_endpoint():
     queue: asyncio.Queue = asyncio.Queue(maxsize=50)
     subscribers.append(queue)
     try:
+
         async def event_generator():
             yield {"event": "connected", "data": json.dumps({"msg": "SSE connected"})}
             while True:
@@ -992,7 +1175,11 @@ async def sse_endpoint():
                     msg = await asyncio.wait_for(queue.get(), timeout=30)
                     yield msg
                 except asyncio.TimeoutError:
-                    yield {"event": "heartbeat", "data": json.dumps({"ts": datetime.now().isoformat()})}
+                    yield {
+                        "event": "heartbeat",
+                        "data": json.dumps({"ts": datetime.now().isoformat()}),
+                    }
+
         return EventSourceResponse(event_generator())
     finally:
         if queue in subscribers:
@@ -1001,21 +1188,23 @@ async def sse_endpoint():
 
 # ─── Static Files ────────────────────────────────────
 
+
 def _inject_auth(html: str, request: Request, inject_token: bool = True) -> str:
     """Inject auth token or read-only marker into HTML pages."""
     if request.state.authenticated and inject_token:
         # Authenticated: inject real token
         html = html.replace(
-            '<script>',
-            '<script>window.DASHBOARD_TOKEN=' + json.dumps(_AUTH_PASS)
-            + ';window.READ_ONLY=false;</script>\n<script>',
+            "<script>",
+            "<script>window.DASHBOARD_TOKEN="
+            + json.dumps(_AUTH_PASS)
+            + ";window.READ_ONLY=false;</script>\n<script>",
             1,
         )
     else:
         # Unauthenticated / read-only: no token, mark read-only
         html = html.replace(
-            '<script>',
-            '<script>window.READ_ONLY=true;</script>\n<script>',
+            "<script>",
+            "<script>window.READ_ONLY=true;</script>\n<script>",
             1,
         )
     return html
@@ -1044,14 +1233,20 @@ async def monitor_page(request: Request):
     dashboard = PROJECT_ROOT / "company" / "chairman_dashboard.html"
     if dashboard.exists():
         html = dashboard.read_text(encoding="utf-8")
-        html = html.replace(
-            '<script src="/static/js/dashboard.js"></script>',
-            '<script>window.DASHBOARD_TOKEN=' + json.dumps(_AUTH_PASS)
-            + ';window.READ_ONLY=' + json.dumps(not request.state.authenticated)
-            + ';</script>\n<script src="/static/js/dashboard.js"></script>',
-        ) if request.state.authenticated else html.replace(
-            '<script src="/static/js/dashboard.js"></script>',
-            '<script>window.READ_ONLY=true;</script>\n<script src="/static/js/dashboard.js"></script>',
+        html = (
+            html.replace(
+                '<script src="/static/js/dashboard.js"></script>',
+                "<script>window.DASHBOARD_TOKEN="
+                + json.dumps(_AUTH_PASS)
+                + ";window.READ_ONLY="
+                + json.dumps(not request.state.authenticated)
+                + ';</script>\n<script src="/static/js/dashboard.js"></script>',
+            )
+            if request.state.authenticated
+            else html.replace(
+                '<script src="/static/js/dashboard.js"></script>',
+                '<script>window.READ_ONLY=true;</script>\n<script src="/static/js/dashboard.js"></script>',
+            )
         )
         return HTMLResponse(html)
     return HTMLResponse("<h1>System Monitor not found.</h1>")
@@ -1085,6 +1280,7 @@ async def chairman_office_page(request: Request):
 
 # ─── Research Panel ─────────────────────────────────────
 
+
 @app.get("/trade", response_class=HTMLResponse)
 async def trade_dashboard_page(request: Request):
     trade = PROJECT_ROOT / "company" / "trade_dashboard.html"
@@ -1107,11 +1303,14 @@ async def api_research_dxyz():
     """DXYZ live research data."""
     try:
         import yfinance as yf
+
         tk = yf.Ticker("DXYZ")
         info = tk.info or {}
         hist = tk.history(period="5d")
         price = info.get("currentPrice") or info.get("regularMarketPrice") or 0
-        prev_close = info.get("regularMarketPreviousClose") or info.get("previousClose") or price
+        prev_close = (
+            info.get("regularMarketPreviousClose") or info.get("previousClose") or price
+        )
         change_pct = ((price - prev_close) / prev_close * 100) if prev_close else 0
         return {
             "ticker": "DXYZ",
@@ -1126,10 +1325,26 @@ async def api_research_dxyz():
                 {"label": "SpaceX IPO=利空落地", "severity": "info"},
             ],
             "catalysts": [
-                {"title": "SpaceX 秘密提交 IPO ($1.75T)", "time": "5/13-15", "desc": "SEC 注册已提交，史上最大 IPO，夏季上市"},
-                {"title": "Starship V3 首飞 (5/19 18:30 EDT)", "time": "明天", "desc": "全新星舰+Raptor3引擎+Pad2首次使用，7月来首次"},
-                {"title": "DXYZ 增持 Anthropic $1亿", "time": "近日", "desc": "via Magnitude ANC III，AI 持仓增至 32%+"},
-                {"title": "IPO 招股书\"最快下周公布\"", "time": "本周随时", "desc": "5/15 起传，若公开 → DXYZ 短期脉冲"},
+                {
+                    "title": "SpaceX 秘密提交 IPO ($1.75T)",
+                    "time": "5/13-15",
+                    "desc": "SEC 注册已提交，史上最大 IPO，夏季上市",
+                },
+                {
+                    "title": "Starship V3 首飞 (5/19 18:30 EDT)",
+                    "time": "明天",
+                    "desc": "全新星舰+Raptor3引擎+Pad2首次使用，7月来首次",
+                },
+                {
+                    "title": "DXYZ 增持 Anthropic $1亿",
+                    "time": "近日",
+                    "desc": "via Magnitude ANC III，AI 持仓增至 32%+",
+                },
+                {
+                    "title": 'IPO 招股书"最快下周公布"',
+                    "time": "本周随时",
+                    "desc": "5/15 起传，若公开 → DXYZ 短期脉冲",
+                },
             ],
             "summary": "三重催化叠加: SpaceX秘密IPO+Starship V3明天首飞+招股书传闻。RSI 96极端超买,NAV溢价138%风险高。关键窗口:5/19发射结果→±30%波动。",
             "verdict": "持有观察 — Starship发射后决定去留。涨幅>20%考虑减仓20-30%",
@@ -1144,10 +1359,13 @@ async def api_research_hynix():
     """SK Hynix tracking data."""
     try:
         import yfinance as yf
+
         tk = yf.Ticker("000660.KS")
         info = tk.info or {}
         price = info.get("currentPrice") or 1835000
-        prev_close = info.get("regularMarketPreviousClose") or info.get("previousClose") or price
+        prev_close = (
+            info.get("regularMarketPreviousClose") or info.get("previousClose") or price
+        )
         change_pct = ((price - prev_close) / prev_close * 100) if prev_close else 0
         return {
             "ticker": "000660.KR",
@@ -1166,17 +1384,44 @@ async def api_research_hynix():
 @app.get("/api/research/overview")
 async def api_research_overview():
     """Research watchlist overview."""
-    tickers = ["DXYZ", "NVDA", "MU", "SNDK", "STX", "WDC", "RKLB", "LUNR", "RDW", "LITE", "COHR", "AVGO", "BABA", "JD"]
+    tickers = [
+        "DXYZ",
+        "NVDA",
+        "MU",
+        "SNDK",
+        "STX",
+        "WDC",
+        "RKLB",
+        "LUNR",
+        "RDW",
+        "LITE",
+        "COHR",
+        "AVGO",
+        "BABA",
+        "JD",
+    ]
     stocks = []
     for t in tickers:
         try:
             import yfinance as yf
+
             tk = yf.Ticker(t)
             info = tk.info or {}
             price = info.get("currentPrice") or info.get("regularMarketPrice") or 0
-            prev = info.get("regularMarketPreviousClose") or info.get("previousClose") or price
+            prev = (
+                info.get("regularMarketPreviousClose")
+                or info.get("previousClose")
+                or price
+            )
             chg = ((price - prev) / prev * 100) if prev else 0
-            stocks.append({"ticker": t, "price": round(price, 2), "change_pct": round(chg, 1), "signal": "—"})
+            stocks.append(
+                {
+                    "ticker": t,
+                    "price": round(price, 2),
+                    "change_pct": round(chg, 1),
+                    "signal": "—",
+                }
+            )
         except Exception:
             stocks.append({"ticker": t, "price": 0, "change_pct": 0, "signal": "N/A"})
     return {
@@ -1190,12 +1435,42 @@ async def api_research_catalysts():
     """Upcoming catalyst calendar."""
     return {
         "events": [
-            {"date": "5/18", "priority": "p1", "title": "LITE Nasdaq-100 正式纳入", "tickers": ["LITE"]},
-            {"date": "5/19", "priority": "p0", "title": "Starship V3 首飞 (18:30 EDT)", "tickers": ["DXYZ"]},
-            {"date": "5/20", "priority": "p0", "title": "NVDA Q1 FY27 财报 (盘后)", "tickers": ["NVDA", "MU", "LITE", "COHR", "AVGO"]},
-            {"date": "6/?", "priority": "p0", "title": "SpaceX IPO 招股书公开 (预期)", "tickers": ["DXYZ"]},
-            {"date": "6/?", "priority": "p1", "title": "Neutron 首飞 (RKLB)", "tickers": ["RKLB"]},
-            {"date": "H2 2026", "priority": "p1", "title": "COHR 6.4T SiPh CPO 发布", "tickers": ["COHR", "LITE"]},
+            {
+                "date": "5/18",
+                "priority": "p1",
+                "title": "LITE Nasdaq-100 正式纳入",
+                "tickers": ["LITE"],
+            },
+            {
+                "date": "5/19",
+                "priority": "p0",
+                "title": "Starship V3 首飞 (18:30 EDT)",
+                "tickers": ["DXYZ"],
+            },
+            {
+                "date": "5/20",
+                "priority": "p0",
+                "title": "NVDA Q1 FY27 财报 (盘后)",
+                "tickers": ["NVDA", "MU", "LITE", "COHR", "AVGO"],
+            },
+            {
+                "date": "6/?",
+                "priority": "p0",
+                "title": "SpaceX IPO 招股书公开 (预期)",
+                "tickers": ["DXYZ"],
+            },
+            {
+                "date": "6/?",
+                "priority": "p1",
+                "title": "Neutron 首飞 (RKLB)",
+                "tickers": ["RKLB"],
+            },
+            {
+                "date": "H2 2026",
+                "priority": "p1",
+                "title": "COHR 6.4T SiPh CPO 发布",
+                "tickers": ["COHR", "LITE"],
+            },
         ],
     }
 
@@ -1206,6 +1481,7 @@ if static_dir.exists():
 
 
 # ─── Watchdog ────────────────────────────────────────
+
 
 def start_watchdog():
     try:
@@ -1283,7 +1559,12 @@ if __name__ == "__main__":
     print("  🌐 http://localhost:8765")
     try:
         import json
-        ctx = json.loads(Path("company/departments/execution/context_state.json").read_text(encoding="utf-8"))
+
+        ctx = json.loads(
+            Path("company/departments/execution/context_state.json").read_text(
+                encoding="utf-8"
+            )
+        )
         tunnel = ctx.get("key_context", {}).get("tunnel_url", "")
         if tunnel:
             print(f"  🌍 {tunnel}")

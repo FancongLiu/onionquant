@@ -12,6 +12,7 @@ from datetime import datetime
 
 try:
     from empyrical import max_drawdown
+
     HAS_EMPYRICAL = True
 except ImportError:
     HAS_EMPYRICAL = False
@@ -28,30 +29,62 @@ class Scenario:
 
 # ── Pre-defined historical crisis scenarios ──────────────
 HISTORICAL_SCENARIOS = [
-    Scenario("2008 GFC", "2008-09-01", "2009-03-09",
-             "Global Financial Crisis: Lehman collapse, credit freeze. S&P 500 -57% peak-to-trough.",
-             {"equity": -0.50, "credit": -0.30, "commodity": -0.55, "rates": 0.05}),
-    Scenario("2010 Flash Crash", "2010-05-06", "2010-05-07",
-             "Algorithmic trading cascade. DJIA dropped ~9% intraday, recovered within minutes.",
-             {"equity": -0.09, "credit": -0.02, "commodity": -0.06, "rates": 0.02}),
-    Scenario("2011 Euro Debt", "2011-07-01", "2011-10-04",
-             "European sovereign debt crisis. S&P 500 -19%, VIX spiked to 48.",
-             {"equity": -0.18, "credit": -0.25, "commodity": -0.20, "rates": 0.03}),
-    Scenario("2015 China Selloff", "2015-08-17", "2015-08-25",
-             "China stock market crash, global contagion. S&P 500 -12% in 6 days.",
-             {"equity": -0.12, "credit": -0.05, "commodity": -0.15, "rates": 0.01}),
-    Scenario("2018 Q4 Selloff", "2018-10-01", "2018-12-24",
-             "Fed rate hike fears, trade war. S&P 500 -20%, nearly entered bear market.",
-             {"equity": -0.19, "credit": -0.08, "commodity": -0.25, "rates": -0.02}),
-    Scenario("2020 COVID Crash", "2020-02-19", "2020-03-23",
-             "COVID pandemic onset. S&P 500 -34% in 33 days, fastest bear market in history.",
-             {"equity": -0.34, "credit": -0.20, "commodity": -0.40, "rates": 0.10}),
-    Scenario("2022 Rate Hikes", "2022-01-03", "2022-10-12",
-             "Fed aggressive tightening. S&P 500 -25%, NASDAQ -35%, bonds -20% (worst bond year ever).",
-             {"equity": -0.25, "credit": -0.15, "commodity": 0.15, "rates": -0.20}),
-    Scenario("2023 Banking Crisis", "2023-03-08", "2023-03-24",
-             "SVB/Signature/CS collapse. Regional bank index -30%, Fed intervened.",
-             {"equity": -0.08, "credit": -0.12, "commodity": -0.05, "rates": 0.04}),
+    Scenario(
+        "2008 GFC",
+        "2008-09-01",
+        "2009-03-09",
+        "Global Financial Crisis: Lehman collapse, credit freeze. S&P 500 -57% peak-to-trough.",
+        {"equity": -0.50, "credit": -0.30, "commodity": -0.55, "rates": 0.05},
+    ),
+    Scenario(
+        "2010 Flash Crash",
+        "2010-05-06",
+        "2010-05-07",
+        "Algorithmic trading cascade. DJIA dropped ~9% intraday, recovered within minutes.",
+        {"equity": -0.09, "credit": -0.02, "commodity": -0.06, "rates": 0.02},
+    ),
+    Scenario(
+        "2011 Euro Debt",
+        "2011-07-01",
+        "2011-10-04",
+        "European sovereign debt crisis. S&P 500 -19%, VIX spiked to 48.",
+        {"equity": -0.18, "credit": -0.25, "commodity": -0.20, "rates": 0.03},
+    ),
+    Scenario(
+        "2015 China Selloff",
+        "2015-08-17",
+        "2015-08-25",
+        "China stock market crash, global contagion. S&P 500 -12% in 6 days.",
+        {"equity": -0.12, "credit": -0.05, "commodity": -0.15, "rates": 0.01},
+    ),
+    Scenario(
+        "2018 Q4 Selloff",
+        "2018-10-01",
+        "2018-12-24",
+        "Fed rate hike fears, trade war. S&P 500 -20%, nearly entered bear market.",
+        {"equity": -0.19, "credit": -0.08, "commodity": -0.25, "rates": -0.02},
+    ),
+    Scenario(
+        "2020 COVID Crash",
+        "2020-02-19",
+        "2020-03-23",
+        "COVID pandemic onset. S&P 500 -34% in 33 days, fastest bear market in history.",
+        {"equity": -0.34, "credit": -0.20, "commodity": -0.40, "rates": 0.10},
+    ),
+    Scenario(
+        "2022 Rate Hikes",
+        "2022-01-03",
+        "2022-10-12",
+        "Fed aggressive tightening. S&P 500 -25%, NASDAQ -35%, bonds -20% (worst bond year ever).",
+        {"equity": -0.25, "credit": -0.15, "commodity": 0.15, "rates": -0.20},
+    ),
+    Scenario(
+        "2023 Banking Crisis",
+        "2023-03-08",
+        "2023-03-24",
+        "SVB/Signature/CS collapse. Regional bank index -30%, Fed intervened.",
+        {"equity": -0.08, "credit": -0.12, "commodity": -0.05, "rates": 0.04},
+    ),
 ]
 
 
@@ -81,7 +114,10 @@ def apply_scenario(
     n = len(shocked.columns)
     if n > 1 and correlation_shock > 0:
         avg_ret = shocked.mean(axis=1)
-        shocked = shocked * (1 - correlation_shock) + avg_ret.values.reshape(-1, 1) * correlation_shock
+        shocked = (
+            shocked * (1 - correlation_shock)
+            + avg_ret.values.reshape(-1, 1) * correlation_shock
+        )
 
     return shocked
 
@@ -119,17 +155,19 @@ def portfolio_stress_test(
         var95 = float(np.percentile(sr, (1 - var_cl) * 100))
         cvar95 = float(sr[sr <= var95].mean()) if (sr <= var95).any() else var95
 
-        results.append({
-            "scenario": sc.name,
-            "period": f"{sc.start} → {sc.end}",
-            "description": sc.description,
-            "total_return": round(total_ret, 4),
-            "annualized_vol": round(vol, 4),
-            "max_drawdown": round(mdd, 4),
-            "var_95": round(var95, 4),
-            "cvar_95": round(cvar95, 4),
-            "vol_change_pct": round((vol / max(port_vol, 1e-8) - 1) * 100, 1),
-        })
+        results.append(
+            {
+                "scenario": sc.name,
+                "period": f"{sc.start} → {sc.end}",
+                "description": sc.description,
+                "total_return": round(total_ret, 4),
+                "annualized_vol": round(vol, 4),
+                "max_drawdown": round(mdd, 4),
+                "var_95": round(var95, 4),
+                "cvar_95": round(cvar95, 4),
+                "vol_change_pct": round((vol / max(port_vol, 1e-8) - 1) * 100, 1),
+            }
+        )
 
     # Aggregate stress score: average of worst 3 scenario returns
     worst_returns = sorted([r["total_return"] for r in results])[:3]
@@ -138,7 +176,9 @@ def portfolio_stress_test(
     return {
         "scenarios": results,
         "stress_score": round(stress_score, 4),
-        "worst_scenario": min(results, key=lambda r: r["total_return"])["scenario"] if results else "N/A",
+        "worst_scenario": min(results, key=lambda r: r["total_return"])["scenario"]
+        if results
+        else "N/A",
         "normal_vol": round(port_vol, 4),
         "n_scenarios": len(results),
     }
@@ -167,8 +207,16 @@ def var_backtest(returns: pd.Series, var_series: pd.Series, cl: float = 0.95) ->
     if n > 0 and 0 < actual_rate < 1:
         try:
             from scipy.stats import chi2
-            lr = -2 * (np.log((1 - expected_rate) ** (n - exceedances) * expected_rate ** exceedances)
-                       - np.log((1 - actual_rate) ** (n - exceedances) * actual_rate ** exceedances))
+
+            lr = -2 * (
+                np.log(
+                    (1 - expected_rate) ** (n - exceedances)
+                    * expected_rate**exceedances
+                )
+                - np.log(
+                    (1 - actual_rate) ** (n - exceedances) * actual_rate**exceedances
+                )
+            )
             pvalue = float(1 - chi2.cdf(lr, 1))
         except ImportError:
             pvalue = float("nan")
@@ -182,7 +230,9 @@ def var_backtest(returns: pd.Series, var_series: pd.Series, cl: float = 0.95) ->
         "actual_rate": round(float(actual_rate), 4),
         "expected_rate": round(expected_rate, 4),
         "kupiec_pvalue": round(pvalue, 4),
-        "assessment": "OK" if pvalue > 0.05 or np.isnan(pvalue) else "FAIL (model underestimates risk)",
+        "assessment": "OK"
+        if pvalue > 0.05 or np.isnan(pvalue)
+        else "FAIL (model underestimates risk)",
     }
 
 
@@ -266,8 +316,10 @@ def main():
     var_vals = exp_ret.quantile(1 - 0.95).dropna()
     var_series = var_vals.iloc[-400:]
     bt = var_backtest(port_ret.iloc[-400:], var_series, 0.95)
-    print(f"\nVaR Backtest: actual={bt['actual_exceedances']}, "
-          f"expected={bt['expected_exceedances']}, kupiec_p={bt['kupiec_pvalue']:.3f}")
+    print(
+        f"\nVaR Backtest: actual={bt['actual_exceedances']}, "
+        f"expected={bt['expected_exceedances']}, kupiec_p={bt['kupiec_pvalue']:.3f}"
+    )
 
 
 if __name__ == "__main__":

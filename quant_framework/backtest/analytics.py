@@ -11,6 +11,7 @@ from typing import Dict, List, Optional, Tuple
 
 # ── Streak Analysis ────────────────────────────────────────
 
+
 def analyze_streaks(returns: pd.Series) -> Dict:
     """Analyze winning/losing streaks from daily returns.
 
@@ -61,7 +62,9 @@ def analyze_streaks(returns: pd.Series) -> Dict:
         "max_win_streak": max(win_streaks) if win_streaks else 0,
         "max_loss_streak": max(loss_streaks) if loss_streaks else 0,
         "avg_win_streak": round(float(np.mean(win_streaks)), 2) if win_streaks else 0,
-        "avg_loss_streak": round(float(np.mean(loss_streaks)), 2) if loss_streaks else 0,
+        "avg_loss_streak": round(float(np.mean(loss_streaks)), 2)
+        if loss_streaks
+        else 0,
         "median_win_streak": float(np.median(win_streaks)) if win_streaks else 0,
         "median_loss_streak": float(np.median(loss_streaks)) if loss_streaks else 0,
         "total_win_days": sum(win_streaks),
@@ -70,6 +73,7 @@ def analyze_streaks(returns: pd.Series) -> Dict:
 
 
 # ── Drawdown Duration ──────────────────────────────────────
+
 
 def analyze_drawdown_duration(equity: pd.Series) -> Dict:
     """Analyze time underwater: duration, recovery, drawdown depth.
@@ -94,30 +98,42 @@ def analyze_drawdown_duration(equity: pd.Series) -> Dict:
         if val > current_peak:
             current_peak = val
             if current_start is not None:
-                periods.append({
-                    "start": current_start,
-                    "end": t,
-                    "duration_days": (pd.Timestamp(t) - pd.Timestamp(current_start)).days
-                        if hasattr(t, 'days') else i,
-                    "peak": float(current_peak),
-                    "trough": float(eq.iloc[current_start_idx: i + 1].min()),
-                    "max_drawdown": float((eq.iloc[current_start_idx: i + 1].min() - current_peak) / current_peak),
-                })
+                periods.append(
+                    {
+                        "start": current_start,
+                        "end": t,
+                        "duration_days": (
+                            pd.Timestamp(t) - pd.Timestamp(current_start)
+                        ).days
+                        if hasattr(t, "days")
+                        else i,
+                        "peak": float(current_peak),
+                        "trough": float(eq.iloc[current_start_idx : i + 1].min()),
+                        "max_drawdown": float(
+                            (eq.iloc[current_start_idx : i + 1].min() - current_peak)
+                            / current_peak
+                        ),
+                    }
+                )
                 current_start = None
         elif in_dd.iloc[i] and current_start is None:
             current_start = t
             current_start_idx = i
 
     if current_start is not None and in_dd.iloc[-1]:
-        periods.append({
-            "start": current_start,
-            "end": eq.index[-1],
-            "duration_days": len(eq) - current_start_idx,
-            "peak": float(current_peak),
-            "trough": float(eq.iloc[current_start_idx:].min()),
-            "max_drawdown": float((eq.iloc[current_start_idx:].min() - current_peak) / current_peak),
-            "ongoing": True,
-        })
+        periods.append(
+            {
+                "start": current_start,
+                "end": eq.index[-1],
+                "duration_days": len(eq) - current_start_idx,
+                "peak": float(current_peak),
+                "trough": float(eq.iloc[current_start_idx:].min()),
+                "max_drawdown": float(
+                    (eq.iloc[current_start_idx:].min() - current_peak) / current_peak
+                ),
+                "ongoing": True,
+            }
+        )
 
     # Compute simplified durations from daily drawdown flags
     dd_flags = in_dd.astype(int)
@@ -141,6 +157,7 @@ def analyze_drawdown_duration(equity: pd.Series) -> Dict:
 
 # ── Monthly / Annual Returns Tables ────────────────────────
 
+
 def monthly_returns_table(returns: pd.Series) -> pd.DataFrame:
     """Generate monthly returns table (years × months) as DataFrame.
 
@@ -151,8 +168,20 @@ def monthly_returns_table(returns: pd.Series) -> pd.DataFrame:
 
     monthly = r.groupby([idx.year, idx.month]).apply(lambda x: (1 + x).prod() - 1)
     matrix = monthly.unstack()
-    cols = {1: "Jan", 2: "Feb", 3: "Mar", 4: "Apr", 5: "May", 6: "Jun",
-            7: "Jul", 8: "Aug", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dec"}
+    cols = {
+        1: "Jan",
+        2: "Feb",
+        3: "Mar",
+        4: "Apr",
+        5: "May",
+        6: "Jun",
+        7: "Jul",
+        8: "Aug",
+        9: "Sep",
+        10: "Oct",
+        11: "Nov",
+        12: "Dec",
+    }
     matrix.columns = [cols.get(c, str(c)) for c in matrix.columns]
     annual = r.groupby(idx.year).apply(lambda x: (1 + x).prod() - 1)
     matrix["Annual"] = [annual.loc[y] for y in matrix.index]
@@ -169,14 +198,17 @@ def annual_returns_table(returns: pd.Series) -> pd.DataFrame:
     annual_vol = r.groupby(idx.year).apply(lambda x: float(x.std() * np.sqrt(252)))
     annual_sharpe = (annual_ret - 0.02) / annual_vol.replace(0, np.nan)
 
-    return pd.DataFrame({
-        "return": annual_ret,
-        "volatility": annual_vol,
-        "sharpe": annual_sharpe,
-    })
+    return pd.DataFrame(
+        {
+            "return": annual_ret,
+            "volatility": annual_vol,
+            "sharpe": annual_sharpe,
+        }
+    )
 
 
 # ── Profit/Loss Ratio ──────────────────────────────────────
+
 
 def profit_loss_ratio(returns: pd.Series) -> Dict:
     """Detailed profit/loss analysis with tail analysis."""
@@ -203,7 +235,8 @@ def profit_loss_ratio(returns: pd.Series) -> Dict:
     tail_ratio = abs(q95 / q5) if q5 != 0 else np.inf
 
     return {
-        "n_wins": n_wins, "n_losses": n_losses,
+        "n_wins": n_wins,
+        "n_losses": n_losses,
         "win_rate": round(float(n_wins / len(r)), 4),
         "avg_win": round(avg_win, 6),
         "avg_loss": round(avg_loss, 6),
@@ -219,8 +252,10 @@ def profit_loss_ratio(returns: pd.Series) -> Dict:
 
 # ── Rolling Metrics DataFrame ──────────────────────────────
 
-def rolling_metrics_df(returns: pd.Series, windows: Optional[List[int]] = None
-                       ) -> pd.DataFrame:
+
+def rolling_metrics_df(
+    returns: pd.Series, windows: Optional[List[int]] = None
+) -> pd.DataFrame:
     """Compute rolling Sharpe, vol, return, VaR as DataFrame.
 
     Args:
@@ -252,8 +287,8 @@ def rolling_metrics_df(returns: pd.Series, windows: Optional[List[int]] = None
 
 # ── Full Analytics Report ──────────────────────────────────
 
-def full_analytics(returns: pd.Series, equity: pd.Series,
-                   ppy: int = 252) -> Dict:
+
+def full_analytics(returns: pd.Series, equity: pd.Series, ppy: int = 252) -> Dict:
     """Run all backtest analytics and return comprehensive dict.
 
     Returns dict with: pl_ratio, streaks, drawdown_duration,
@@ -270,6 +305,7 @@ def full_analytics(returns: pd.Series, equity: pd.Series,
 
 
 # ── Markdown Report ────────────────────────────────────────
+
 
 def analytics_report_markdown(analytics: Dict) -> str:
     """Generate markdown report from full_analytics output."""
@@ -355,8 +391,8 @@ def analytics_report_markdown(analytics: Dict) -> str:
 
 # ── Demo ────────────────────────────────────────────────────
 
-def _make_demo_data(n: int = 504, seed: int = 42
-                    ) -> Tuple[pd.Series, pd.Series]:
+
+def _make_demo_data(n: int = 504, seed: int = 42) -> Tuple[pd.Series, pd.Series]:
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2023-01-01", periods=n, freq="B")
     returns = pd.Series(rng.normal(0.0006, 0.012, n), index=dates)

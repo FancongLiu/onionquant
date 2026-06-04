@@ -4,6 +4,7 @@ Real-time inbox watcher — polls chairman_inbox/ every 3 seconds.
 When new messages appear, triggers immediate AI processing via WSL claude -p.
 Gives <1 minute WeChat reply latency (vs 10-30 min before).
 """
+
 import subprocess
 import time
 import json
@@ -49,14 +50,21 @@ def process_inbox():
     if not new_msgs:
         return
 
-    print(f"\n[{datetime.now().strftime('%H:%M:%S')}] NEW MESSAGES: {[f.name for f in new_msgs]}", flush=True)
+    print(
+        f"\n[{datetime.now().strftime('%H:%M:%S')}] NEW MESSAGES: {[f.name for f in new_msgs]}",
+        flush=True,
+    )
 
     # Step 1: Run AI processing via WSL claude
     prompt = "CEO inbox: process ALL pending messages in company/chairman_inbox/ (excluding README.md). For each: read content, write response to chairman_outbox/RESP_*.md. Move processed files to processed/. Then exit."
     try:
         result = subprocess.run(
-            ["wsl", "bash", "-c",
-             f"cd /mnt/e/2026_AgentStudy/Python_code && echo '2' | claude -p '{prompt}' --model deepseek-v4-pro --dangerously-skip-permissions 2>&1"],
+            [
+                "wsl",
+                "bash",
+                "-c",
+                f"cd /mnt/e/2026_AgentStudy/Python_code && echo '2' | claude -p '{prompt}' --model deepseek-v4-pro --dangerously-skip-permissions 2>&1",
+            ],
             cwd=str(PROJECT_ROOT),
             capture_output=True,
             text=True,

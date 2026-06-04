@@ -26,14 +26,15 @@ from sklearn.metrics.pairwise import cosine_similarity
 @dataclass
 class MemoryEntry:
     """A single memory with decay-based lifecycle."""
-    id: str                          # SHA-256 fingerprint
-    content: str                     # The memory text
-    category: str = "general"        # user, feedback, project, reference, decision, bug
-    strength: float = 1.0            # 1.0 = fresh, decays toward 0.1 floor
+
+    id: str  # SHA-256 fingerprint
+    content: str  # The memory text
+    category: str = "general"  # user, feedback, project, reference, decision, bug
+    strength: float = 1.0  # 1.0 = fresh, decays toward 0.1 floor
     access_count: int = 0
-    last_accessed: str = ""          # ISO timestamp
-    created_at: str = ""             # ISO timestamp
-    source_file: str = ""            # Which MEMORY.md or index file
+    last_accessed: str = ""  # ISO timestamp
+    created_at: str = ""  # ISO timestamp
+    source_file: str = ""  # Which MEMORY.md or index file
     supersedes: List[str] = field(default_factory=list)
     is_active: bool = True
 
@@ -47,17 +48,26 @@ class MemoryEntry:
 
     def to_dict(self) -> dict:
         return {
-            "id": self.id, "content": self.content, "category": self.category,
-            "strength": round(self.strength, 4), "access_count": self.access_count,
-            "last_accessed": self.last_accessed, "created_at": self.created_at,
-            "source_file": self.source_file, "supersedes": self.supersedes,
+            "id": self.id,
+            "content": self.content,
+            "category": self.category,
+            "strength": round(self.strength, 4),
+            "access_count": self.access_count,
+            "last_accessed": self.last_accessed,
+            "created_at": self.created_at,
+            "source_file": self.source_file,
+            "supersedes": self.supersedes,
             "is_active": self.is_active,
         }
 
     @classmethod
     def from_dict(cls, d: dict) -> "MemoryEntry":
-        return cls(**{k: d.get(k, v.default if hasattr(v, 'default') else v)
-                       for k, v in cls.__dataclass_fields__.items()})
+        return cls(
+            **{
+                k: d.get(k, v.default if hasattr(v, "default") else v)
+                for k, v in cls.__dataclass_fields__.items()
+            }
+        )
 
 
 class MemoryStore:
@@ -97,12 +107,14 @@ class MemoryStore:
 
     def _save(self):
         self.store_path.parent.mkdir(parents=True, exist_ok=True)
-        lines = [json.dumps(e.to_dict(), ensure_ascii=False)
-                 for e in self.entries.values()]
+        lines = [
+            json.dumps(e.to_dict(), ensure_ascii=False) for e in self.entries.values()
+        ]
         self.store_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    def add(self, content: str, category: str = "general",
-            source_file: str = "") -> str:
+    def add(
+        self, content: str, category: str = "general", source_file: str = ""
+    ) -> str:
         """Add a memory entry. Returns the entry ID (SHA-256 fingerprint)."""
         fingerprint = self._fingerprint(content)
         now = datetime.now().isoformat()
@@ -116,8 +128,12 @@ class MemoryStore:
                 return fingerprint
 
         entry = MemoryEntry(
-            id=fingerprint, content=content, category=category,
-            created_at=now, last_accessed=now, source_file=source_file,
+            id=fingerprint,
+            content=content,
+            category=category,
+            created_at=now,
+            last_accessed=now,
+            source_file=source_file,
         )
         self.entries[fingerprint] = entry
         self._corpus.append(content)
@@ -171,16 +187,19 @@ class MemoryStore:
         self._corpus_ids = [e.id for e in active]
         if len(self._corpus) >= 2:
             self._vectorizer = TfidfVectorizer(
-                max_features=500, stop_words="english",
-                ngram_range=(1, 2), lowercase=True,
+                max_features=500,
+                stop_words="english",
+                ngram_range=(1, 2),
+                lowercase=True,
             )
             self._tfidf_matrix = self._vectorizer.fit_transform(self._corpus)
         else:
             self._vectorizer = None
             self._tfidf_matrix = None
 
-    def search(self, query: str, k: int = 5,
-               min_strength: float = 0.0) -> List[Tuple[MemoryEntry, float]]:
+    def search(
+        self, query: str, k: int = 5, min_strength: float = 0.0
+    ) -> List[Tuple[MemoryEntry, float]]:
         """Search memories by TF-IDF cosine similarity. Returns (entry, score)."""
         if self._vectorizer is None or self._tfidf_matrix is None:
             # Fallback: keyword match
@@ -189,8 +208,9 @@ class MemoryStore:
             for e in self.entries.values():
                 if not e.is_active or e.strength < min_strength:
                     continue
-                score = sum(1 for w in query_lower.split()
-                           if w in e.content.lower()) / max(len(query_lower.split()), 1)
+                score = sum(
+                    1 for w in query_lower.split() if w in e.content.lower()
+                ) / max(len(query_lower.split()), 1)
                 if score > 0:
                     results.append((e, score))
             results.sort(key=lambda x: -x[1])
@@ -218,8 +238,9 @@ class MemoryStore:
             if e.is_active:
                 e.decay(factor)
         # Archive very weak entries
-        to_archive = [eid for eid, e in self.entries.items()
-                      if e.strength < 0.15 and e.is_active]
+        to_archive = [
+            eid for eid, e in self.entries.items() if e.strength < 0.15 and e.is_active
+        ]
         for eid in to_archive:
             self.entries[eid].is_active = False
         self._rebuild_index()
@@ -234,10 +255,13 @@ class MemoryStore:
 
     # ── Context Budget Builder ──────────────────────────────
 
-    def build_context_budget(self, max_tokens: int = 2000,
-                             recency_weight: float = 0.3,
-                             strength_weight: float = 0.4,
-                             category_boost: Optional[List[str]] = None) -> str:
+    def build_context_budget(
+        self,
+        max_tokens: int = 2000,
+        recency_weight: float = 0.3,
+        strength_weight: float = 0.4,
+        category_boost: Optional[List[str]] = None,
+    ) -> str:
         """Build a context injection string within token budget.
 
         Selects entries by composite score: recency * w_r + strength * w_s + access * w_a
@@ -261,10 +285,12 @@ class MemoryStore:
             recency = max(0, 1.0 - days / 30)
 
             # Composite score
-            score = (recency * recency_weight +
-                     e.strength * strength_weight +
-                     min(e.access_count / 10, 1.0) * 0.2 +
-                     min(len(e.content) / 200, 1.0) * 0.1)
+            score = (
+                recency * recency_weight
+                + e.strength * strength_weight
+                + min(e.access_count / 10, 1.0) * 0.2
+                + min(len(e.content) / 200, 1.0) * 0.1
+            )
 
             # Category boost
             if category_boost and e.category in category_boost:
@@ -296,7 +322,9 @@ class MemoryStore:
         return {
             "total_entries": len(self.entries),
             "active_entries": len(active),
-            "avg_strength": round(float(np.mean([e.strength for e in active])), 4) if active else 0,
+            "avg_strength": round(float(np.mean([e.strength for e in active])), 4)
+            if active
+            else 0,
             "categories": categories,
             "corpus_size": len(self._corpus),
         }
@@ -304,18 +332,32 @@ class MemoryStore:
 
 # ── Demo ────────────────────────────────────────────────────
 
+
 def main():
     import tempfile
+
     path = Path(tempfile.gettempdir()) / "demo_memory_store.jsonl"
 
     store = MemoryStore(path)
 
     # Add some memories
-    store.add("Project uses sklearn Ridge/RandomForest/XGBoost for factor→return prediction", "decision")
+    store.add(
+        "Project uses sklearn Ridge/RandomForest/XGBoost for factor→return prediction",
+        "decision",
+    )
     store.add("Windows GBK encoding causes emoji failures — use ASCII text only", "bug")
-    store.add("Data quality monitoring has 5 checks: NaN, freshness, outliers, completeness, lookahead", "project")
-    store.add("Chairman prefers evidence-based decisions over theoretical cleanliness", "feedback")
-    store.add("TradingAgents uses LangGraph StateGraph for multi-agent orchestration", "reference")
+    store.add(
+        "Data quality monitoring has 5 checks: NaN, freshness, outliers, completeness, lookahead",
+        "project",
+    )
+    store.add(
+        "Chairman prefers evidence-based decisions over theoretical cleanliness",
+        "feedback",
+    )
+    store.add(
+        "TradingAgents uses LangGraph StateGraph for multi-agent orchestration",
+        "reference",
+    )
 
     print(f"Store: {store.stats()}")
     print()
@@ -324,7 +366,9 @@ def main():
     results = store.search("machine learning prediction factors")
     print("Search 'machine learning prediction factors':")
     for e, score in results:
-        print(f"  [{e.category}] score={score:.3f} strength={e.strength:.2f} — {e.content[:80]}")
+        print(
+            f"  [{e.category}] score={score:.3f} strength={e.strength:.2f} — {e.content[:80]}"
+        )
 
     print()
 

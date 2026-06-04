@@ -14,16 +14,15 @@ Cron: 0 18 * * 1-5  (weekdays after market close)
 
 import argparse
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
-import numpy as np
-import pandas as pd
 import yfinance as yf
 
 # Fix Windows GBK encoding for emoji output
 if sys.platform == "win32":
     import io
+
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
@@ -52,8 +51,8 @@ def fetch_data(symbol: str = SYMBOL) -> dict:
     # 1Y for metrics
     hist_1y = ticker.history("1y")["Close"]
     rets = hist_1y.pct_change().dropna()
-    sharpe_1y = float(rets.mean() / rets.std() * (252 ** 0.5)) if len(rets) > 20 else 0
-    vol_1y = float(rets.std() * (252 ** 0.5) * 100)
+    sharpe_1y = float(rets.mean() / rets.std() * (252**0.5)) if len(rets) > 20 else 0
+    vol_1y = float(rets.std() * (252**0.5) * 100)
     maxdd_1y = float((hist_1y / hist_1y.cummax() - 1).min() * 100)
 
     # Current vs moving averages
@@ -63,7 +62,11 @@ def fetch_data(symbol: str = SYMBOL) -> dict:
     ma200 = float(hist_1y.rolling(200).mean().iloc[-1]) if len(hist_1y) >= 200 else ma50
 
     close = float(today["Close"])
-    trend = "BULL" if (close > ma5 > ma20) else ("BEAR" if (close < ma5 < ma20) else "NEUTRAL")
+    trend = (
+        "BULL"
+        if (close > ma5 > ma20)
+        else ("BEAR" if (close < ma5 < ma20) else "NEUTRAL")
+    )
 
     # RSI(14)
     delta = hist_1y.diff()
@@ -84,7 +87,9 @@ def fetch_data(symbol: str = SYMBOL) -> dict:
 
     return {
         "symbol": symbol,
-        "date": str(today.name.date()) if hasattr(today.name, "date") else str(datetime.now().date()),
+        "date": str(today.name.date())
+        if hasattr(today.name, "date")
+        else str(datetime.now().date()),
         "close": close,
         "change": change,
         "change_pct": change_pct,
@@ -112,7 +117,7 @@ def generate_report(data: dict, quick: bool = False) -> str:
         return f"# DXYZ Daily Briefing ERROR\n**{data['error']}**"
 
     lines = [
-        f"# DXYZ 每日快报",
+        "# DXYZ 每日快报",
         f"> {data['date']} | 收盘价 ${data['close']:.2f} | {data['change']:+.2f} ({data['change_pct']:+.1f}%)",
         "",
         "## 核心指标",
@@ -151,7 +156,9 @@ def generate_report(data: dict, quick: bool = False) -> str:
             lines.append(f"- {title}")
 
     lines.append("")
-    lines.append(f"*自动生成于 {datetime.now().strftime('%Y-%m-%d %H:%M')} | daily_dxyz_briefing.py*")
+    lines.append(
+        f"*自动生成于 {datetime.now().strftime('%Y-%m-%d %H:%M')} | daily_dxyz_briefing.py*"
+    )
     return "\n".join(lines)
 
 
@@ -177,7 +184,9 @@ def write_alert(data: dict):
 def main():
     parser = argparse.ArgumentParser(description="DXYZ Daily Briefing Generator")
     parser.add_argument("--quick", action="store_true", help="Price + volume only")
-    parser.add_argument("--alert", action="store_true", help="Alert mode: write to outbox if big move")
+    parser.add_argument(
+        "--alert", action="store_true", help="Alert mode: write to outbox if big move"
+    )
     args = parser.parse_args()
 
     print(f"DXYZ Daily Briefing — {datetime.now().strftime('%Y-%m-%d %H:%M')}")

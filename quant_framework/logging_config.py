@@ -112,12 +112,14 @@ class MemoryLogHandler(logging.Handler):
         self.buffer = deque(maxlen=capacity)
 
     def emit(self, record: logging.LogRecord) -> None:
-        self.buffer.append({
-            "time": datetime.fromtimestamp(record.created).isoformat(),
-            "level": record.levelname,
-            "name": record.name,
-            "msg": self.format(record),
-        })
+        self.buffer.append(
+            {
+                "time": datetime.fromtimestamp(record.created).isoformat(),
+                "level": record.levelname,
+                "name": record.name,
+                "msg": self.format(record),
+            }
+        )
 
     def get_records(self, level: Optional[str] = None, limit: int = 50) -> List[dict]:
         records = list(self.buffer)

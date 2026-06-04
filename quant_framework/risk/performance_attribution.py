@@ -67,7 +67,9 @@ def factor_regression(
                 float(exposures[name] * factor_returns[name].loc[common].mean()), 6
             )
 
-    total_factor_return = sum(v for k, v in factor_contributions.items() if k != "alpha")
+    total_factor_return = sum(
+        v for k, v in factor_contributions.items() if k != "alpha"
+    )
 
     return {
         "exposures": exposures,
@@ -75,7 +77,9 @@ def factor_regression(
         "p_values": pvals,
         "r_squared": round(float(model.rsquared), 4),
         "adj_r_squared": round(float(model.rsquared_adj), 4),
-        "alpha_annual": round(float(exposures.get("alpha", 0)) * 252, 6) if intercept else 0,
+        "alpha_annual": round(float(exposures.get("alpha", 0)) * 252, 6)
+        if intercept
+        else 0,
         "factor_contributions": factor_contributions,
         "total_factor_return_annual": round(float(total_factor_return) * 252, 6),
         "n_obs": len(y),
@@ -95,7 +99,7 @@ def rolling_attribution(
     results = []
     dates = portfolio_returns.index
     for i in range(window, len(dates), step):
-        port_slice = portfolio_returns.iloc[i - window:i]
+        port_slice = portfolio_returns.iloc[i - window : i]
         reg = factor_regression(port_slice, factor_returns.loc[port_slice.index])
         if "error" in reg:
             continue
@@ -118,24 +122,28 @@ def contribution_summary(attribution: Dict) -> pd.DataFrame:
     rows = []
     for factor, contrib in attribution.get("factor_contributions", {}).items():
         if factor not in {"alpha", "const"}:
-            rows.append({
-                "factor": factor,
-                "daily_contribution": contrib,
-                "annual_contribution": round(contrib * 252, 6),
-                "exposure": attribution["exposures"].get(factor, 0),
-                "t_stat": attribution["t_statistics"].get(factor, 0),
-                "significant": attribution["p_values"].get(factor, 1) < 0.05,
-            })
+            rows.append(
+                {
+                    "factor": factor,
+                    "daily_contribution": contrib,
+                    "annual_contribution": round(contrib * 252, 6),
+                    "exposure": attribution["exposures"].get(factor, 0),
+                    "t_stat": attribution["t_statistics"].get(factor, 0),
+                    "significant": attribution["p_values"].get(factor, 1) < 0.05,
+                }
+            )
 
     if "alpha" in attribution.get("exposures", {}):
-        rows.append({
-            "factor": "alpha (idiosyncratic)",
-            "daily_contribution": attribution["exposures"]["alpha"],
-            "annual_contribution": attribution["alpha_annual"],
-            "exposure": 0,
-            "t_stat": attribution["t_statistics"].get("alpha", 0),
-            "significant": attribution["p_values"].get("alpha", 1) < 0.05,
-        })
+        rows.append(
+            {
+                "factor": "alpha (idiosyncratic)",
+                "daily_contribution": attribution["exposures"]["alpha"],
+                "annual_contribution": attribution["alpha_annual"],
+                "exposure": 0,
+                "t_stat": attribution["t_statistics"].get("alpha", 0),
+                "significant": attribution["p_values"].get("alpha", 1) < 0.05,
+            }
+        )
 
     return pd.DataFrame(rows).sort_values("annual_contribution", ascending=False)
 
@@ -157,8 +165,12 @@ def brinson_attribution(
 
     Returns dict with allocation_effect, selection_effect, interaction_effect.
     """
-    common_dates = portfolio_weights.index.intersection(benchmark_weights.index).intersection(asset_returns.index)
-    common_tickers = portfolio_weights.columns.intersection(benchmark_weights.columns).intersection(asset_returns.columns)
+    common_dates = portfolio_weights.index.intersection(
+        benchmark_weights.index
+    ).intersection(asset_returns.index)
+    common_tickers = portfolio_weights.columns.intersection(
+        benchmark_weights.columns
+    ).intersection(asset_returns.columns)
 
     if len(common_dates) < 2 or len(common_tickers) < 2:
         return {"error": "Insufficient overlapping data"}
@@ -177,7 +189,9 @@ def brinson_attribution(
             "allocation_effect": round(float(allocation) * 252, 6),
             "selection_effect": round(float(selection) * 252, 6),
             "interaction_effect": round(float(interaction) * 252, 6),
-            "total_excess_return": round(float(((pw - bw) * rets).sum(axis=1).mean()) * 252, 6),
+            "total_excess_return": round(
+                float(((pw - bw) * rets).sum(axis=1).mean()) * 252, 6
+            ),
         }
 
     # With sector mapping
@@ -195,8 +209,8 @@ def brinson_attribution(
         bw_g = bw[grp_tickers].sum(axis=1)
         ret_g = rets[grp_tickers].mean(axis=1)
 
-        alloc_effect += float(((bw_g * (ret_g - rets.mean(axis=1)))).mean())
-        select_effect += float(((pw_g * (ret_g - rets[grp_tickers].mean(axis=1)))).mean())
+        alloc_effect += float((bw_g * (ret_g - rets.mean(axis=1))).mean())
+        select_effect += float((pw_g * (ret_g - rets[grp_tickers].mean(axis=1))).mean())
 
     return {
         "allocation_effect": round(alloc_effect * 252, 6),
@@ -249,24 +263,33 @@ def report_markdown(attribution: Dict) -> str:
     return "\n".join(lines)
 
 
-def _make_demo_data(n: int = 504, n_factors: int = 4, seed: int = 42
-                    ) -> Tuple[pd.Series, pd.DataFrame]:
+def _make_demo_data(
+    n: int = 504, n_factors: int = 4, seed: int = 42
+) -> Tuple[pd.Series, pd.DataFrame]:
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2022-01-01", periods=n, freq="B")
 
     # Factor returns
-    factors = pd.DataFrame({
-        "MKT": rng.normal(0.0005, 0.012, n),
-        "SMB": rng.normal(0.0002, 0.008, n),
-        "HML": rng.normal(0.0001, 0.009, n),
-        "MOM": rng.normal(0.0003, 0.010, n),
-    }, index=dates)
+    factors = pd.DataFrame(
+        {
+            "MKT": rng.normal(0.0005, 0.012, n),
+            "SMB": rng.normal(0.0002, 0.008, n),
+            "HML": rng.normal(0.0001, 0.009, n),
+            "MOM": rng.normal(0.0003, 0.010, n),
+        },
+        index=dates,
+    )
 
     # Portfolio = 1.0 * MKT + 0.3 * SMB - 0.2 * HML + 0.15 * MOM + alpha + noise
     alpha = 0.0002
-    port = (1.0 * factors["MKT"] + 0.3 * factors["SMB"]
-            - 0.2 * factors["HML"] + 0.15 * factors["MOM"]
-            + alpha + rng.normal(0, 0.003, n))
+    port = (
+        1.0 * factors["MKT"]
+        + 0.3 * factors["SMB"]
+        - 0.2 * factors["HML"]
+        + 0.15 * factors["MOM"]
+        + alpha
+        + rng.normal(0, 0.003, n)
+    )
     port.name = "portfolio"
 
     return port, factors

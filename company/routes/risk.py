@@ -1,4 +1,5 @@
 """Risk management routes — limit checks, enhanced risk."""
+
 from datetime import datetime
 from fastapi import APIRouter
 
@@ -16,7 +17,12 @@ async def risk_limit_check():
     if price_files:
         try:
             import pandas as pd
-            from quant_framework.risk.risk_metrics import var_historical, ann_vol, max_drawdown, sharpe_ratio
+            from quant_framework.risk.risk_metrics import (
+                var_historical,
+                ann_vol,
+                max_drawdown,
+                sharpe_ratio,
+            )
 
             df = pd.concat([pd.read_parquet(f) for f in price_files[:5]])
             if "close" in df.columns and "ticker" in df.columns and len(df) > 100:
@@ -30,42 +36,100 @@ async def risk_limit_check():
                     sharpe = sharpe_ratio(returns.values)
 
                     checks = [
-                        ("VaR 95%", var95, RISK_LIMITS["var95_daily"], "gt",
-                         f"Daily VaR 95% ({var95:.2%}) exceeds limit ({RISK_LIMITS['var95_daily']:.2%})"),
-                        ("Max Drawdown", mdd, RISK_LIMITS["max_drawdown"], "gt",
-                         f"Max DD ({mdd:.2%}) exceeds limit ({RISK_LIMITS['max_drawdown']:.2%})"),
-                        ("Sharpe", sharpe, RISK_LIMITS["sharpe_min"], "lt",
-                         f"Sharpe ({sharpe:.2f}) below minimum ({RISK_LIMITS['sharpe_min']:.2f})"),
-                        ("Volatility", vol, RISK_LIMITS["vol_max"], "gt",
-                         f"Annual vol ({vol:.2%}) exceeds limit ({RISK_LIMITS['vol_max']:.2%})"),
+                        (
+                            "VaR 95%",
+                            var95,
+                            RISK_LIMITS["var95_daily"],
+                            "gt",
+                            f"Daily VaR 95% ({var95:.2%}) exceeds limit ({RISK_LIMITS['var95_daily']:.2%})",
+                        ),
+                        (
+                            "Max Drawdown",
+                            mdd,
+                            RISK_LIMITS["max_drawdown"],
+                            "gt",
+                            f"Max DD ({mdd:.2%}) exceeds limit ({RISK_LIMITS['max_drawdown']:.2%})",
+                        ),
+                        (
+                            "Sharpe",
+                            sharpe,
+                            RISK_LIMITS["sharpe_min"],
+                            "lt",
+                            f"Sharpe ({sharpe:.2f}) below minimum ({RISK_LIMITS['sharpe_min']:.2f})",
+                        ),
+                        (
+                            "Volatility",
+                            vol,
+                            RISK_LIMITS["vol_max"],
+                            "gt",
+                            f"Annual vol ({vol:.2%}) exceeds limit ({RISK_LIMITS['vol_max']:.2%})",
+                        ),
                     ]
 
                     for name, value, limit, op, detail in checks:
-                        breached = (op == "gt" and value > limit) or (op == "lt" and value < limit)
-                        alerts.append({
-                            "name": name, "value": round(float(value), 4),
-                            "limit": limit, "breached": breached,
-                            "severity": "critical" if breached else "ok",
-                            "detail": detail,
-                        })
+                        breached = (op == "gt" and value > limit) or (
+                            op == "lt" and value < limit
+                        )
+                        alerts.append(
+                            {
+                                "name": name,
+                                "value": round(float(value), 4),
+                                "limit": limit,
+                                "breached": breached,
+                                "severity": "critical" if breached else "ok",
+                                "detail": detail,
+                            }
+                        )
 
                     criticals = [a for a in alerts if a["breached"]]
                     if criticals:
-                        await notify_all("risk_breach", {
-                            "alerts": criticals,
-                            "timestamp": datetime.now().isoformat(),
-                        })
+                        await notify_all(
+                            "risk_breach",
+                            {
+                                "alerts": criticals,
+                                "timestamp": datetime.now().isoformat(),
+                            },
+                        )
 
-                    return {"alerts": alerts, "breaches": len(criticals), "source": "live"}
+                    return {
+                        "alerts": alerts,
+                        "breaches": len(criticals),
+                        "source": "live",
+                    }
         except Exception:
             pass
 
     return {
         "alerts": [
-            {"name": "VaR 95%", "value": 0.021, "limit": 0.03, "breached": False, "severity": "ok"},
-            {"name": "Max Drawdown", "value": 0.12, "limit": 0.20, "breached": False, "severity": "ok"},
-            {"name": "Sharpe", "value": 0.85, "limit": 0.0, "breached": False, "severity": "ok"},
-            {"name": "Volatility", "value": 0.18, "limit": 0.40, "breached": False, "severity": "ok"},
+            {
+                "name": "VaR 95%",
+                "value": 0.021,
+                "limit": 0.03,
+                "breached": False,
+                "severity": "ok",
+            },
+            {
+                "name": "Max Drawdown",
+                "value": 0.12,
+                "limit": 0.20,
+                "breached": False,
+                "severity": "ok",
+            },
+            {
+                "name": "Sharpe",
+                "value": 0.85,
+                "limit": 0.0,
+                "breached": False,
+                "severity": "ok",
+            },
+            {
+                "name": "Volatility",
+                "value": 0.18,
+                "limit": 0.40,
+                "breached": False,
+                "severity": "ok",
+            },
         ],
-        "breaches": 0, "source": "generated",
+        "breaches": 0,
+        "source": "generated",
     }

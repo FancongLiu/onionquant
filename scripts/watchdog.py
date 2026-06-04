@@ -6,7 +6,7 @@
 - 主 Tunnel 断线 → 启用备用 quick tunnel → 微信发备用 URL
 - 开机自启，持续运行
 """
-import json
+
 import os
 import subprocess
 import sys
@@ -29,12 +29,16 @@ VENV_PYTHON = str(PROJECT_ROOT / ".venv" / "Scripts" / "python.exe")
 SERVICES = {
     "server": {
         "check": lambda: _check_port(8765),
-        "start": lambda: _start_process([VENV_PYTHON, str(PROJECT_ROOT / "company" / "server.py")]),
+        "start": lambda: _start_process(
+            [VENV_PYTHON, str(PROJECT_ROOT / "company" / "server.py")]
+        ),
         "name": "server.py :8765",
     },
     "auto_reply": {
         "check": lambda: _check_python_script("wechat_auto_reply"),
-        "start": lambda: _start_process([VENV_PYTHON, str(PROJECT_ROOT / "scripts" / "wechat_auto_reply.py")]),
+        "start": lambda: _start_process(
+            [VENV_PYTHON, str(PROJECT_ROOT / "scripts" / "wechat_auto_reply.py")]
+        ),
         "name": "wechat_auto_reply",
     },
     "cloudflared": {
@@ -84,9 +88,17 @@ def _check_process_name(name: str) -> bool:
     """Check if a process name contains the given string."""
     try:
         result = subprocess.run(
-            ["powershell.exe", "-NoProfile", "-Command",
-             f"(Get-Process | Where-Object {{ $_.ProcessName -like '*{name}*' }} | Measure-Object).Count"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10,
+            [
+                "powershell.exe",
+                "-NoProfile",
+                "-Command",
+                f"(Get-Process | Where-Object {{ $_.ProcessName -like '*{name}*' }} | Measure-Object).Count",
+            ],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=10,
         )
         return int(result.stdout.strip() or "0") > 0
     except Exception:
@@ -97,9 +109,17 @@ def _check_python_script(script_name: str) -> bool:
     """Check if a Python script is running by inspecting command lines."""
     try:
         result = subprocess.run(
-            ["powershell.exe", "-NoProfile", "-Command",
-             f"(Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | Where-Object {{ $_.CommandLine -like '*{script_name}*' }} | Measure-Object).Count"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10,
+            [
+                "powershell.exe",
+                "-NoProfile",
+                "-Command",
+                f"(Get-CimInstance Win32_Process -Filter \"Name='python.exe'\" | Where-Object {{ $_.CommandLine -like '*{script_name}*' }} | Measure-Object).Count",
+            ],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=10,
         )
         return int(result.stdout.strip() or "0") > 0
     except Exception:
@@ -109,9 +129,13 @@ def _check_python_script(script_name: str) -> bool:
 def _start_process(args: list) -> bool:
     """Start a background process and return True if successful."""
     try:
-        subprocess.Popen(args, cwd=str(PROJECT_ROOT),
-                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                         creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0)
+        subprocess.Popen(
+            args,
+            cwd=str(PROJECT_ROOT),
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
+        )
         return True
     except Exception as e:
         _log(f"START FAILED {args}: {e}")
@@ -129,7 +153,14 @@ def _start_cloudflared() -> bool:
             "cloudflared",
         ]:
             try:
-                result = subprocess.run([path, "--version"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5)
+                result = subprocess.run(
+                    [path, "--version"],
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    timeout=5,
+                )
                 if result.returncode == 0:
                     CLOUDFLARED_BIN = path
                     break
@@ -141,8 +172,18 @@ def _start_cloudflared() -> bool:
 
     try:
         subprocess.Popen(
-            [CLOUDFLARED_BIN, "tunnel", "--config", CLOUDFLARED_CONFIG, "--protocol", "http2", "run", "onion-tunnel"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            [
+                CLOUDFLARED_BIN,
+                "tunnel",
+                "--config",
+                CLOUDFLARED_CONFIG,
+                "--protocol",
+                "http2",
+                "run",
+                "onion-tunnel",
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
             creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
         )
         return True
@@ -156,7 +197,11 @@ def _check_wsl_tmux() -> bool:
     try:
         result = subprocess.run(
             ["wsl", "-e", "bash", "-c", "tmux has-session -t ceo-24x7 2>&1"],
-            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=10,
         )
         return result.returncode == 0
     except Exception:
@@ -167,9 +212,15 @@ def _start_wsl_tmux() -> bool:
     """Start WSL tmux with ceo_loop.sh."""
     try:
         subprocess.Popen(
-            ["wsl", "-e", "bash", "-c",
-             "cd /mnt/e/2026_AgentStudy/Python_code && tmux new-session -d -s ceo-24x7 'bash scripts/ceo_loop.sh'"],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            [
+                "wsl",
+                "-e",
+                "bash",
+                "-c",
+                "cd /mnt/e/2026_AgentStudy/Python_code && tmux new-session -d -s ceo-24x7 'bash scripts/ceo_loop.sh'",
+            ],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
         )
         return True
     except Exception as e:
@@ -179,6 +230,7 @@ def _start_wsl_tmux() -> bool:
 
 # ─── Backup Tunnel ───
 
+
 def start_backup_tunnel():
     """Start a quick trycloudflare tunnel as backup. Returns URL or None."""
     global CLOUDFLARED_BIN, _BACKUP_TUNNEL_URL
@@ -187,18 +239,22 @@ def start_backup_tunnel():
     try:
         proc = subprocess.Popen(
             [CLOUDFLARED_BIN, "tunnel", "--url", "http://localhost:8765"],
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-            encoding="utf-8", errors="replace",
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
             creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
         )
         # Parse the trycloudflare URL from output
         import re
+
         deadline = time.time() + 30
         while time.time() < deadline:
             line = proc.stderr.readline() if proc.stderr else ""
             if not line and proc.poll() is not None:
                 break
-            m = re.search(r'(https://[a-z0-9-]+\.trycloudflare\.com)', line)
+            m = re.search(r"(https://[a-z0-9-]+\.trycloudflare\.com)", line)
             if m:
                 url = m.group(1)
                 _BACKUP_TUNNEL_URL = url
@@ -213,6 +269,7 @@ def start_backup_tunnel():
 
 # ─── WeChat Notification ───
 
+
 def _send_wechat(text: str):
     """Send alert to WeChat. Returns True on success."""
     corp_id = os.getenv("WECHAT_CORP_ID", "")
@@ -221,7 +278,10 @@ def _send_wechat(text: str):
     if not all([corp_id, secret, agent_id]):
         return False
     try:
-        r = requests.get(f"https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid={corp_id}&corpsecret={secret}", timeout=10)
+        r = requests.get(
+            f"https://qyapi.weixin.qq.com/cgi-bin/gettoken?corpid={corp_id}&corpsecret={secret}",
+            timeout=10,
+        )
         token = r.json().get("access_token", "")
         if not token:
             return False
@@ -231,13 +291,18 @@ def _send_wechat(text: str):
             "agentid": int(agent_id),
             "text": {"content": text[:2000]},
         }
-        r = requests.post(f"https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={token}", json=body, timeout=10)
+        r = requests.post(
+            f"https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={token}",
+            json=body,
+            timeout=10,
+        )
         return r.json().get("errcode") == 0
     except Exception:
         return False
 
 
 # ─── Domain Health Check ───
+
 
 def check_domain() -> bool:
     """Check if onionoffice.xyz is reachable."""
@@ -250,6 +315,7 @@ def check_domain() -> bool:
 
 # ─── Main Watchdog Loop ───
 
+
 def main():
     global CLOUDFLARED_BIN
 
@@ -260,7 +326,14 @@ def main():
         "cloudflared",
     ]:
         try:
-            result = subprocess.run([path, "--version"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=5)
+            result = subprocess.run(
+                [path, "--version"],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=5,
+            )
             if result.returncode == 0:
                 CLOUDFLARED_BIN = path
                 _log(f"Cloudflared: {path}")
@@ -282,7 +355,9 @@ def main():
     _log("Starting backup tunnel...")
     start_backup_tunnel()
 
-    _send_wechat("🟢 OnionQuant Watchdog 已启动\n\n主域名: https://onionoffice.xyz\n状态: 监控中...")
+    _send_wechat(
+        "🟢 OnionQuant Watchdog 已启动\n\n主域名: https://onionoffice.xyz\n状态: 监控中..."
+    )
 
     last_domain_check = 0
     last_status_push = 0
@@ -337,7 +412,9 @@ def main():
                 ok = sum(1 for s in SERVICES.values() if s["check"]())
                 total = len(SERVICES)
                 domain_ok = "✅" if check_domain() else "🔴"
-                _send_wechat(f"📊 系统状态 ({_ts()})\n\n服务: {ok}/{total} 在线\n域名: {domain_ok}\n备用: {_BACKUP_TUNNEL_URL or '无'}")
+                _send_wechat(
+                    f"📊 系统状态 ({_ts()})\n\n服务: {ok}/{total} 在线\n域名: {domain_ok}\n备用: {_BACKUP_TUNNEL_URL or '无'}"
+                )
 
             time.sleep(30)
 

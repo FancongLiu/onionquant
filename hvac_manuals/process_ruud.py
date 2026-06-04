@@ -1,7 +1,13 @@
 """
 Targeted Ruud processor — fetches known product pages, extracts PDF links, downloads spec sheets.
 """
-import sys, io, re, json, time, logging
+
+import sys
+import io
+import re
+import json
+import time
+import logging
 from pathlib import Path
 import requests
 
@@ -17,10 +23,12 @@ log = logging.getLogger(__name__)
 
 session = requests.Session()
 session.timeout = 30
-session.headers.update({
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-    "Accept": "text/html,application/xhtml+xml,*/*;q=0.9",
-})
+session.headers.update(
+    {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "text/html,application/xhtml+xml,*/*;q=0.9",
+    }
+)
 
 # Known Ruud product page URLs for our series
 RUUD_PRODUCT_PAGES = {
@@ -39,14 +47,20 @@ RUUD_PRODUCT_PAGES = {
     "VACDZS": None,
 }
 
+
 def safe_fn(n):
     return re.sub(r'[<>:"/\\|?*]', "_", str(n))[:200]
+
 
 def load_m():
     return json.loads(open(MANIFEST_PATH, "r", encoding="utf-8").read())
 
+
 def save_m(m):
-    json.dump(m, open(MANIFEST_PATH, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+    json.dump(
+        m, open(MANIFEST_PATH, "w", encoding="utf-8"), indent=2, ensure_ascii=False
+    )
+
 
 def fetch(url, timeout=30):
     try:
@@ -55,6 +69,7 @@ def fetch(url, timeout=30):
         return r.status_code, r.text
     except Exception as e:
         return -1, str(e)
+
 
 def extract_pdfs_from_html(html):
     """Extract all .pdf URLs from HTML, preferring myrheem.com ones."""
@@ -67,12 +82,15 @@ def extract_pdfs_from_html(html):
         if url not in results:
             results.append(url)
     # Prefer spec sheets over warranty cards
-    spec_sheets = [u for u in results if 'warranty' not in u.lower() and 'spec' not in u.lower()]
-    warranty = [u for u in results if 'warranty' in u.lower()]
+    spec_sheets = [
+        u for u in results if "warranty" not in u.lower() and "spec" not in u.lower()
+    ]
+    warranty = [u for u in results if "warranty" in u.lower()]
     # Just return all (prefer non-warranty first)
-    ordered = [u for u in results if 'warranty' not in u.lower()]
-    ordered += [u for u in results if 'warranty' in u.lower()]
+    ordered = [u for u in results if "warranty" not in u.lower()]
+    ordered += [u for u in results if "warranty" in u.lower()]
     return ordered
+
 
 def download_pdf(url, outpath):
     if outpath.exists() and outpath.stat().st_size > 1000:
@@ -81,19 +99,23 @@ def download_pdf(url, outpath):
         r = session.get(url, timeout=120)
         if r.status_code == 200 and len(r.content) > 1000 and r.content[:4] == b"%PDF":
             outpath.write_bytes(r.content)
-            log.info(f"    Downloaded: {outpath.stat().st_size/1024:.0f}KB")
+            log.info(f"    Downloaded: {outpath.stat().st_size / 1024:.0f}KB")
             return True
     except Exception:
         pass
     return False
 
+
 def process_ruud():
     manifest = load_m()
-    log.info(f"Processing remaining Ruud entries...")
+    log.info("Processing remaining Ruud entries...")
 
     # Get remaining Ruud entries
-    ruud_pending = [(mid, e) for mid, e in manifest.items()
-                    if e["brand"] == "RUUD" and e.get("status") != "found"]
+    ruud_pending = [
+        (mid, e)
+        for mid, e in manifest.items()
+        if e["brand"] == "RUUD" and e.get("status") != "found"
+    ]
 
     log.info(f"Pending Ruud entries: {len(ruud_pending)}")
     found = 0
@@ -104,7 +126,9 @@ def process_ruud():
         models = entry.get("models", [])
         parent_url = RUUD_PRODUCT_PAGES.get(series)
 
-        log.info(f"  {mid}: series={series} page={'found' if parent_url else 'NOT FOUND'}")
+        log.info(
+            f"  {mid}: series={series} page={'found' if parent_url else 'NOT FOUND'}"
+        )
 
         if not parent_url:
             entry["status"] = "not_found"
@@ -134,7 +158,11 @@ def process_ruud():
         success = False
         for pdf_url in pdfs[:5]:
             ref_id = entry.get("reference_ids", ["0"])[0]
-            ref_type = (entry.get("refrigerants", ["UNKNOWN"])[0] or "UNKNOWN").replace("/","-").replace(" ","-")
+            ref_type = (
+                (entry.get("refrigerants", ["UNKNOWN"])[0] or "UNKNOWN")
+                .replace("/", "-")
+                .replace(" ", "-")
+            )
             stem = pdf_url.split("/")[-1].replace(".pdf", "")[:80]
             fname = safe_fn(f"{stem}__Ref{ref_id}_{brand}_{series}_{ref_type}.pdf")
             outpath = PDF_DIR / fname
@@ -153,12 +181,15 @@ def process_ruud():
 
         if not success:
             entry["status"] = "not_found"
-            entry["evidence"] = f"PDF download failed for {len(pdfs)} links on product page"
+            entry["evidence"] = (
+                f"PDF download failed for {len(pdfs)} links on product page"
+            )
 
         save_m(manifest)
         time.sleep(0.5)
 
     log.info(f"Ruud processing done: {found}/{len(ruud_pending)} found")
+
 
 if __name__ == "__main__":
     process_ruud()

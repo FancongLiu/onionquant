@@ -8,7 +8,6 @@ Paper Trading Performance Tracker — 独立的虚拟交易追踪系统。
 """
 
 import json
-import os
 from datetime import datetime, date
 from pathlib import Path
 from typing import Optional
@@ -43,7 +42,9 @@ class PaperPortfolio:
         }
 
     def save(self):
-        STATE_FILE.write_text(json.dumps(self.state, indent=2, ensure_ascii=False), encoding="utf-8")
+        STATE_FILE.write_text(
+            json.dumps(self.state, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
 
     def get_market_price(self, ticker: str) -> Optional[float]:
         try:
@@ -84,8 +85,14 @@ class PaperPortfolio:
         }
         self.save()
 
-    def execute_trade(self, ticker: str, action: str, shares: int,
-                      price: Optional[float] = None, reason: str = ""):
+    def execute_trade(
+        self,
+        ticker: str,
+        action: str,
+        shares: int,
+        price: Optional[float] = None,
+        reason: str = "",
+    ):
         """执行虚拟交易。action: buy/sell"""
         if price is None:
             price = self.get_market_price(ticker)
@@ -96,10 +103,14 @@ class PaperPortfolio:
 
         if action == "buy":
             if total > self.state["cash"]:
-                return {"error": f"Insufficient cash: need {total}, have {self.state['cash']}"}
+                return {
+                    "error": f"Insufficient cash: need {total}, have {self.state['cash']}"
+                }
             self.state["cash"] -= total
 
-            pos = self.state["positions"].get(ticker, {"shares": 0, "avg_cost": 0, "market_value": 0})
+            pos = self.state["positions"].get(
+                ticker, {"shares": 0, "avg_cost": 0, "market_value": 0}
+            )
             new_shares = pos["shares"] + shares
             new_cost = (pos["avg_cost"] * pos["shares"] + total) / new_shares
             self.state["positions"][ticker] = {
@@ -114,7 +125,9 @@ class PaperPortfolio:
         elif action == "sell":
             pos = self.state["positions"].get(ticker, {"shares": 0})
             if pos["shares"] < shares:
-                return {"error": f"Insufficient shares: have {pos['shares']}, need {shares}"}
+                return {
+                    "error": f"Insufficient shares: have {pos['shares']}, need {shares}"
+                }
 
             avg_cost = pos["avg_cost"]
             realized_pl = shares * (price - avg_cost)
@@ -123,8 +136,12 @@ class PaperPortfolio:
 
             remaining = pos["shares"] - shares
             if remaining > 0:
-                self.state["positions"][ticker] = {**pos, "shares": remaining,
-                    "market_value": remaining * price, "unrealized_pl": remaining * (price - avg_cost)}
+                self.state["positions"][ticker] = {
+                    **pos,
+                    "shares": remaining,
+                    "market_value": remaining * price,
+                    "unrealized_pl": remaining * (price - avg_cost),
+                }
             else:
                 self.state["positions"].pop(ticker, None)
 
@@ -149,7 +166,9 @@ class PaperPortfolio:
             if price:
                 pos["current_price"] = price
                 pos["market_value"] = price * pos["shares"]
-                pos["unrealized_pl"] = pos["market_value"] - pos["avg_cost"] * pos["shares"]
+                pos["unrealized_pl"] = (
+                    pos["market_value"] - pos["avg_cost"] * pos["shares"]
+                )
                 pos["unrealized_pl_pct"] = round((price / pos["avg_cost"] - 1) * 100, 2)
         self.save()
 
@@ -163,15 +182,17 @@ class PaperPortfolio:
         for ticker, pos in self.state["positions"].items():
             total_equity += pos["market_value"]
             total_pl += pos.get("unrealized_pl", 0)
-            positions_detail.append({
-                "ticker": ticker,
-                "shares": pos["shares"],
-                "avg_cost": pos["avg_cost"],
-                "current_price": pos["current_price"],
-                "market_value": round(pos["market_value"], 2),
-                "unrealized_pl": round(pos.get("unrealized_pl", 0), 2),
-                "unrealized_pl_pct": pos.get("unrealized_pl_pct", 0),
-            })
+            positions_detail.append(
+                {
+                    "ticker": ticker,
+                    "shares": pos["shares"],
+                    "avg_cost": pos["avg_cost"],
+                    "current_price": pos["current_price"],
+                    "market_value": round(pos["market_value"], 2),
+                    "unrealized_pl": round(pos.get("unrealized_pl", 0), 2),
+                    "unrealized_pl_pct": pos.get("unrealized_pl_pct", 0),
+                }
+            )
 
         initial = self.state["initial_capital"]
         return {
@@ -201,19 +222,32 @@ class PaperPortfolio:
         else:
             history.append({"date": today, **summary})
 
-        HISTORY_FILE.write_text(json.dumps(history, indent=2, ensure_ascii=False), encoding="utf-8")
+        HISTORY_FILE.write_text(
+            json.dumps(history, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
         return history
 
 
 # ─── CLI ───────────────────────────────────────────────────
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(description="Paper Trading Performance Tracker")
-    parser.add_argument("--sync", nargs=3, metavar=("TICKER", "SHARES", "COST"),
-                        help="Sync chairman position to paper portfolio")
-    parser.add_argument("--trade", nargs=4, metavar=("TICKER", "ACTION", "SHARES", "REASON"),
-                        help="Execute a virtual trade")
-    parser.add_argument("--summary", action="store_true", help="Print portfolio summary")
+    parser.add_argument(
+        "--sync",
+        nargs=3,
+        metavar=("TICKER", "SHARES", "COST"),
+        help="Sync chairman position to paper portfolio",
+    )
+    parser.add_argument(
+        "--trade",
+        nargs=4,
+        metavar=("TICKER", "ACTION", "SHARES", "REASON"),
+        help="Execute a virtual trade",
+    )
+    parser.add_argument(
+        "--summary", action="store_true", help="Print portfolio summary"
+    )
     parser.add_argument("--snapshot", action="store_true", help="Record daily snapshot")
     args = parser.parse_args()
 

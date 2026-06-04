@@ -8,8 +8,8 @@ daily pipeline (6:07 1-5).
 
 Zero AI token consumption — pure Python subprocess.
 """
+
 import subprocess
-import sys
 import time
 from datetime import datetime
 from pathlib import Path
@@ -89,7 +89,12 @@ def main():
         ("7 6 * * 1-5", "run_pipeline.py", [], 600),
         ("0,30 13-20 * * 1-5", "research_publisher.py", [], 120),
         # Market monitor every 60min during US extended hours (14:00-04:00 BJT)
-        ("17 14,15,16,17,18,19,20,21,22,23,0,1,2,3 * * 1-5", "market_monitor.py", ["--once"], 120),
+        (
+            "17 14,15,16,17,18,19,20,21,22,23,0,1,2,3 * * 1-5",
+            "market_monitor.py",
+            ["--once"],
+            120,
+        ),
         # Heat collector — every 60 min all day (zero AI tokens)
         ("7 * * * *", "heat_collector.py", ["--once"], 120),
     ]
@@ -101,9 +106,11 @@ def main():
         now = datetime.now()
         for cron_spec, script, args, timeout in tasks:
             if should_run(cron_spec, now):
-                sec_since = (now.timestamp() - last_run[script])
+                sec_since = now.timestamp() - last_run[script]
                 if sec_since >= 55:  # Avoid double-fire within same minute
-                    print(f"\n[{now.strftime('%H:%M:%S')}] Running {script}", flush=True)
+                    print(
+                        f"\n[{now.strftime('%H:%M:%S')}] Running {script}", flush=True
+                    )
                     run_script(script, args, timeout)
                     last_run[script] = now.timestamp()
         time.sleep(30)

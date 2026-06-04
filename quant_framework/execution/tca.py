@@ -16,13 +16,14 @@ from datetime import datetime
 @dataclass
 class CostConfig:
     commission_per_share: float = 0.005
-    spread_bp: float = 5.0           # assumed half-spread
+    spread_bp: float = 5.0  # assumed half-spread
     market_impact_bp_per_pct: float = 2.0  # bp impact per 1% of ADV
-    min_commission: float = 1.0       # minimum per-trade commission
-    exchange_fee_bp: float = 0.3      # SEC/exchange fees
+    min_commission: float = 1.0  # minimum per-trade commission
+    exchange_fee_bp: float = 0.3  # SEC/exchange fees
 
 
 # ── Pre-trade cost estimation ──────────────────────────────
+
 
 def estimate_pre_trade(
     order_shares: float,
@@ -57,7 +58,9 @@ def estimate_pre_trade(
     impact_cost = impact_bp / 10000 * trade_value
 
     # Commission
-    commission = max(config.commission_per_share * abs(order_shares), config.min_commission)
+    commission = max(
+        config.commission_per_share * abs(order_shares), config.min_commission
+    )
 
     # Exchange fees
     exchange_cost = config.exchange_fee_bp / 10000 * trade_value
@@ -92,7 +95,9 @@ def pre_trade_batch(
     for _, order in orders.iterrows():
         ticker = order["ticker"]
         vol = daily_volumes.get(ticker, order.get("shares", 1) * 100)
-        est = estimate_pre_trade(order["shares"], order["price"], vol, price_volatility, config)
+        est = estimate_pre_trade(
+            order["shares"], order["price"], vol, price_volatility, config
+        )
         est["ticker"] = ticker
         est["shares"] = order["shares"]
         rows.append(est)
@@ -101,6 +106,7 @@ def pre_trade_batch(
 
 
 # ── Implementation shortfall (post-trade) ───────────────────
+
 
 def implementation_shortfall(
     decision_price: float,
@@ -130,7 +136,11 @@ def implementation_shortfall(
     """
     filled = execution_sizes.sum()
     unfilled = total_order_size - filled
-    avg_exec_price = float(np.average(execution_prices, weights=execution_sizes)) if filled > 0 else arrival_price
+    avg_exec_price = (
+        float(np.average(execution_prices, weights=execution_sizes))
+        if filled > 0
+        else arrival_price
+    )
     direction = 1 if total_order_size > 0 else -1  # buy or sell
 
     # Paper return (hypothetical perfect execution)
@@ -145,10 +155,14 @@ def implementation_shortfall(
     # Decomposition
     delay_cost = direction * (arrival_price - decision_price) * filled
     exec_cost = direction * (avg_exec_price - arrival_price) * filled
-    opportunity_cost = direction * (final_price - arrival_price) * unfilled if unfilled > 0 else 0
+    opportunity_cost = (
+        direction * (final_price - arrival_price) * unfilled if unfilled > 0 else 0
+    )
 
     # Fees
-    total_cost_bp = total_shortfall / max(abs(decision_price * total_order_size), 1) * 10000
+    total_cost_bp = (
+        total_shortfall / max(abs(decision_price * total_order_size), 1) * 10000
+    )
 
     return {
         "total_shortfall": round(float(total_shortfall), 4),
@@ -179,7 +193,12 @@ def vwap_slippage(
     """
     filled = execution_sizes.sum()
     if filled == 0:
-        return {"slippage_bp": 0, "avg_price": 0, "market_vwap": market_vwap, "direction": direction}
+        return {
+            "slippage_bp": 0,
+            "avg_price": 0,
+            "market_vwap": market_vwap,
+            "direction": direction,
+        }
 
     avg_price = float(np.average(execution_prices, weights=execution_sizes))
     slippage = direction * (avg_price - market_vwap)
@@ -197,11 +216,12 @@ def vwap_slippage(
 
 # ── Market impact models ───────────────────────────────────
 
+
 def almgrin_chriss_impact(
     order_size: float,
     daily_volume: float,
     daily_volatility: float,
-    eta: float = 0.142,     # market power parameter (Almgren-Chriss calibration)
+    eta: float = 0.142,  # market power parameter (Almgren-Chriss calibration)
     gamma: float = 2.5e-6,  # temporary impact coefficient
     time_fraction: float = 1.0,
 ) -> Dict:
@@ -218,7 +238,7 @@ def almgrin_chriss_impact(
     T = max(time_fraction, 0.01)
 
     vol_frac = Q / V
-    perm_bp = gamma * sigma * vol_frac / 2 * 10000   # half of round-trip
+    perm_bp = gamma * sigma * vol_frac / 2 * 10000  # half of round-trip
     temp_bp = eta * sigma * (vol_frac / T) / 2 * 10000
 
     return {
@@ -231,6 +251,7 @@ def almgrin_chriss_impact(
 
 
 # ── Post-trade summary ─────────────────────────────────────
+
 
 def analyze_execution(
     trades: pd.DataFrame,
@@ -283,35 +304,60 @@ def analyze_execution(
         else:
             arrival = float(mp["open"].iloc[0])
             final_p = float(mp["close"].iloc[0])
-            vwap_p = float(mp.get("vwap", pd.Series([(mp["high"].iloc[0] + mp["low"].iloc[0] + mp["close"].iloc[0]) / 3])).iloc[0])
+            vwap_p = float(
+                mp.get(
+                    "vwap",
+                    pd.Series(
+                        [
+                            (
+                                mp["high"].iloc[0]
+                                + mp["low"].iloc[0]
+                                + mp["close"].iloc[0]
+                            )
+                            / 3
+                        ]
+                    ),
+                ).iloc[0]
+            )
 
         # Simulate fill: filled at price
         is_result = implementation_shortfall(
-            decision_price=price, arrival_price=arrival,
-            execution_prices=np.array([price]), execution_sizes=np.array([shares]),
-            total_order_size=shares, final_price=final_p, benchmark=benchmark,
+            decision_price=price,
+            arrival_price=arrival,
+            execution_prices=np.array([price]),
+            execution_sizes=np.array([shares]),
+            total_order_size=shares,
+            final_price=final_p,
+            benchmark=benchmark,
         )
 
         vwap_slip = vwap_slippage(
-            np.array([price]), np.array([shares]), vwap_p, direction,
+            np.array([price]),
+            np.array([shares]),
+            vwap_p,
+            direction,
         )
 
-        results.append({
-            "ticker": ticker,
-            "action": action,
-            "shares": shares,
-            "value": shares * price,
-            "is_bp": is_result["total_shortfall_bp"],
-            "vwap_slippage_bp": vwap_slip["slippage_bp"],
-            "fill_rate": 100.0,
-        })
+        results.append(
+            {
+                "ticker": ticker,
+                "action": action,
+                "shares": shares,
+                "value": shares * price,
+                "is_bp": is_result["total_shortfall_bp"],
+                "vwap_slippage_bp": vwap_slip["slippage_bp"],
+                "fill_rate": 100.0,
+            }
+        )
 
         total_shortfall += is_result["total_shortfall"]
         total_value += shares * price
 
     summary_df = pd.DataFrame(results)
     avg_is_bp = float(summary_df["is_bp"].mean()) if not summary_df.empty else 0
-    avg_vwap_bp = float(summary_df["vwap_slippage_bp"].mean()) if not summary_df.empty else 0
+    avg_vwap_bp = (
+        float(summary_df["vwap_slippage_bp"].mean()) if not summary_df.empty else 0
+    )
     total_bp = total_shortfall / max(total_value, 1) * 10000
 
     return {
@@ -326,6 +372,7 @@ def analyze_execution(
 
 
 # ── Cost summary report ────────────────────────────────────
+
 
 def report_markdown(
     pre_trade: Optional[Dict] = None,
@@ -387,6 +434,7 @@ def report_markdown(
 
 # ── Demo ────────────────────────────────────────────────────
 
+
 def _make_demo_data(seed: int = 42) -> Tuple[pd.DataFrame, pd.DataFrame]:
     rng = np.random.default_rng(seed)
     n = 20
@@ -399,11 +447,16 @@ def _make_demo_data(seed: int = 42) -> Tuple[pd.DataFrame, pd.DataFrame]:
             price = 100 + j * 50 + rng.normal(0, 2)
             shares = rng.integers(100, 1000)
             action = rng.choice(["buy", "sell"])
-            trades.append({
-                "date": date, "ticker": ticker, "action": action,
-                "shares": shares if action == "buy" else -shares,
-                "price": price, "value": shares * price,
-            })
+            trades.append(
+                {
+                    "date": date,
+                    "ticker": ticker,
+                    "action": action,
+                    "shares": shares if action == "buy" else -shares,
+                    "price": price,
+                    "value": shares * price,
+                }
+            )
 
     market = []
     for date in dates:
@@ -412,11 +465,17 @@ def _make_demo_data(seed: int = 42) -> Tuple[pd.DataFrame, pd.DataFrame]:
             close_p = open_p + rng.normal(0, 1)
             high_p = max(open_p, close_p) + abs(rng.normal(0, 0.5))
             low_p = min(open_p, close_p) - abs(rng.normal(0, 0.5))
-            market.append({
-                "date": date, "ticker": ticker,
-                "open": open_p, "high": high_p, "low": low_p,
-                "close": close_p, "volume": rng.integers(5_000_000, 50_000_000),
-            })
+            market.append(
+                {
+                    "date": date,
+                    "ticker": ticker,
+                    "open": open_p,
+                    "high": high_p,
+                    "low": low_p,
+                    "close": close_p,
+                    "volume": rng.integers(5_000_000, 50_000_000),
+                }
+            )
 
     return pd.DataFrame(trades), pd.DataFrame(market)
 
@@ -440,7 +499,8 @@ def main():
     vwap_slip = vwap_slippage(
         np.array([150.0, 150.5, 149.8]),
         np.array([200, 200, 100]),
-        150.2, direction=1,
+        150.2,
+        direction=1,
     )
     print(f"\n# VWAP Slippage: {vwap_slip['slippage_bp']:.1f} bp")
 

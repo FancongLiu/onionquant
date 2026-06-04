@@ -35,9 +35,12 @@ def var_cornish_fisher(returns, cl=0.95):
     sk = float(skew(r, bias=False))
     ku = float(kurtosis(r, bias=False))  # excess kurtosis
     z = float(np.abs(norm.ppf(1 - cl)))
-    z_cf = z + (z ** 2 - 1) * sk / 6 + (z ** 3 - 3 * z) * ku / 24 - (
-        2 * z ** 3 - 5 * z
-    ) * sk ** 2 / 36
+    z_cf = (
+        z
+        + (z**2 - 1) * sk / 6
+        + (z**3 - 3 * z) * ku / 24
+        - (2 * z**3 - 5 * z) * sk**2 / 36
+    )
     return mu - s * z_cf
 
 
@@ -59,28 +62,50 @@ def drawdown_analysis(equity):
     """empyrical 无此细化分析, 保留 numpy 实现"""
     eq = np.asarray(equity, dtype=float)
     if len(eq) < 2:
-        return {k: 0 for k in ("max_drawdown", "start_idx", "end_idx",
-                               "recovery_idx", "duration")}
+        return {
+            k: 0
+            for k in (
+                "max_drawdown",
+                "start_idx",
+                "end_idx",
+                "recovery_idx",
+                "duration",
+            )
+        }
     peak = np.maximum.accumulate(eq)
     dd = (eq - peak) / peak
     end = int(np.argmin(dd))
-    start = int(np.argmax(eq[:end + 1])) if end > 0 else 0
+    start = int(np.argmax(eq[: end + 1])) if end > 0 else 0
     rec = np.where(eq[end:] >= eq[start])[0]
     rec_idx = int(end + rec[0]) if len(rec) > 0 else len(eq) - 1
-    return {"max_drawdown": float(dd[end]), "start_idx": start,
-            "end_idx": end, "recovery_idx": rec_idx,
-            "duration": rec_idx - start}
+    return {
+        "max_drawdown": float(dd[end]),
+        "start_idx": start,
+        "end_idx": end,
+        "recovery_idx": rec_idx,
+        "duration": rec_idx - start,
+    }
 
 
 # ---- 波动率 ----
 def ann_vol(returns, ppy=252):
-    return float(ep.annual_volatility(np.asarray(returns), annualization=ppy)) \
-        if len(returns) >= 2 else 0.0
+    return (
+        float(ep.annual_volatility(np.asarray(returns), annualization=ppy))
+        if len(returns) >= 2
+        else 0.0
+    )
 
 
 def downside_vol(returns, target=0, ppy=252):
-    return float(ep.downside_risk(np.asarray(returns), required_return=target,
-                                  annualization=ppy)) if len(returns) >= 2 else 0.0
+    return (
+        float(
+            ep.downside_risk(
+                np.asarray(returns), required_return=target, annualization=ppy
+            )
+        )
+        if len(returns) >= 2
+        else 0.0
+    )
 
 
 # ---- 比率 ----
@@ -88,15 +113,17 @@ def sharpe_ratio(returns, rfr=0.02, ppy=252):
     if len(returns) < 2:
         return 0.0
     # empyrical 的 risk_free 是日频
-    return float(ep.sharpe_ratio(np.asarray(returns), risk_free=rfr / ppy,
-                                 annualization=ppy))
+    return float(
+        ep.sharpe_ratio(np.asarray(returns), risk_free=rfr / ppy, annualization=ppy)
+    )
 
 
 def sortino_ratio(returns, rfr=0.02, target=0, ppy=252):
     # 注: 原实现同时使用 rfr 与 target 有歧义; 现用 empyrical 标准 Sortino,
     # required_return=target 作为最低可接受收益(MAR)
-    return float(ep.sortino_ratio(np.asarray(returns), required_return=target,
-                                  annualization=ppy))
+    return float(
+        ep.sortino_ratio(np.asarray(returns), required_return=target, annualization=ppy)
+    )
 
 
 def calmar_ratio(returns, ppy=252):
@@ -108,8 +135,9 @@ def beta(returns, mkt):
 
 
 # ---- 汇总 ----
-def risk_metrics_summary(returns, market_returns=None, equity_curve=None,
-                         ppy=252, cl=0.95, rfr=0.02):
+def risk_metrics_summary(
+    returns, market_returns=None, equity_curve=None, ppy=252, cl=0.95, rfr=0.02
+):
     if equity_curve is None:
         equity_curve = np.cumprod(1 + np.asarray(returns))
     r = np.asarray(returns, dtype=float)
@@ -147,5 +175,4 @@ if __name__ == "__main__":
     res = risk_metrics_summary(s, m, eq)
     print("=" * 60, "\n风险指标计算示例\n", "=" * 60)
     for k, v in res.items():
-        print(f"  {k:20s} : {v:>12.4f}" if isinstance(v, float) else
-              f"  {k:20s} : {v}")
+        print(f"  {k:20s} : {v:>12.4f}" if isinstance(v, float) else f"  {k:20s} : {v}")

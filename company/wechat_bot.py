@@ -28,7 +28,9 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
 
 BEIJING_TZ = timezone(timedelta(hours=8))
-CTX_STATE = PROJECT_ROOT / "company" / "departments" / "execution" / "context_state.json"
+CTX_STATE = (
+    PROJECT_ROOT / "company" / "departments" / "execution" / "context_state.json"
+)
 
 
 def _ts() -> str:
@@ -42,6 +44,7 @@ def _get_dashboard_url() -> str:
         return data.get("key_context", {}).get("tunnel_url", "http://localhost:8765")
     except Exception:
         return "http://localhost:8765"
+
 
 CORP_ID = os.getenv("WECHAT_CORP_ID", "")
 AGENT_ID = os.getenv("WECHAT_AGENT_ID", "")
@@ -73,7 +76,12 @@ async def get_access_token() -> str:
 
 async def send_text(user_id: str, content: str) -> dict:
     token = await get_access_token()
-    body = {"touser": user_id, "msgtype": "text", "agentid": int(AGENT_ID), "text": {"content": content}}
+    body = {
+        "touser": user_id,
+        "msgtype": "text",
+        "agentid": int(AGENT_ID),
+        "text": {"content": content},
+    }
     async with aiohttp.ClientSession() as session:
         url = f"{WECOM_API}/message/send?access_token={token}"
         async with session.post(url, json=body) as resp:
@@ -82,7 +90,12 @@ async def send_text(user_id: str, content: str) -> dict:
 
 async def send_markdown(user_id: str, content: str) -> dict:
     token = await get_access_token()
-    body = {"touser": user_id, "msgtype": "markdown", "agentid": int(AGENT_ID), "markdown": {"content": content}}
+    body = {
+        "touser": user_id,
+        "msgtype": "markdown",
+        "agentid": int(AGENT_ID),
+        "markdown": {"content": content},
+    }
     async with aiohttp.ClientSession() as session:
         url = f"{WECOM_API}/message/send?access_token={token}"
         async with session.post(url, json=body) as resp:

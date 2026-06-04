@@ -33,10 +33,22 @@ DATA_DIR = PROJECT_ROOT / "company" / "sentiment_data" / "market_heat"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 AI_CHAIN_TICKERS = [
-    "NVDA", "AMD", "INTC", "TSM", "AVGO", "MRVL",
-    "MU", "LITE", "COHR", "AAOI",
-    "ANET", "CIEN",
-    "RKLB", "ASTS", "LUNR", "RDW",
+    "NVDA",
+    "AMD",
+    "INTC",
+    "TSM",
+    "AVGO",
+    "MRVL",
+    "MU",
+    "LITE",
+    "COHR",
+    "AAOI",
+    "ANET",
+    "CIEN",
+    "RKLB",
+    "ASTS",
+    "LUNR",
+    "RDW",
 ]
 
 USER_AGENT = (
@@ -54,7 +66,8 @@ class MarketHeat:
     # ─── 异常成交量 ───────────────────────────────────
 
     def unusual_volume_scan(
-        self, tickers: list[str] | None = None,
+        self,
+        tickers: list[str] | None = None,
         vol_ratio_threshold: float = 1.5,
     ) -> list[dict]:
         """扫描异常成交量 — 当前量 vs 20日均量.
@@ -114,17 +127,19 @@ class MarketHeat:
                 else:
                     heat_level = "缩量"
 
-                results.append({
-                    "ticker": ticker,
-                    "current_volume": current_vol,
-                    "avg_volume_10d": base_vol,
-                    "volume_ratio": round(vol_ratio, 2),
-                    "price_change_pct": round(price_change, 2),
-                    "heat_level": heat_level,
-                    "is_unusual": vol_ratio >= vol_ratio_threshold,
-                    "data_type": "REAL_TRADING_VOLUME",
-                    "data_scale": f"{current_vol:,} shares",
-                })
+                results.append(
+                    {
+                        "ticker": ticker,
+                        "current_volume": current_vol,
+                        "avg_volume_10d": base_vol,
+                        "volume_ratio": round(vol_ratio, 2),
+                        "price_change_pct": round(price_change, 2),
+                        "heat_level": heat_level,
+                        "is_unusual": vol_ratio >= vol_ratio_threshold,
+                        "data_type": "REAL_TRADING_VOLUME",
+                        "data_scale": f"{current_vol:,} shares",
+                    }
+                )
             except Exception as e:
                 print(f"    [WARN] {ticker}: {e}")
 
@@ -134,7 +149,9 @@ class MarketHeat:
     # ─── 期权大单 ──────────────────────────────────────
 
     def options_flow_scan(
-        self, ticker: str, min_premium: float = 25000,
+        self,
+        ticker: str,
+        min_premium: float = 25000,
         min_vol_oi_ratio: float = 3.0,
     ) -> dict:
         """扫描单个 ticker 的期权异常流.
@@ -173,16 +190,18 @@ class MarketHeat:
                         premium = vol * last_price * 100  # 每合约100股
 
                         if ratio >= min_vol_oi_ratio and premium >= min_premium:
-                            unusual_trades.append({
-                                "side": side,
-                                "strike": float(row.get("strike", 0)),
-                                "expiration": exp_date,
-                                "volume": vol,
-                                "open_interest": oi,
-                                "vol_oi_ratio": round(ratio, 1),
-                                "premium": round(premium, 0),
-                                "last_price": last_price,
-                            })
+                            unusual_trades.append(
+                                {
+                                    "side": side,
+                                    "strike": float(row.get("strike", 0)),
+                                    "expiration": exp_date,
+                                    "volume": vol,
+                                    "open_interest": oi,
+                                    "vol_oi_ratio": round(ratio, 1),
+                                    "premium": round(premium, 0),
+                                    "last_price": last_price,
+                                }
+                            )
 
                 time.sleep(0.3)
 
@@ -261,7 +280,8 @@ class MarketHeat:
 
         try:
             resp = requests.get(
-                url, params=params,
+                url,
+                params=params,
                 headers={"User-Agent": USER_AGENT},
                 timeout=15,
             )
@@ -273,6 +293,7 @@ class MarketHeat:
             results = []
             # 找 ticker 行: class="screener-link"
             import re
+
             ticker_matches = re.findall(
                 r'<a[^>]*class="screener-link"[^>]*>(\w+)</a>', html
             )
@@ -284,7 +305,7 @@ class MarketHeat:
             # 找 change% 列
             change_matches = re.findall(
                 r'<td[^>]*class="screener-body-table-nw"[^>]*>'
-                r'<span[^>]*>([^<]+)</span></td>',
+                r"<span[^>]*>([^<]+)</span></td>",
                 html,
             )
 
@@ -306,7 +327,8 @@ class MarketHeat:
     # ─── 综合扫描 ───────────────────────────────────────
 
     def full_scan(
-        self, tickers: list[str] | None = None,
+        self,
+        tickers: list[str] | None = None,
         scan_options: bool = True,
     ) -> dict:
         """完整市场热力扫描."""
@@ -314,23 +336,31 @@ class MarketHeat:
             tickers = AI_CHAIN_TICKERS
 
         start = time.time()
-        print(f"\n{'='*65}")
-        print(f"  MARKET HEAT ENGINE — Real Trading Data")
-        print(f"  Scale: millions of shares/day · thousands of options")
-        print(f"{'='*65}")
+        print(f"\n{'=' * 65}")
+        print("  MARKET HEAT ENGINE — Real Trading Data")
+        print("  Scale: millions of shares/day · thousands of options")
+        print(f"{'=' * 65}")
 
         # 1. 异常成交量
         vol_results = self.unusual_volume_scan(tickers)
         unusual = [r for r in vol_results if r["is_unusual"]]
         hot_vol = sorted(vol_results, key=lambda x: -x["volume_ratio"])
 
-        print(f"\n  >> 成交量热度 (放量>1.5x 均量):")
+        print("\n  >> 成交量热度 (放量>1.5x 均量):")
         if hot_vol:
             for i, r in enumerate(hot_vol[:10]):
-                icon = "🔴" if r["volume_ratio"] >= 3 else "🟡" if r["volume_ratio"] >= 2 else "🟢"
-                print(f"  {i+1}. {r['ticker']:<6} {icon} {r['volume_ratio']:.1f}x vol "
-                      f"({r['current_volume']:,} shrs) price:{r['price_change_pct']:+.1f}% "
-                      f"{r['heat_level']}")
+                icon = (
+                    "🔴"
+                    if r["volume_ratio"] >= 3
+                    else "🟡"
+                    if r["volume_ratio"] >= 2
+                    else "🟢"
+                )
+                print(
+                    f"  {i + 1}. {r['ticker']:<6} {icon} {r['volume_ratio']:.1f}x vol "
+                    f"({r['current_volume']:,} shrs) price:{r['price_change_pct']:+.1f}% "
+                    f"{r['heat_level']}"
+                )
         else:
             print("  (no unusual volume detected)")
 
@@ -338,30 +368,31 @@ class MarketHeat:
         options_results = {}
         if scan_options:
             top_volume = [r["ticker"] for r in hot_vol[:5]]
-            print(f"\n  >> 期权异常流 (前5放量票):")
+            print("\n  >> 期权异常流 (前5放量票):")
             for ticker in top_volume:
                 opt = self.options_flow_scan(ticker)
                 options_results[ticker] = opt
                 if opt["unusual_trades"] > 0:
-                    print(f"  {ticker:<6} {opt['unusual_trades']:>2} unusual trades | "
-                          f"Calls:${opt['call_premium']:,.0f} "
-                          f"Puts:${opt['put_premium']:,.0f} | "
-                          f"BIAS: {opt['flow_bias']}")
+                    print(
+                        f"  {ticker:<6} {opt['unusual_trades']:>2} unusual trades | "
+                        f"Calls:${opt['call_premium']:,.0f} "
+                        f"Puts:${opt['put_premium']:,.0f} | "
+                        f"BIAS: {opt['flow_bias']}"
+                    )
                 time.sleep(0.5)
 
         # 3. Finviz 异常成交量榜
-        print(f"\n  >> Finviz Unusual Volume (全市场):")
+        print("\n  >> Finviz Unusual Volume (全市场):")
         finviz = self.finviz_screener("unusual_volume")
-        ai_in_finviz = [
-            r for r in finviz
-            if r["ticker"] in AI_CHAIN_TICKERS
-        ]
+        ai_in_finviz = [r for r in finviz if r["ticker"] in AI_CHAIN_TICKERS]
         for r in finviz[:15]:
             tag = " [AI]" if r["ticker"] in AI_CHAIN_TICKERS else ""
             print(f"  {r['ticker']:<6} {r.get('change_pct', '?'):>8}{tag}")
         if ai_in_finviz:
-            print(f"\n  AI链出现在全市场异常量榜: "
-                  f"{', '.join(r['ticker'] for r in ai_in_finviz)}")
+            print(
+                f"\n  AI链出现在全市场异常量榜: "
+                f"{', '.join(r['ticker'] for r in ai_in_finviz)}"
+            )
 
         elapsed = time.time() - start
         snapshot = {
@@ -376,10 +407,14 @@ class MarketHeat:
         # 保存
         ts = datetime.now().strftime("%Y%m%d_%H%M")
         path = DATA_DIR / f"market_heat_{ts}.json"
-        path.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False, default=str), "utf-8")
+        path.write_text(
+            json.dumps(snapshot, indent=2, ensure_ascii=False, default=str), "utf-8"
+        )
         print(f"\n  [SAVE] {path}")
-        print(f"  Scan complete in {elapsed:.0f}s | "
-              f"Data scale: BILLIONS of shares + MILLIONS of options contracts")
+        print(
+            f"  Scan complete in {elapsed:.0f}s | "
+            f"Data scale: BILLIONS of shares + MILLIONS of options contracts"
+        )
 
         return snapshot
 
@@ -387,6 +422,7 @@ class MarketHeat:
 # ─── CLI ────────────────────────────────────────────────
 if __name__ == "__main__":
     import argparse
+
     p = argparse.ArgumentParser(description="OnionQuant Market Heat Engine")
     p.add_argument("--scan", action="store_true", help="完整扫描 (默认)")
     p.add_argument("--ticker", type=str, help="单票深度")
@@ -404,37 +440,49 @@ if __name__ == "__main__":
         vol = mh.unusual_volume_scan([ticker])
         if vol:
             v = vol[0]
-            print(f"  成交量: {v['current_volume']:,} shares "
-                  f"({v['volume_ratio']:.1f}x avg) | "
-                  f"价格: {v['price_change_pct']:+.1f}% | {v['heat_level']}")
+            print(
+                f"  成交量: {v['current_volume']:,} shares "
+                f"({v['volume_ratio']:.1f}x avg) | "
+                f"价格: {v['price_change_pct']:+.1f}% | {v['heat_level']}"
+            )
         opt = mh.options_flow_scan(ticker)
         if opt["unusual_trades"] > 0:
-            print(f"  期权异常: {opt['unusual_trades']} 笔 | "
-                  f"Call:${opt['call_premium']:,.0f} "
-                  f"Put:${opt['put_premium']:,.0f} | {opt['flow_bias']}")
+            print(
+                f"  期权异常: {opt['unusual_trades']} 笔 | "
+                f"Call:${opt['call_premium']:,.0f} "
+                f"Put:${opt['put_premium']:,.0f} | {opt['flow_bias']}"
+            )
             for t in opt["top_trades"][:5]:
-                print(f"    {t['side']:<5} ${t['strike']} {t['expiration']} "
-                      f"vol:{t['volume']} oi:{t['open_interest']} "
-                      f"ratio:{t['vol_oi_ratio']}x prem:${t['premium']:,.0f}")
+                print(
+                    f"    {t['side']:<5} ${t['strike']} {t['expiration']} "
+                    f"vol:{t['volume']} oi:{t['open_interest']} "
+                    f"ratio:{t['vol_oi_ratio']}x prem:${t['premium']:,.0f}"
+                )
 
     elif args.unusual_volume:
         results = mh.unusual_volume_scan(AI_CHAIN_TICKERS)
         results.sort(key=lambda x: -x["volume_ratio"])
-        print(f"\n  AI链 异常成交量排行:")
+        print("\n  AI链 异常成交量排行:")
         for i, r in enumerate(results):
             if r["volume_ratio"] >= 1.0:
-                print(f"  {i+1}. {r['ticker']:<6} {r['volume_ratio']:.1f}x "
-                      f"({r['current_volume']:,} shrs) price:{r['price_change_pct']:+.1f}%")
+                print(
+                    f"  {i + 1}. {r['ticker']:<6} {r['volume_ratio']:.1f}x "
+                    f"({r['current_volume']:,} shrs) price:{r['price_change_pct']:+.1f}%"
+                )
 
     elif args.options_flow:
         for t in AI_CHAIN_TICKERS[:5]:
             opt = mh.options_flow_scan(t)
             if opt["unusual_trades"] > 0:
-                print(f"\n  {t}: {opt['unusual_trades']} unusual trades | "
-                      f"{opt['flow_bias']}")
+                print(
+                    f"\n  {t}: {opt['unusual_trades']} unusual trades | "
+                    f"{opt['flow_bias']}"
+                )
                 for tr in opt["top_trades"][:5]:
-                    print(f"    {tr['side']} ${tr['strike']} "
-                          f"prem:${tr['premium']:,.0f} ratio:{tr['vol_oi_ratio']}x")
+                    print(
+                        f"    {tr['side']} ${tr['strike']} "
+                        f"prem:${tr['premium']:,.0f} ratio:{tr['vol_oi_ratio']}x"
+                    )
 
     elif args.finviz:
         results = mh.finviz_screener(args.finviz)

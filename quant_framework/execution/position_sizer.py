@@ -26,8 +26,9 @@ def equal_weight(signals: pd.DataFrame, max_positions: int = 10) -> pd.Series:
     return pd.Series(w, index=tickers)
 
 
-def kelly_sizing(returns: pd.DataFrame, max_weight: float = 0.25,
-                 risk_aversion: float = 2.0) -> pd.Series:
+def kelly_sizing(
+    returns: pd.DataFrame, max_weight: float = 0.25, risk_aversion: float = 2.0
+) -> pd.Series:
     """Kelly criterion position sizing via Riskfolio-Lib Utility optimization.
 
     Parameters
@@ -42,12 +43,19 @@ def kelly_sizing(returns: pd.DataFrame, max_weight: float = 0.25,
     """
     try:
         import riskfolio as rp
+
         port = rp.Portfolio(returns=returns, upperlng=max_weight, lowerlng=0.0)
-        port.assets_stats(method_mu='hist', method_cov='hist')
-        w_df = port.optimization(model='Classic', rm='MV', obj='Utility',
-                                  kelly='approx', rf=0, l=risk_aversion)
-        if w_df is not None and 'weights' in w_df:
-            return w_df['weights']
+        port.assets_stats(method_mu="hist", method_cov="hist")
+        w_df = port.optimization(
+            model="Classic",
+            rm="MV",
+            obj="Utility",
+            kelly="approx",
+            rf=0,
+            l=risk_aversion,
+        )
+        if w_df is not None and "weights" in w_df:
+            return w_df["weights"]
     except (ImportError, Exception):
         pass
 
@@ -55,6 +63,7 @@ def kelly_sizing(returns: pd.DataFrame, max_weight: float = 0.25,
     mu = returns.mean().values
     try:
         from sklearn.covariance import LedoitWolf
+
         cov = LedoitWolf().fit(returns.values).covariance_
     except ImportError:
         cov = returns.cov().values
@@ -78,22 +87,22 @@ def risk_parity_sizing(returns: pd.DataFrame, max_weight: float = 0.30) -> pd.Se
     """
     try:
         import riskfolio as rp
+
         try:
             port = rp.Portfolio(returns=returns, upperlng=max_weight, lowerlng=0.0)
-            port.assets_stats(method_mu='hist', method_cov='hist')
-            w_df = port.optimization(model='Classic', rm='MV', obj='MinRisk',
-                                      rf=0, l=0)
-            if w_df is not None and 'weights' in w_df:
-                w = w_df['weights']
+            port.assets_stats(method_mu="hist", method_cov="hist")
+            w_df = port.optimization(model="Classic", rm="MV", obj="MinRisk", rf=0, l=0)
+            if w_df is not None and "weights" in w_df:
+                w = w_df["weights"]
                 w = w.clip(upper=max_weight)
                 w = w / w.sum()
                 return w
         except Exception:
             # Fall through: HRP as alternative
             try:
-                w_df = port.rp_optimization(model='Classic', rm='MV', rf=0, b=None)
-                if w_df is not None and 'weights' in w_df:
-                    w = w_df['weights']
+                w_df = port.rp_optimization(model="Classic", rm="MV", rf=0, b=None)
+                if w_df is not None and "weights" in w_df:
+                    w = w_df["weights"]
                     w = w.clip(upper=max_weight)
                     w = w / w.sum()
                     return w
@@ -111,9 +120,12 @@ def risk_parity_sizing(returns: pd.DataFrame, max_weight: float = 0.30) -> pd.Se
     return w
 
 
-def volatility_targeted_sizing(returns: pd.DataFrame, target_vol: float = 0.15,
-                                max_leverage: float = 2.0,
-                                lookback: int = 63) -> pd.Series:
+def volatility_targeted_sizing(
+    returns: pd.DataFrame,
+    target_vol: float = 0.15,
+    max_leverage: float = 2.0,
+    lookback: int = 63,
+) -> pd.Series:
     """Volatility-targeted position sizing.
 
     Scale each position so portfolio vol ≈ target_vol.
@@ -197,7 +209,11 @@ def size_positions(
         ).sort_index()
         common = [t for t in active_tickers if t in pivot.columns]
         if len(common) < 2:
-            weights = pd.Series(1.0 / len(common), index=common) if common else pd.Series(dtype=float)
+            weights = (
+                pd.Series(1.0 / len(common), index=common)
+                if common
+                else pd.Series(dtype=float)
+            )
         elif method == "kelly":
             rets = pivot[common].pct_change().dropna()
             weights = kelly_sizing(rets, max_weight=max_position_pct, **kwargs)
@@ -210,7 +226,11 @@ def size_positions(
         ).sort_index()
         common = [t for t in active_tickers if t in pivot.columns]
         rets = pivot[common].pct_change().dropna() if common else pd.DataFrame()
-        weights = volatility_targeted_sizing(rets, **kwargs) if not rets.empty else pd.Series(dtype=float)
+        weights = (
+            volatility_targeted_sizing(rets, **kwargs)
+            if not rets.empty
+            else pd.Series(dtype=float)
+        )
     else:  # equal_weight
         weights = equal_weight(signals, max_positions=max_positions)
         # Align with active_tickers
@@ -231,13 +251,15 @@ def size_positions(
         allocation = min(w, max_position_pct) * capital
         shares = int(allocation / price)
         if shares > 0:
-            orders.append({
-                "ticker": ticker,
-                "shares": shares,
-                "weight": round(w, 6),
-                "price": round(price, 4),
-                "allocation": round(shares * price, 2),
-            })
+            orders.append(
+                {
+                    "ticker": ticker,
+                    "shares": shares,
+                    "weight": round(w, 6),
+                    "price": round(price, 4),
+                    "allocation": round(shares * price, 2),
+                }
+            )
 
     return {
         "orders": orders,
@@ -248,8 +270,9 @@ def size_positions(
     }
 
 
-def _make_demo_data(n: int = 252, n_tickers: int = 5, seed: int = 42
-                    ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def _make_demo_data(
+    n: int = 252, n_tickers: int = 5, seed: int = 42
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2024-01-01", periods=n, freq="B")
     tickers = [f"STK{i}" for i in range(n_tickers)]
@@ -271,12 +294,21 @@ def main():
     for method in ["equal_weight", "kelly", "risk_parity", "vol_targeted"]:
         result = size_positions(signals, prices, capital=100_000, method=method)
         orders = result["orders"]
-        logger.info("%s: %d orders, allocated $%s", method, len(orders),
-                     f"{result['total_allocated']:,.0f}")
+        logger.info(
+            "%s: %d orders, allocated $%s",
+            method,
+            len(orders),
+            f"{result['total_allocated']:,.0f}",
+        )
         for o in orders:
-            logger.info("  %s: %d shares @ $%.2f (%.4f) = $%s",
-                        o['ticker'], o['shares'], o['price'], o['weight'],
-                        f"{o['allocation']:,.2f}")
+            logger.info(
+                "  %s: %d shares @ $%.2f (%.4f) = $%s",
+                o["ticker"],
+                o["shares"],
+                o["price"],
+                o["weight"],
+                f"{o['allocation']:,.2f}",
+            )
 
 
 if __name__ == "__main__":

@@ -43,7 +43,11 @@ def perturb_and_evaluate(
     base_val = base_params[param_name]
     results = {}
 
-    for label, mult in [("base", 1.0), ("up", 1 + perturbation), ("down", 1 - perturbation)]:
+    for label, mult in [
+        ("base", 1.0),
+        ("up", 1 + perturbation),
+        ("down", 1 - perturbation),
+    ]:
         test_params = {**base_params}
         test_params[param_name] = base_val * mult
         try:
@@ -55,8 +59,12 @@ def perturb_and_evaluate(
     base = results.get("base", 0)
     if abs(base) < 1e-10:
         return SensitivityResult(
-            param=param_name, base_value=base_val, perturb_pct=perturbation,
-            output_change_pct=0, elasticity=0, direction="flat",
+            param=param_name,
+            base_value=base_val,
+            perturb_pct=perturbation,
+            output_change_pct=0,
+            elasticity=0,
+            direction="flat",
         )
 
     up_change = (results.get("up", base) - base) / abs(base)
@@ -94,18 +102,20 @@ def sensitivity_matrix(
     for i, r in enumerate(sorted_results):
         r.impact_rank = i + 1
 
-    df = pd.DataFrame([
-        {
-            "param": r.param,
-            "base_value": r.base_value,
-            "perturb_±%": f"±{r.perturb_pct:.0%}",
-            "output_change_%": r.output_change_pct,
-            "elasticity": r.elasticity,
-            "direction": r.direction,
-            "impact_rank": r.impact_rank,
-        }
-        for r in sorted_results
-    ])
+    df = pd.DataFrame(
+        [
+            {
+                "param": r.param,
+                "base_value": r.base_value,
+                "perturb_±%": f"±{r.perturb_pct:.0%}",
+                "output_change_%": r.output_change_pct,
+                "elasticity": r.elasticity,
+                "direction": r.direction,
+                "impact_rank": r.impact_rank,
+            }
+            for r in sorted_results
+        ]
+    )
     return df
 
 
@@ -130,7 +140,9 @@ def report_markdown(df: pd.DataFrame, output_key: str = "sharpe") -> str:
         lines.append("| Param | Base | Output Δ% | Elasticity | Direction |")
         lines.append("|-------|------|-----------|------------|-----------|")
         for _, r in high.iterrows():
-            lines.append(f"| **{r['param']}** | {r['base_value']:.3f} | {r['output_change_%']:.1f}% | {r['elasticity']:.3f} | {r['direction']} |")
+            lines.append(
+                f"| **{r['param']}** | {r['base_value']:.3f} | {r['output_change_%']:.1f}% | {r['elasticity']:.3f} | {r['direction']} |"
+            )
         lines.append("")
 
     if len(medium) > 0:
@@ -138,7 +150,9 @@ def report_markdown(df: pd.DataFrame, output_key: str = "sharpe") -> str:
         lines.append("| Param | Base | Output Δ% | Elasticity |")
         lines.append("|-------|------|-----------|-----------|")
         for _, r in medium.iterrows():
-            lines.append(f"| {r['param']} | {r['base_value']:.3f} | {r['output_change_%']:.1f}% | {r['elasticity']:.3f} |")
+            lines.append(
+                f"| {r['param']} | {r['base_value']:.3f} | {r['output_change_%']:.1f}% | {r['elasticity']:.3f} |"
+            )
         lines.append("")
 
     if len(low) > 0:
@@ -146,7 +160,9 @@ def report_markdown(df: pd.DataFrame, output_key: str = "sharpe") -> str:
         lines.append(f"Parameters: {', '.join(low['param'].tolist())}")
 
     lines.append("")
-    lines.append("**Recommendation**: Focus tuning efforts on 🔴 high-sensitivity parameters first.")
+    lines.append(
+        "**Recommendation**: Focus tuning efforts on 🔴 high-sensitivity parameters first."
+    )
     return "\n".join(lines)
 
 
@@ -161,6 +177,11 @@ if __name__ == "__main__":
         sharpe += rng.normal(0, 0.05)
         return {"sharpe": sharpe, "return": 0.12 + rng.normal(0, 0.01)}
 
-    params = {"lookback": 60, "risk_aversion": 2.5, "max_weight": 0.2, "vol_target": 0.15}
+    params = {
+        "lookback": 60,
+        "risk_aversion": 2.5,
+        "max_weight": 0.2,
+        "vol_target": 0.15,
+    }
     df = sensitivity_matrix(toy_strategy, params, list(params.keys()))
     print(report_markdown(df))

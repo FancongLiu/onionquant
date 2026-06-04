@@ -10,7 +10,6 @@ import logging
 from typing import Any, Optional
 
 import networkx as nx
-import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -133,7 +132,9 @@ class QuantGraphStore:
             nodes = self._run("MATCH (n) RETURN n.id AS id, labels(n) AS labels, n")
             for n in nodes:
                 g.add_node(n["id"], **(n.get("n") or {}))
-            edges = self._run("MATCH (a)-[r]->(b) RETURN a.id AS src, b.id AS dst, type(r) AS rel, r")
+            edges = self._run(
+                "MATCH (a)-[r]->(b) RETURN a.id AS src, b.id AS dst, type(r) AS rel, r"
+            )
             for e in edges:
                 g.add_edge(e["src"], e["dst"], rel_type=e["rel"])
             return g
@@ -160,6 +161,7 @@ class QuantGraphStore:
 
 
 # ── Pre-built query helpers ──────────────────────────────────────
+
 
 def query_stock_supply_chain(graph: QuantGraphStore, ticker: str) -> list[dict]:
     """Get supply chain network for a stock."""

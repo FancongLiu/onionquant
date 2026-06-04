@@ -12,7 +12,6 @@ Usage:
 
 import json
 import os
-import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -26,22 +25,39 @@ sys.path.insert(0, str(PROJECT_ROOT))
 load_dotenv(PROJECT_ROOT / ".env")
 
 from infrastructure.kg_schema import (
-    NODE_STOCK, NODE_FACTOR, NODE_INDUSTRY, NODE_REPORT, NODE_EVENT,
-    NODE_AGENT, NODE_RISK,
-    REL_CORRELATES, REL_HAS_FACTOR, REL_IN_INDUSTRY, REL_MENTIONED,
-    REL_TRIGGERED, REL_EXECUTED, REL_DEPENDS, REL_SUPPLIES,
-    CONSTRAINT_DDL, INDEX_DDL,
-    INDUSTRY_TAXONOMY, TICKER_INDUSTRY_MAP,
-    StockNode, FactorNode, IndustryNode, ReportNode, EventNode,
-    AgentNode, RiskAlertNode,
+    NODE_STOCK,
+    NODE_FACTOR,
+    NODE_INDUSTRY,
+    NODE_REPORT,
+    NODE_EVENT,
+    NODE_RISK,
+    REL_CORRELATES,
+    REL_HAS_FACTOR,
+    REL_IN_INDUSTRY,
+    REL_MENTIONED,
+    REL_TRIGGERED,
+    CONSTRAINT_DDL,
+    INDEX_DDL,
+    INDUSTRY_TAXONOMY,
+    TICKER_INDUSTRY_MAP,
+    StockNode,
+    FactorNode,
+    IndustryNode,
+    ReportNode,
+    EventNode,
+    RiskAlertNode,
 )
 
 
 class KnowledgeGraph:
     """Neo4j 知识图谱 — 连接/摄入/查询 统一入口."""
 
-    def __init__(self, uri: Optional[str] = None, user: Optional[str] = None,
-                 password: Optional[str] = None):
+    def __init__(
+        self,
+        uri: Optional[str] = None,
+        user: Optional[str] = None,
+        password: Optional[str] = None,
+    ):
         self._driver = None
         self._uri = uri or os.getenv("NEO4J_URI", "bolt://localhost:7687")
         self._user = user or os.getenv("NEO4J_USER", "neo4j")
@@ -51,7 +67,10 @@ class KnowledgeGraph:
     def driver(self):
         if self._driver is None:
             from neo4j import GraphDatabase
-            self._driver = GraphDatabase.driver(self._uri, auth=(self._user, self._password))
+
+            self._driver = GraphDatabase.driver(
+                self._uri, auth=(self._user, self._password)
+            )
         return self._driver
 
     @property
@@ -82,7 +101,9 @@ class KnowledgeGraph:
                     session.run(ddl)
                 except Exception as e:
                     print(f"[KG] index skip: {e}")
-        print(f"[KG] Schema initialized: {len(CONSTRAINT_DDL)} constraints, {len(INDEX_DDL)} indexes")
+        print(
+            f"[KG] Schema initialized: {len(CONSTRAINT_DDL)} constraints, {len(INDEX_DDL)} indexes"
+        )
 
     # ── Node upsert helpers ───────────────────────────────
 
@@ -91,15 +112,21 @@ class KnowledgeGraph:
             f"MERGE (n:{NODE_STOCK} {{ticker: $ticker}}) "
             "SET n.name = $name, n.exchange = $exchange, n.sector = $sector, "
             "n.market_cap = $market_cap, n.price = $price",
-            ticker=stock.uid, name=stock.name, exchange=stock.exchange,
-            sector=stock.sector, market_cap=stock.market_cap, price=stock.price,
+            ticker=stock.uid,
+            name=stock.name,
+            exchange=stock.exchange,
+            sector=stock.sector,
+            market_cap=stock.market_cap,
+            price=stock.price,
         )
 
     def _merge_industry(self, session, ind: IndustryNode):
         session.run(
             f"MERGE (n:{NODE_INDUSTRY} {{name: $name}}) "
             "SET n.sector = $sector, n.description = $description",
-            name=ind.uid, sector=ind.sector, description=ind.description,
+            name=ind.uid,
+            sector=ind.sector,
+            description=ind.description,
         )
 
     def _merge_factor(self, session, factor: FactorNode):
@@ -107,16 +134,21 @@ class KnowledgeGraph:
             f"MERGE (n:{NODE_FACTOR} {{name: $name}}) "
             "SET n.category = $category, n.description = $description, "
             "n.latest_ic = $latest_ic, n.ic_stable = $ic_stable",
-            name=factor.uid, category=factor.category, description=factor.description,
-            latest_ic=factor.latest_ic, ic_stable=factor.ic_stable,
+            name=factor.uid,
+            category=factor.category,
+            description=factor.description,
+            latest_ic=factor.latest_ic,
+            ic_stable=factor.ic_stable,
         )
 
     def _merge_report(self, session, report: ReportNode):
         session.run(
             f"MERGE (n:{NODE_REPORT} {{path: $path}}) "
             "SET n.title = $title, n.report_type = $report_type, n.generated_at = $generated_at",
-            path=report.uid, title=report.title or report.path,
-            report_type=report.report_type, generated_at=report.generated_at,
+            path=report.uid,
+            title=report.title or report.path,
+            report_type=report.report_type,
+            generated_at=report.generated_at,
         )
 
     def _merge_event(self, session, event: EventNode):
@@ -124,8 +156,11 @@ class KnowledgeGraph:
             f"MERGE (n:{NODE_EVENT} {{uid: $uid}}) "
             "SET n.name = $name, n.event_type = $event_type, "
             "n.date = $date, n.impact_score = $impact_score",
-            uid=event.uid, name=event.name, event_type=event.event_type,
-            date=event.date, impact_score=event.impact_score,
+            uid=event.uid,
+            name=event.name,
+            event_type=event.event_type,
+            date=event.date,
+            impact_score=event.impact_score,
         )
 
     def _merge_risk_alert(self, session, alert: RiskAlertNode):
@@ -133,8 +168,12 @@ class KnowledgeGraph:
             f"MERGE (n:{NODE_RISK} {{uid: $uid}}) "
             "SET n.ticker = $ticker, n.alert_type = $alert_type, "
             "n.severity = $severity, n.message = $message, n.created_at = $created_at",
-            uid=alert.uid, ticker=alert.ticker, alert_type=alert.alert_type,
-            severity=alert.severity, message=alert.message, created_at=alert.created_at,
+            uid=alert.uid,
+            ticker=alert.ticker,
+            alert_type=alert.alert_type,
+            severity=alert.severity,
+            message=alert.message,
+            created_at=alert.created_at,
         )
 
     # ── Ingestion pipelines ───────────────────────────────
@@ -173,7 +212,8 @@ class KnowledgeGraph:
                         f"MATCH (s:{NODE_STOCK} {{ticker: $ticker}}) "
                         f"MERGE (i:{NODE_INDUSTRY} {{name: $industry}}) "
                         f"MERGE (s)-[:{REL_IN_INDUSTRY}]->(i)",
-                        ticker=t, industry=industry_key,
+                        ticker=t,
+                        industry=industry_key,
                     )
 
             # Stock-Stock correlations (same industry)
@@ -188,7 +228,8 @@ class KnowledgeGraph:
                             f"MATCH (s1:{NODE_STOCK} {{ticker: $t1}}) "
                             f"MATCH (s2:{NODE_STOCK} {{ticker: $t2}}) "
                             f"MERGE (s1)-[:{REL_CORRELATES} {{connector: 'same_industry'}}]->(s2)",
-                            t1=t1, t2=t2,
+                            t1=t1,
+                            t2=t2,
                         )
 
         print(f"[KG] Ingested {len(tickers)} stocks + industry/correlation edges")
@@ -203,7 +244,16 @@ class KnowledgeGraph:
             print("[KG] No factor data to ingest")
             return
 
-        exclude = {"ticker", "date", "close", "open", "high", "low", "volume", "industry"}
+        exclude = {
+            "ticker",
+            "date",
+            "close",
+            "open",
+            "high",
+            "low",
+            "volume",
+            "industry",
+        }
         factor_cols = [c for c in factor_df.columns if c not in exclude]
 
         if not factor_cols:
@@ -223,7 +273,20 @@ class KnowledgeGraph:
                 cat_map[f] = "volume"
             elif any(k in fl for k in ("size", "mcap", "ln_cap")):
                 cat_map[f] = "size"
-            elif any(k in fl for k in ("pe", "pb", "roe", "eps", "bv", "profit", "margin", "debt", "yield")):
+            elif any(
+                k in fl
+                for k in (
+                    "pe",
+                    "pb",
+                    "roe",
+                    "eps",
+                    "bv",
+                    "profit",
+                    "margin",
+                    "debt",
+                    "yield",
+                )
+            ):
                 cat_map[f] = "fundamental"
             else:
                 cat_map[f] = "technical"
@@ -240,21 +303,34 @@ class KnowledgeGraph:
                 # Approximate IC: Pearson r between factor value and forward return
                 ic_val = 0.0
                 try:
-                    if "_ret" in factor_df_copy.columns and fc in factor_df_copy.columns:
+                    if (
+                        "_ret" in factor_df_copy.columns
+                        and fc in factor_df_copy.columns
+                    ):
                         valid = factor_df_copy[[fc, "_ret"]].dropna()
                         if len(valid) > 10:
                             ic_val = valid[fc].corr(valid["_ret"])
                 except Exception:
                     pass
 
-                factor = FactorNode(name=fc, category=cat, latest_ic=round(ic_val, 4),
-                                   ic_stable=abs(ic_val) >= 0.02)
+                factor = FactorNode(
+                    name=fc,
+                    category=cat,
+                    latest_ic=round(ic_val, 4),
+                    ic_stable=abs(ic_val) >= 0.02,
+                )
                 self._merge_factor(session, factor)
 
             # Stock → Factor edges (with latest factor values)
-            latest = factor_df.sort_values("date" if "date" in factor_df.columns else factor_df.columns[0])
+            latest = factor_df.sort_values(
+                "date" if "date" in factor_df.columns else factor_df.columns[0]
+            )
             for t in latest["ticker"].unique():
-                row = latest[latest["ticker"] == t].iloc[-1] if len(latest[latest["ticker"] == t]) > 0 else None
+                row = (
+                    latest[latest["ticker"] == t].iloc[-1]
+                    if len(latest[latest["ticker"] == t]) > 0
+                    else None
+                )
                 if row is None:
                     continue
                 for fc in factor_cols:
@@ -263,7 +339,9 @@ class KnowledgeGraph:
                             f"MATCH (s:{NODE_STOCK} {{ticker: $ticker}}) "
                             f"MERGE (f:{NODE_FACTOR} {{name: $factor}}) "
                             f"MERGE (s)-[:{REL_HAS_FACTOR} {{value: $value}}]->(f)",
-                            ticker=t, factor=fc, value=float(row[fc]),
+                            ticker=t,
+                            factor=fc,
+                            value=float(row[fc]),
                         )
 
         print(f"[KG] Ingested {len(factor_cols)} factors with {cat_map} classification")
@@ -286,7 +364,8 @@ class KnowledgeGraph:
         rtype = report_type or self._guess_report_type(rel_path)
 
         report = ReportNode(
-            path=rel_path, title=title or path.stem,
+            path=rel_path,
+            title=title or path.stem,
             report_type=rtype,
             generated_at=datetime.fromtimestamp(path.stat().st_mtime).isoformat(),
             tickers_covered=list(tickers_found),
@@ -299,7 +378,8 @@ class KnowledgeGraph:
                     f"MATCH (r:{NODE_REPORT} {{path: $path}}) "
                     f"MATCH (s:{NODE_STOCK} {{ticker: $ticker}}) "
                     f"MERGE (s)-[:{REL_MENTIONED}]->(r)",
-                    path=rel_path, ticker=t,
+                    path=rel_path,
+                    ticker=t,
                 )
         print(f"[KG] Ingested report: {rel_path} ({len(tickers_found)} tickers)")
 
@@ -312,9 +392,12 @@ class KnowledgeGraph:
                     f"MATCH (e:{NODE_EVENT} {{uid: $uid}}) "
                     f"MATCH (s:{NODE_STOCK} {{ticker: $ticker}}) "
                     f"MERGE (s)-[:{REL_TRIGGERED}]->(e)",
-                    uid=event.uid, ticker=t,
+                    uid=event.uid,
+                    ticker=t,
                 )
-        print(f"[KG] Ingested event: {event.name} ({len(event.target_tickers)} tickers)")
+        print(
+            f"[KG] Ingested event: {event.name} ({len(event.target_tickers)} tickers)"
+        )
 
     def ingest_risk_alert(self, alert: RiskAlertNode):
         """摄入风险告警."""
@@ -325,7 +408,8 @@ class KnowledgeGraph:
                 f"MATCH (r:{NODE_RISK} {{uid: $uid}}) "
                 f"MATCH (s:{NODE_STOCK} {{ticker: $ticker}}) "
                 f"MERGE (s)-[:{REL_TRIGGERED}]->(r)",
-                uid=alert.uid, ticker=alert.ticker,
+                uid=alert.uid,
+                ticker=alert.ticker,
             )
 
     # ── Queries ───────────────────────────────────────────
@@ -337,18 +421,22 @@ class KnowledgeGraph:
                 f"MATCH (s:{NODE_STOCK} {{ticker: $ticker}})-[:{REL_HAS_FACTOR}]->(f:{NODE_FACTOR}) "
                 "RETURN f.name AS factor, f.category AS category, f.latest_ic AS ic "
                 "ORDER BY abs(f.latest_ic) DESC LIMIT $k",
-                ticker=ticker.upper(), k=top_k,
+                ticker=ticker.upper(),
+                k=top_k,
             )
             return [r.data() for r in result]
 
-    def query_correlation_chain(self, ticker_a: str, ticker_b: str, max_depth: int = 3) -> list:
+    def query_correlation_chain(
+        self, ticker_a: str, ticker_b: str, max_depth: int = 3
+    ) -> list:
         """查询两标的最短关联路径."""
         with self.driver.session() as session:
             result = session.run(
                 f"MATCH path = shortestPath((a:{NODE_STOCK} {{ticker: $a}})-[*..{max_depth}]-(b:{NODE_STOCK} {{ticker: $b}})) "
                 "RETURN [n in nodes(path) | coalesce(n.ticker, n.name, n.uid)] AS chain, "
                 "length(path) AS distance",
-                a=ticker_a.upper(), b=ticker_b.upper(),
+                a=ticker_a.upper(),
+                b=ticker_b.upper(),
             )
             records = [r.data() for r in result]
             return records
@@ -366,7 +454,9 @@ class KnowledgeGraph:
             stocks = []
             for r in result:
                 d = r.data()
-                d["factor_count"] = len([x for x in d.get("factors", []) if x["factor"]])
+                d["factor_count"] = len(
+                    [x for x in d.get("factors", []) if x["factor"]]
+                )
                 stocks.append(d)
             return {"industry": industry, "stock_count": len(stocks), "stocks": stocks}
 
@@ -384,7 +474,14 @@ class KnowledgeGraph:
         """返回图谱统计."""
         with self.driver.session() as session:
             stats = {}
-            for label in ["Stock", "Factor", "Industry", "Report", "Event", "RiskAlert"]:
+            for label in [
+                "Stock",
+                "Factor",
+                "Industry",
+                "Report",
+                "Event",
+                "RiskAlert",
+            ]:
                 r = session.run(f"MATCH (n:{label}) RETURN count(n) AS c")
                 stats[label.lower()] = r.single()["c"]
             r = session.run("MATCH ()-[r]->() RETURN count(r) AS c")
@@ -414,9 +511,13 @@ class KnowledgeGraph:
 
 # ── Full ingestion pipeline ──────────────────────────────
 
-def ingest_all(tickers: list, price_df: Optional[pd.DataFrame] = None,
-               factor_df: Optional[pd.DataFrame] = None,
-               reports_dir: str = "company/reports") -> dict:
+
+def ingest_all(
+    tickers: list,
+    price_df: Optional[pd.DataFrame] = None,
+    factor_df: Optional[pd.DataFrame] = None,
+    reports_dir: str = "company/reports",
+) -> dict:
     """一键摄入: 行业→标的→因子→报告→事件.
 
     返回图谱统计.
@@ -444,13 +545,27 @@ def ingest_all(tickers: list, price_df: Optional[pd.DataFrame] = None,
 
     # Add key events
     events = [
-        EventNode(name="Starship V3 First Flight", event_type="launch",
-                  target_tickers=["DXYZ"], date="2026-05-19", impact_score=0.7),
-        EventNode(name="NVDA Q1 FY27 Earnings", event_type="earnings",
-                  target_tickers=["NVDA", "MU", "LITE", "COHR", "AMD"],
-                  date="2026-05-20", impact_score=0.9),
-        EventNode(name="LITE Nasdaq-100 Inclusion", event_type="catalyst",
-                  target_tickers=["LITE"], date="2026-05-18", impact_score=0.5),
+        EventNode(
+            name="Starship V3 First Flight",
+            event_type="launch",
+            target_tickers=["DXYZ"],
+            date="2026-05-19",
+            impact_score=0.7,
+        ),
+        EventNode(
+            name="NVDA Q1 FY27 Earnings",
+            event_type="earnings",
+            target_tickers=["NVDA", "MU", "LITE", "COHR", "AMD"],
+            date="2026-05-20",
+            impact_score=0.9,
+        ),
+        EventNode(
+            name="LITE Nasdaq-100 Inclusion",
+            event_type="catalyst",
+            target_tickers=["LITE"],
+            date="2026-05-18",
+            impact_score=0.5,
+        ),
     ]
     for ev in events:
         try:
@@ -467,9 +582,13 @@ def ingest_all(tickers: list, price_df: Optional[pd.DataFrame] = None,
 
 if __name__ == "__main__":
     import argparse
+
     parser = argparse.ArgumentParser(description="OnionQuant Knowledge Graph CLI")
-    parser.add_argument("action", choices=["init", "ingest", "stats", "query", "clear"],
-                        help="Action to perform")
+    parser.add_argument(
+        "action",
+        choices=["init", "ingest", "stats", "query", "clear"],
+        help="Action to perform",
+    )
     parser.add_argument("--tickers", help="Comma-separated tickers for ingest")
     parser.add_argument("--query-ticker", help="Ticker for factor query")
     parser.add_argument("--query-a", help="Ticker A for chain query")

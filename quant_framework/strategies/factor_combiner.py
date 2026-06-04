@@ -26,8 +26,8 @@ def _rolling_spearman(a: pd.Series, b: pd.Series, window: int) -> pd.Series:
         return pd.Series(np.nan, index=a.index)
     combined["_r"] = np.nan
     for i in range(window - 1, len(combined)):
-        wa = combined["a"].iloc[i - window + 1:i + 1]
-        wb = combined["b"].iloc[i - window + 1:i + 1]
+        wa = combined["a"].iloc[i - window + 1 : i + 1]
+        wb = combined["b"].iloc[i - window + 1 : i + 1]
         if wa.nunique() < 2 or wb.nunique() < 2:
             continue
         combined.iloc[i, combined.columns.get_loc("_r")] = spearmanr(wa, wb)[0]
@@ -46,8 +46,12 @@ def compute_ic(factor_values: pd.Series, forward_returns: pd.Series) -> dict:
     return {"IC": round(ic, 4), "n": len(aligned)}
 
 
-def rolling_ic_matrix(factor_df: pd.DataFrame, factor_cols: list,
-                      price_series: pd.Series, window: int = 21) -> pd.DataFrame:
+def rolling_ic_matrix(
+    factor_df: pd.DataFrame,
+    factor_cols: list,
+    price_series: pd.Series,
+    window: int = 21,
+) -> pd.DataFrame:
     """计算滚动 IC 矩阵（Alphalens 风格，基于前向收益）。"""
     fwd = price_series.pct_change(window).shift(-window)
     results = pd.DataFrame(index=factor_df.index)
@@ -60,9 +64,13 @@ def rolling_ic_matrix(factor_df: pd.DataFrame, factor_cols: list,
     return results
 
 
-def _cs_ic_series(factor_df: pd.DataFrame, factor_cols: list,
-                  horizon: int = 21, min_tickers: int = 5,
-                  ic_smooth_span: int = 60) -> pd.DataFrame:
+def _cs_ic_series(
+    factor_df: pd.DataFrame,
+    factor_cols: list,
+    horizon: int = 21,
+    min_tickers: int = 5,
+    ic_smooth_span: int = 60,
+) -> pd.DataFrame:
     """Cross-sectional IC per date — correct IC methodology.
 
     For each date, compute Spearman correlation of factor values
@@ -108,9 +116,13 @@ def _cs_ic_series(factor_df: pd.DataFrame, factor_cols: list,
     return ic_df.ewm(span=ic_smooth_span, min_periods=max(20, min_tickers)).mean()
 
 
-def filter_factors_by_ic(factor_df: pd.DataFrame, factor_cols: list,
-                         ic_threshold: float = 0.02, min_factors: int = 3,
-                         horizon: int = 21) -> list:
+def filter_factors_by_ic(
+    factor_df: pd.DataFrame,
+    factor_cols: list,
+    ic_threshold: float = 0.02,
+    min_factors: int = 3,
+    horizon: int = 21,
+) -> list:
     """Exclude factors whose trailing mean |IC| falls below threshold.
 
     Weak-IC factors add noise, not signal. This keeps only factors
@@ -119,20 +131,31 @@ def filter_factors_by_ic(factor_df: pd.DataFrame, factor_cols: list,
     """
     ic_df = _cs_ic_series(factor_df, factor_cols, horizon=horizon)
     if ic_df.empty:
-        return factor_cols[:min_factors] if len(factor_cols) >= min_factors else factor_cols
+        return (
+            factor_cols[:min_factors]
+            if len(factor_cols) >= min_factors
+            else factor_cols
+        )
 
     mean_abs_ic = ic_df.abs().mean().sort_values(ascending=False)
-    strong = [c for c in mean_abs_ic.index if c in factor_cols and mean_abs_ic[c] >= ic_threshold]
+    strong = [
+        c
+        for c in mean_abs_ic.index
+        if c in factor_cols and mean_abs_ic[c] >= ic_threshold
+    ]
     if len(strong) < min_factors:
         strong = list(mean_abs_ic.index[:min_factors])
     return [c for c in strong if c in factor_cols]
 
 
-def ic_weighted_combine(factor_df: pd.DataFrame, factor_cols: list,
-                        price_series: pd.Series = None,
-                        ic_threshold: float = 0.0,
-                        min_factors: int = 3,
-                        ic_shrinkage: float = 0.2) -> pd.DataFrame:
+def ic_weighted_combine(
+    factor_df: pd.DataFrame,
+    factor_cols: list,
+    price_series: pd.Series = None,
+    ic_threshold: float = 0.0,
+    min_factors: int = 3,
+    ic_shrinkage: float = 0.2,
+) -> pd.DataFrame:
     """IC-weighted factor combination using proper cross-sectional IC.
 
     Uses signed IC (not |IC|) so factors with negative predictive power
@@ -186,8 +209,9 @@ def ic_weighted_combine(factor_df: pd.DataFrame, factor_cols: list,
     return result
 
 
-def normalize_factor_signs(factor_df: pd.DataFrame, factor_cols: list,
-                          horizon: int = 21) -> pd.DataFrame:
+def normalize_factor_signs(
+    factor_df: pd.DataFrame, factor_cols: list, horizon: int = 21
+) -> pd.DataFrame:
     """Flip factor signs so all factors have positive expected IC.
 
     Factors like debt_ratio (high=bad) get flipped so "positive=good"
@@ -211,8 +235,9 @@ def normalize_factor_signs(factor_df: pd.DataFrame, factor_cols: list,
     return result
 
 
-def equal_weighted_combine(factor_df: pd.DataFrame, factor_cols: list,
-                           normalize_signs: bool = True) -> pd.DataFrame:
+def equal_weighted_combine(
+    factor_df: pd.DataFrame, factor_cols: list, normalize_signs: bool = True
+) -> pd.DataFrame:
     """等权因子组合。Optionally normalizes factor signs first."""
     df = factor_df
     if normalize_signs and "date" in df.columns and "ticker" in df.columns:
@@ -225,9 +250,13 @@ def equal_weighted_combine(factor_df: pd.DataFrame, factor_cols: list,
     return result
 
 
-def generate_signals(factor_df: pd.DataFrame, score_col: str = "combined_score",
-                     top_k: int = 50, method: str = "long_short",
-                     cross_sectional: bool = True) -> pd.DataFrame:
+def generate_signals(
+    factor_df: pd.DataFrame,
+    score_col: str = "combined_score",
+    top_k: int = 50,
+    method: str = "long_short",
+    cross_sectional: bool = True,
+) -> pd.DataFrame:
     """从组合得分生成交易信号。
 
     Args:
@@ -263,8 +292,12 @@ def generate_signals(factor_df: pd.DataFrame, score_col: str = "combined_score",
                     continue
                 threshold_long = day_scores.nlargest(k).iloc[-1]
                 threshold_short = day_scores.nsmallest(k).iloc[-1]
-                result.loc[day_mask & (result[score_col] >= threshold_long), "signal"] = 1
-                result.loc[day_mask & (result[score_col] <= threshold_short), "signal"] = -1
+                result.loc[
+                    day_mask & (result[score_col] >= threshold_long), "signal"
+                ] = 1
+                result.loc[
+                    day_mask & (result[score_col] <= threshold_short), "signal"
+                ] = -1
 
             elif method == "quantile":
                 try:
@@ -296,18 +329,24 @@ def generate_signals(factor_df: pd.DataFrame, score_col: str = "combined_score",
     return result
 
 
-def factor_correlation_matrix(factor_df: pd.DataFrame, factor_cols: list) -> pd.DataFrame:
+def factor_correlation_matrix(
+    factor_df: pd.DataFrame, factor_cols: list
+) -> pd.DataFrame:
     """因子相关性矩阵。"""
     valid = [c for c in factor_cols if c in factor_df.columns]
     return factor_df[valid].corr()
 
 
-def evaluate_with_alphalens(factor_df: pd.DataFrame, factor_names: list,
-                            price_series: pd.Series) -> Optional[str]:
+def evaluate_with_alphalens(
+    factor_df: pd.DataFrame, factor_names: list, price_series: pd.Series
+) -> Optional[str]:
     """使用 Alphalens-Reloaded 评估因子。返回 markdown 报告。"""
-    report = ["## Alphalens Factor Evaluation", "",
-              "| Factor | Horizon | IC | N |",
-              "|--------|---------|----|---|"]
+    report = [
+        "## Alphalens Factor Evaluation",
+        "",
+        "| Factor | Horizon | IC | N |",
+        "|--------|---------|----|---|",
+    ]
 
     for fname in factor_names:
         if fname not in factor_df.columns:
@@ -331,18 +370,37 @@ def main():
     parser = argparse.ArgumentParser(description="Factor Combiner with Alphalens")
     parser.add_argument("--input", required=True, help="Input factor CSV/parquet")
     parser.add_argument("--output", default="signals.csv", help="Output file")
-    parser.add_argument("--method", default="equal_weight",
-                        choices=["equal_weight", "ic_weight"])
-    parser.add_argument("--signal-method", default="long_short",
-                        choices=["long_short", "long_only", "quantile"])
+    parser.add_argument(
+        "--method", default="equal_weight", choices=["equal_weight", "ic_weight"]
+    )
+    parser.add_argument(
+        "--signal-method",
+        default="long_short",
+        choices=["long_short", "long_only", "quantile"],
+    )
     parser.add_argument("--top-k", type=int, default=50)
     parser.add_argument("--report", action="store_true")
     args = parser.parse_args()
 
-    df = pd.read_parquet(args.input) if args.input.endswith(".parquet") else pd.read_csv(args.input)
+    df = (
+        pd.read_parquet(args.input)
+        if args.input.endswith(".parquet")
+        else pd.read_csv(args.input)
+    )
 
-    exclude = {"ticker", "date", "close", "open", "high", "low", "volume",
-               "industry", "combined_score", "signal", "shares_outstanding"}
+    exclude = {
+        "ticker",
+        "date",
+        "close",
+        "open",
+        "high",
+        "low",
+        "volume",
+        "industry",
+        "combined_score",
+        "signal",
+        "shares_outstanding",
+    }
     factor_cols = [c for c in df.columns if c not in exclude]
 
     if args.method == "ic_weight" and "close" in df.columns:

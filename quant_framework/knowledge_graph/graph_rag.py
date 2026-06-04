@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -88,10 +87,22 @@ class GraphRAGBuilder:
             if t not in seen and 2 <= len(t) <= 5:
                 seen.add(t)
                 # Find factors near the ticker
-                for factor in ["momentum", "volatility", "value", "growth", "quality", "sentiment"]:
+                for factor in [
+                    "momentum",
+                    "volatility",
+                    "value",
+                    "growth",
+                    "quality",
+                    "sentiment",
+                ]:
                     if factor in text.lower():
                         triples.append(
-                            (t, f"factor_{factor}", "EXPOSED_TO", {"source": "research"})
+                            (
+                                t,
+                                f"factor_{factor}",
+                                "EXPOSED_TO",
+                                {"source": "research"},
+                            )
                         )
         return triples
 
@@ -108,10 +119,14 @@ class GraphRAGBuilder:
             )
             if m:
                 task_id, name, dept, priority, status = m.groups()
-                triples.append((task_id, dept.strip(), "ASSIGNED_TO", {"task": name.strip()}))
+                triples.append(
+                    (task_id, dept.strip(), "ASSIGNED_TO", {"task": name.strip()})
+                )
                 triples.append((task_id, f"priority_{priority}", "HAS_PRIORITY", {}))
                 if "✅" in status:
-                    triples.append((task_id, "status_done", "HAS_STATUS", {"value": "done"}))
+                    triples.append(
+                        (task_id, "status_done", "HAS_STATUS", {"value": "done"})
+                    )
         return triples
 
     def _extract_with_llm(self, text: str) -> list:
@@ -120,7 +135,9 @@ class GraphRAGBuilder:
             from langchain_core.documents import Document
             from langchain_experimental.graph_transformers import LLMGraphTransformer
         except ImportError:
-            logger.warning("langchain-experimental not installed, skipping LLM extraction")
+            logger.warning(
+                "langchain-experimental not installed, skipping LLM extraction"
+            )
             return []
 
         try:

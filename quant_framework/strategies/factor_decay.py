@@ -45,7 +45,9 @@ def ic_trend_test(
         if len(ic) < max(window, 20):
             continue
 
-        rolling_mean = ic.rolling(window=window, min_periods=window // 2).mean().dropna()
+        rolling_mean = (
+            ic.rolling(window=window, min_periods=window // 2).mean().dropna()
+        )
         if len(rolling_mean) < 10:
             continue
 
@@ -58,16 +60,22 @@ def ic_trend_test(
             slope = model.params[1] * 252
             p_value = model.pvalues[1]
 
-            rows.append({
-                "factor": col,
-                "slope_annual": slope,
-                "p_value": p_value,
-                "trend": "declining" if slope < -0.01 else "rising" if slope > 0.01 else "flat",
-                "significant": p_value < p_threshold,
-                "n_obs": len(rolling_mean),
-                "mean_ic": float(rolling_mean.mean()),
-                "last_ic": float(rolling_mean.iloc[-1]),
-            })
+            rows.append(
+                {
+                    "factor": col,
+                    "slope_annual": slope,
+                    "p_value": p_value,
+                    "trend": "declining"
+                    if slope < -0.01
+                    else "rising"
+                    if slope > 0.01
+                    else "flat",
+                    "significant": p_value < p_threshold,
+                    "n_obs": len(rolling_mean),
+                    "mean_ic": float(rolling_mean.mean()),
+                    "last_ic": float(rolling_mean.iloc[-1]),
+                }
+            )
         except Exception:
             continue
 
@@ -102,7 +110,7 @@ def detect_crowding(
     late = factor_df[factor_cols].iloc[mid:]
 
     for i, c1 in enumerate(factor_cols):
-        for c2 in factor_cols[i + 1:]:
+        for c2 in factor_cols[i + 1 :]:
             e1 = early[c1].dropna()
             e2 = early[c2].dropna()
             l1 = late[c1].dropna()
@@ -119,13 +127,15 @@ def detect_crowding(
             delta = rho_late - rho_early
 
             if abs(delta) > 0.1:
-                rows.append({
-                    "factor_pair": f"{c1} / {c2}",
-                    "rho_early": round(rho_early, 4),
-                    "rho_late": round(rho_late, 4),
-                    "delta": round(delta, 4),
-                    "crowding_signal": "rising" if delta > 0.1 else "diverging",
-                })
+                rows.append(
+                    {
+                        "factor_pair": f"{c1} / {c2}",
+                        "rho_early": round(rho_early, 4),
+                        "rho_late": round(rho_late, 4),
+                        "delta": round(delta, 4),
+                        "crowding_signal": "rising" if delta > 0.1 else "diverging",
+                    }
+                )
 
     return pd.DataFrame(rows)
 
@@ -147,41 +157,49 @@ def check_decay_alerts(
     summary = ic_summary(ic_df)
     for _, row in summary.iterrows():
         if row["mean_ic"] < ic_min_threshold:
-            alerts.append(DecayAlert(
-                factor=row["factor"],
-                alert_type="ic_below_threshold",
-                severity="warning" if row["mean_ic"] > -0.05 else "critical",
-                detail=f"Mean IC {row['mean_ic']:.4f} below threshold {ic_min_threshold}",
-                metric_value=row["mean_ic"],
-                threshold=ic_min_threshold,
-            ))
+            alerts.append(
+                DecayAlert(
+                    factor=row["factor"],
+                    alert_type="ic_below_threshold",
+                    severity="warning" if row["mean_ic"] > -0.05 else "critical",
+                    detail=f"Mean IC {row['mean_ic']:.4f} below threshold {ic_min_threshold}",
+                    metric_value=row["mean_ic"],
+                    threshold=ic_min_threshold,
+                )
+            )
 
     # IC trend test
     trends = ic_trend_test(ic_df, p_threshold=trend_sig_threshold)
     for _, row in trends.iterrows():
         if row["significant"] and row["trend"] == "declining":
-            alerts.append(DecayAlert(
-                factor=row["factor"],
-                alert_type="ic_trend_down",
-                severity="critical" if abs(row["slope_annual"]) > 0.05 else "warning",
-                detail=f"IC declining at {row['slope_annual']:.4f}/year (p={row['p_value']:.4f})",
-                metric_value=row["slope_annual"],
-                threshold=trend_sig_threshold,
-            ))
+            alerts.append(
+                DecayAlert(
+                    factor=row["factor"],
+                    alert_type="ic_trend_down",
+                    severity="critical"
+                    if abs(row["slope_annual"]) > 0.05
+                    else "warning",
+                    detail=f"IC declining at {row['slope_annual']:.4f}/year (p={row['p_value']:.4f})",
+                    metric_value=row["slope_annual"],
+                    threshold=trend_sig_threshold,
+                )
+            )
 
     # Crowding
     if factor_df is not None and factor_cols:
         crowding = detect_crowding(factor_df, factor_cols)
         for _, row in crowding.iterrows():
             if row["crowding_signal"] == "rising":
-                alerts.append(DecayAlert(
-                    factor=row["factor_pair"],
-                    alert_type="crowding_rising",
-                    severity="warning",
-                    detail=f"Pairwise correlation rising: {row['rho_early']:.3f} → {row['rho_late']:.3f}",
-                    metric_value=row["delta"],
-                    threshold=0.1,
-                ))
+                alerts.append(
+                    DecayAlert(
+                        factor=row["factor_pair"],
+                        alert_type="crowding_rising",
+                        severity="warning",
+                        detail=f"Pairwise correlation rising: {row['rho_early']:.3f} → {row['rho_late']:.3f}",
+                        metric_value=row["delta"],
+                        threshold=0.1,
+                    )
+                )
 
     return alerts
 
@@ -202,7 +220,9 @@ def report_markdown(
     if not alerts:
         lines.append("## Status: ✅ All factors stable")
         lines.append("")
-        lines.append("No decay alerts. IC trends are flat or positive, no crowding detected.")
+        lines.append(
+            "No decay alerts. IC trends are flat or positive, no crowding detected."
+        )
     else:
         if critical:
             lines.append(f"## 🔴 Critical ({len(critical)})")

@@ -46,7 +46,9 @@ def auto_tune(
 
     # Step 1: Sensitivity analysis
     param_names = list(param_bounds.keys())
-    sens_df = sensitivity_matrix(fn, base_params, param_names, perturbation=0.20, output_key=output_key)
+    sens_df = sensitivity_matrix(
+        fn, base_params, param_names, perturbation=0.20, output_key=output_key
+    )
 
     # Step 2: Filter sensitive params
     sensitive = sens_df[abs(sens_df["elasticity"]) > elasticity_threshold]
@@ -68,8 +70,7 @@ def auto_tune(
         from skopt.utils import use_named_args
 
         space = [
-            Real(param_bounds[p][0], param_bounds[p][1], name=p)
-            for p in tuned_params
+            Real(param_bounds[p][0], param_bounds[p][1], name=p) for p in tuned_params
         ]
 
         @use_named_args(space)
@@ -81,7 +82,9 @@ def auto_tune(
                 score = baseline
             return -direction * score  # skopt minimizes
 
-        result = gp_minimize(objective, space, n_calls=n_calls, random_state=42, noise=0.01)
+        result = gp_minimize(
+            objective, space, n_calls=n_calls, random_state=42, noise=0.01
+        )
         best_score = -direction * result.fun
 
         # Build best params dict
@@ -100,7 +103,9 @@ def auto_tune(
             baseline_params=base_params,
             best_score=round(best_score, 6),
             baseline_score=round(baseline, 6),
-            improvement_pct=round((best_score - baseline) / max(abs(baseline), 1e-10) * 100, 2),
+            improvement_pct=round(
+                (best_score - baseline) / max(abs(baseline), 1e-10) * 100, 2
+            ),
             n_iterations=n_calls,
             tuned_params=tuned_params,
             history=history[:10],
@@ -109,7 +114,9 @@ def auto_tune(
     except ImportError:
         # Fallback: grid search on sensitive params
         logger.warning("skopt not available — using grid search fallback")
-        return _grid_tune(fn, base_params, param_bounds, tuned_params, output_key, maximize)
+        return _grid_tune(
+            fn, base_params, param_bounds, tuned_params, output_key, maximize
+        )
 
 
 def _grid_tune(fn, base_params, bounds, tuned_params, output_key, maximize):
@@ -135,7 +142,12 @@ def _grid_tune(fn, base_params, bounds, tuned_params, output_key, maximize):
         baseline_params=base_params,
         best_score=round(best_score, 6),
         baseline_score=round(fn(**base_params).get(output_key, 0), 6),
-        improvement_pct=round((best_score - fn(**base_params).get(output_key, 0)) / max(abs(fn(**base_params).get(output_key, 0)), 1e-10) * 100, 2),
+        improvement_pct=round(
+            (best_score - fn(**base_params).get(output_key, 0))
+            / max(abs(fn(**base_params).get(output_key, 0)), 1e-10)
+            * 100,
+            2,
+        ),
         n_iterations=len(tuned_params) * 10,
         tuned_params=tuned_params,
     )
@@ -157,7 +169,11 @@ def report_markdown(result: TuneResult) -> str:
     for p in result.tuned_params:
         bl = result.baseline_params.get(p, "—")
         tuned = result.best_params.get(p, "—")
-        change = f"{tuned - bl:.4f}" if isinstance(bl, (int, float)) and isinstance(tuned, (int, float)) else "—"
+        change = (
+            f"{tuned - bl:.4f}"
+            if isinstance(bl, (int, float)) and isinstance(tuned, (int, float))
+            else "—"
+        )
         lines.append(f"| {p} | {bl} | {tuned} | {change} |")
 
     if result.history:
@@ -166,8 +182,6 @@ def report_markdown(result: TuneResult) -> str:
         lines.append("|------|-------|--------|")
         for i, h in enumerate(result.history[:5]):
             params_str = ", ".join(f"{k}={v:.3f}" for k, v in h["params"].items())
-            lines.append(f"| {i+1} | {h['score']:.4f} | {params_str} |")
+            lines.append(f"| {i + 1} | {h['score']:.4f} | {params_str} |")
 
     return "\n".join(lines)
-
-

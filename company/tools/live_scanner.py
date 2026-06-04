@@ -21,27 +21,33 @@ Usage:
 """
 
 import json
-import sys
 import time
 import urllib.request
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+
 
 # 延迟导入, 避免循环依赖
 def _get_reddit_scanner():
     from company.tools.reddit_scanner import RedditScanner
+
     return RedditScanner()
+
 
 def _get_twitter_scanner():
     from company.tools.twitter_scanner import TwitterScanner
+
     return TwitterScanner()
+
 
 def _get_news_scanner():
     from company.tools.news_scanner import NewsScanner
+
     return NewsScanner()
+
+
 DATA_DIR = PROJECT_ROOT / "company" / "sentiment_data"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -105,7 +111,9 @@ class LiveScanner:
             print(f"[ERROR] ApeWisdom fetch failed: {e}")
             return []
 
-    def detect_early_signals(self, results: list[dict], min_rank_jump: int = 3) -> list[dict]:
+    def detect_early_signals(
+        self, results: list[dict], min_rank_jump: int = 3
+    ) -> list[dict]:
         """检测早期信号: rank_change_24h > threshold.
 
         科学原理: Semenova & Winkler (2025) — 讨论量增速比绝对量更能预测短期价格.
@@ -123,30 +131,39 @@ class LiveScanner:
                 in_chain = ticker in AI_CHAIN_TICKERS
                 has_catalyst = ticker in UPCOMING_CATALYSTS
 
-                signals.append({
-                    "ticker": ticker,
-                    "rank": rank,
-                    "mentions": mentions,
-                    "rank_change_24h": rank_change,
-                    "direction": direction,
-                    "ai_chain": AI_CHAIN_TICKERS.get(ticker, ""),
-                    "catalyst": UPCOMING_CATALYSTS.get(ticker, ""),
-                    "in_ai_chain": in_chain,
-                    "has_catalyst": has_catalyst,
-                    # 早期信号评分: AI链(30%) + 催化剂(30%) + 热度突变幅度(40%)
-                    "early_score": round(
-                        (30 if in_chain else 5)
-                        + (30 if has_catalyst else 5)
-                        + min(abs(rank_change) / 10 * 40, 40),
-                        1,
-                    ),
-                })
+                signals.append(
+                    {
+                        "ticker": ticker,
+                        "rank": rank,
+                        "mentions": mentions,
+                        "rank_change_24h": rank_change,
+                        "direction": direction,
+                        "ai_chain": AI_CHAIN_TICKERS.get(ticker, ""),
+                        "catalyst": UPCOMING_CATALYSTS.get(ticker, ""),
+                        "in_ai_chain": in_chain,
+                        "has_catalyst": has_catalyst,
+                        # 早期信号评分: AI链(30%) + 催化剂(30%) + 热度突变幅度(40%)
+                        "early_score": round(
+                            (30 if in_chain else 5)
+                            + (30 if has_catalyst else 5)
+                            + min(abs(rank_change) / 10 * 40, 40),
+                            1,
+                        ),
+                    }
+                )
 
         # 按早期信号评分排序
         signals.sort(key=lambda x: x["early_score"], reverse=True)
         return signals
 
-    def scan(self, min_jump: int = 3, top_n: int = 15, use_reddit: bool = False, use_twitter: bool = False, use_news: bool = False):
+    def scan(
+        self,
+        min_jump: int = 3,
+        top_n: int = 15,
+        use_reddit: bool = False,
+        use_twitter: bool = False,
+        use_news: bool = False,
+    ):
         """执行一次完整扫描."""
         parts = ["ApeWisdom"]
         if use_reddit:
@@ -156,11 +173,11 @@ class LiveScanner:
         if use_news:
             parts.append("Finviz News")
         sources = " + ".join(parts)
-        print(f"\n{'='*65}")
+        print(f"\n{'=' * 65}")
         print(f"  OnionQuant Live Scanner | {datetime.now():%Y-%m-%d %H:%M}")
         print(f"  数据: {sources} (766 stocks, ~hourly)")
         print(f"  早期检测: rank_change_24h > ±{min_jump}")
-        print(f"{'='*65}")
+        print(f"{'=' * 65}")
 
         print("\n[1/2] Fetching ApeWisdom...")
         results = self.fetch_apewisdom()
@@ -170,24 +187,28 @@ class LiveScanner:
             return []
 
         # Top 10 by absolute mentions
-        print(f"\n  📊 Top 10 绝对热度:")
+        print("\n  📊 Top 10 绝对热度:")
         for r in results[:10]:
             chg = r.get("rank_24h_change", 0) or 0
             arrow = f"+{chg}" if chg > 0 else str(chg)
-            print(f"  #{r['rank']:<4} {r['ticker']:<8} mentions:{r['mentions']:<5} Δ24h:{arrow}")
+            print(
+                f"  #{r['rank']:<4} {r['ticker']:<8} mentions:{r['mentions']:<5} Δ24h:{arrow}"
+            )
 
         # Early signals
-        print(f"\n[2/2] Detecting early signals...")
+        print("\n[2/2] Detecting early signals...")
         signals = self.detect_early_signals(results, min_jump)
 
-        print(f"\n  🚨 早期信号 (热度突变, AI链+催化剂):")
+        print("\n  🚨 早期信号 (热度突变, AI链+催化剂):")
         print(f"  {'Ticker':<8} {'ΔRank':>6} {'AI链':<28} {'催化剂':<20} {'评分':>5}")
-        print(f"  {'-'*68}")
+        print(f"  {'-' * 68}")
         for s in signals[:top_n]:
             chain = s["ai_chain"][:27] if s["ai_chain"] else "—"
             cat = s["catalyst"][:19] if s["catalyst"] else "—"
-            print(f"  {s['ticker']:<8} {s['direction']}{abs(s['rank_change_24h']):>5} "
-                  f"{chain:<28} {cat:<20} {s['early_score']:>5.1f}")
+            print(
+                f"  {s['ticker']:<8} {s['direction']}{abs(s['rank_change_24h']):>5} "
+                f"{chain:<28} {cat:<20} {s['early_score']:>5.1f}"
+            )
 
         # Reddit cross-validation
         if use_reddit:
@@ -206,7 +227,7 @@ class LiveScanner:
 
     def cross_validate_with_reddit(self, signals: list[dict], top_n: int = 10):
         """用 PullPush.io Reddit 数据交叉验证 ApeWisdom 信号."""
-        print(f"\n[3/3] Cross-validating with Reddit (PullPush.io)...")
+        print("\n[3/3] Cross-validating with Reddit (PullPush.io)...")
         try:
             reddit = _get_reddit_scanner()
         except Exception as e:
@@ -225,8 +246,10 @@ class LiveScanner:
                 s["top_reddit_post"] = result["top_posts"][0]["title"][:100]
             validated.append(result)
             status = "✅" if result["confirmed"] else "❌"
-            print(f"  {status} {ticker}: ApeWisdom Δ{s['rank_change_24h']:+d} | "
-                  f"Reddit {result['reddit_mentions']}次 | {result['recommendation']}")
+            print(
+                f"  {status} {ticker}: ApeWisdom Δ{s['rank_change_24h']:+d} | "
+                f"Reddit {result['reddit_mentions']}次 | {result['recommendation']}"
+            )
         return validated
 
     def cross_validate_with_twitter(self, signals: list[dict], top_n: int = 5):
@@ -251,13 +274,15 @@ class LiveScanner:
             s["x_error"] = result["x_error"]
             validated.append(result)
             status = "✅" if result["confirmed"] else "❓"
-            print(f"  {status} {ticker}: ApeWisdom Δ{s['rank_change_24h']:+d} | "
-                  f"X {result['x_tweet_count']}推文/{result['x_engagement']}互动 | {result['recommendation']}")
+            print(
+                f"  {status} {ticker}: ApeWisdom Δ{s['rank_change_24h']:+d} | "
+                f"X {result['x_tweet_count']}推文/{result['x_engagement']}互动 | {result['recommendation']}"
+            )
         return validated
 
     def cross_validate_with_news(self, signals: list[dict], top_n: int = 10):
         """用 Finviz 新闻数据交叉验证 ApeWisdom 信号."""
-        print(f"\n[5/5] Cross-validating with News (Finviz, free)...")
+        print("\n[5/5] Cross-validating with News (Finviz, free)...")
         try:
             news = _get_news_scanner()
         except Exception as e:
@@ -275,15 +300,18 @@ class LiveScanner:
             s["news_sources"] = result["sources_count"]
             # 交叉验证: ApeWisdom 热度 + 新闻情绪同向 = 加强信号
             direction_match = (
-                (s["rank_change_24h"] > 0 and result["sentiment"]["avg_compound"] > 0.1)
-                or (s["rank_change_24h"] < 0 and result["sentiment"]["avg_compound"] < -0.1)
+                s["rank_change_24h"] > 0 and result["sentiment"]["avg_compound"] > 0.1
+            ) or (
+                s["rank_change_24h"] < 0 and result["sentiment"]["avg_compound"] < -0.1
             )
             s["news_confirmed"] = direction_match
             validated.append(result)
             conf = "CONFIRMED" if direction_match else "DIVERGENT"
-            print(f"  {ticker}: ApeWisdom Δ{s['rank_change_24h']:+d} | "
-                  f"News {result['news_count']}条/{result['sentiment']['sentiment_label']} "
-                  f"({result['sentiment']['avg_compound']:.2f}) | {conf}")
+            print(
+                f"  {ticker}: ApeWisdom Δ{s['rank_change_24h']:+d} | "
+                f"News {result['news_count']}条/{result['sentiment']['sentiment_label']} "
+                f"({result['sentiment']['avg_compound']:.2f}) | {conf}"
+            )
         return validated
 
     def save_snapshot(self, signals: list[dict]):
@@ -297,19 +325,35 @@ class LiveScanner:
             "signals_count": len(signals),
             "signals": signals,
         }
-        path.write_text(json.dumps(snapshot, indent=2, ensure_ascii=False, default=str), "utf-8")
+        path.write_text(
+            json.dumps(snapshot, indent=2, ensure_ascii=False, default=str), "utf-8"
+        )
         return path
 
-    def watch_loop(self, interval_minutes: int = 60, min_jump: int = 3, use_reddit: bool = False, use_twitter: bool = False, use_news: bool = False):
+    def watch_loop(
+        self,
+        interval_minutes: int = 60,
+        min_jump: int = 3,
+        use_reddit: bool = False,
+        use_twitter: bool = False,
+        use_news: bool = False,
+    ):
         """持续监控循环."""
         print(f"Loop mode: every {interval_minutes} min")
-        print(f"Press Ctrl+C to stop\n")
+        print("Press Ctrl+C to stop\n")
         while True:
             try:
-                signals = self.scan(min_jump=min_jump, use_reddit=use_reddit, use_twitter=use_twitter, use_news=use_news)
+                signals = self.scan(
+                    min_jump=min_jump,
+                    use_reddit=use_reddit,
+                    use_twitter=use_twitter,
+                    use_news=use_news,
+                )
                 path = self.save_snapshot(signals)
                 print(f"\n  💾 快照: {path.name}")
-                print(f"  ⏰ 下次扫描: {datetime.now().strftime('%H:%M')} (+{interval_minutes}min)")
+                print(
+                    f"  ⏰ 下次扫描: {datetime.now().strftime('%H:%M')} (+{interval_minutes}min)"
+                )
                 time.sleep(interval_minutes * 60)
             except KeyboardInterrupt:
                 print("\n  ⏹ 监控停止")
@@ -319,21 +363,40 @@ class LiveScanner:
 # ─── CLI ────────────────────────────────────────────────
 if __name__ == "__main__":
     import argparse
+
     p = argparse.ArgumentParser(description="OnionQuant Live Scanner")
     p.add_argument("--watch", type=int, default=0, help="持续监控, 每N分钟")
     p.add_argument("--alert", type=int, default=3, help="最小rank变化阈值 (默认3)")
     p.add_argument("--top", type=int, default=15, help="显示前N个信号")
-    p.add_argument("--reddit", action="store_true", help="启用 PullPush.io Reddit 交叉验证")
-    p.add_argument("--twitter", action="store_true", help="启用 X/Twitter 交叉验证 (定向验证Top5)")
-    p.add_argument("--news", action="store_true", help="启用 Finviz 新闻情绪交叉验证 (免费, 免注册)")
+    p.add_argument(
+        "--reddit", action="store_true", help="启用 PullPush.io Reddit 交叉验证"
+    )
+    p.add_argument(
+        "--twitter", action="store_true", help="启用 X/Twitter 交叉验证 (定向验证Top5)"
+    )
+    p.add_argument(
+        "--news",
+        action="store_true",
+        help="启用 Finviz 新闻情绪交叉验证 (免费, 免注册)",
+    )
     args = p.parse_args()
 
     scanner = LiveScanner()
 
     if args.watch:
-        scanner.watch_loop(interval_minutes=args.watch, min_jump=args.alert,
-                          use_reddit=args.reddit, use_twitter=args.twitter, use_news=args.news)
+        scanner.watch_loop(
+            interval_minutes=args.watch,
+            min_jump=args.alert,
+            use_reddit=args.reddit,
+            use_twitter=args.twitter,
+            use_news=args.news,
+        )
     else:
-        signals = scanner.scan(min_jump=args.alert, top_n=args.top,
-                              use_reddit=args.reddit, use_twitter=args.twitter, use_news=args.news)
+        signals = scanner.scan(
+            min_jump=args.alert,
+            top_n=args.top,
+            use_reddit=args.reddit,
+            use_twitter=args.twitter,
+            use_news=args.news,
+        )
         scanner.save_snapshot(signals)

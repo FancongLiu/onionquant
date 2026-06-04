@@ -15,9 +15,8 @@ Usage:
 """
 
 import os
-import sys
 import time
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 
 import tweepy
@@ -33,18 +32,31 @@ BEARER_TOKEN = os.getenv("TWITTER_BEARER_TOKEN", "")
 
 # AI 产业链 ticker
 AI_CHAIN_TICKERS = [
-    "LITE", "COHR", "SIVEF", "AAOI",
-    "AVGO", "MRVL", "NVDA", "AMD",
-    "INTC", "TSM", "FN",
-    "MU", "SNDK",
-    "RKLB", "ASTS", "LUNR", "RDW",
-    "ANET", "CIEN",
+    "LITE",
+    "COHR",
+    "SIVEF",
+    "AAOI",
+    "AVGO",
+    "MRVL",
+    "NVDA",
+    "AMD",
+    "INTC",
+    "TSM",
+    "FN",
+    "MU",
+    "SNDK",
+    "RKLB",
+    "ASTS",
+    "LUNR",
+    "RDW",
+    "ANET",
+    "CIEN",
 ]
 
 # ─── 金融圈 KOL 账号 (用于定向抓取专家观点) ───
 TRACKED_KOLS = [
-    "Dansc2603",       # Daniel Sereda (SA分析师, 光模块/CPO专家)
-    "JohanRosenqvist", # 前 Danske Bank, SIVEF 重要推手
+    "Dansc2603",  # Daniel Sereda (SA分析师, 光模块/CPO专家)
+    "JohanRosenqvist",  # 前 Danske Bank, SIVEF 重要推手
     # 可扩展更多
 ]
 
@@ -78,7 +90,10 @@ class TwitterScanner:
         self.request_count += 1
 
     def search_ticker(
-        self, ticker: str, max_results: int = 50, hours: int = 24,
+        self,
+        ticker: str,
+        max_results: int = 50,
+        hours: int = 24,
     ) -> dict:
         """搜索 X 上关于某 ticker 的推文 ($TICKER 格式).
 
@@ -97,7 +112,9 @@ class TwitterScanner:
         result = {
             "ticker": ticker,
             "tweet_count": 0,
-            "total_likes": 0, "total_retweets": 0, "total_replies": 0,
+            "total_likes": 0,
+            "total_retweets": 0,
+            "total_replies": 0,
             "total_engagement": 0,
             "top_tweets": [],
             "kol_tweets": [],
@@ -210,7 +227,9 @@ class TwitterScanner:
             "x_engagement": x_data["total_engagement"],
             "x_buzz": x_data["buzz_level"],
             "x_has_kol": len(x_data["kol_tweets"]) > 0,
-            "x_top_tweet": x_data["top_tweets"][0]["text"][:120] if x_data["top_tweets"] else "",
+            "x_top_tweet": x_data["top_tweets"][0]["text"][:120]
+            if x_data["top_tweets"]
+            else "",
             "x_error": x_data["error"],
             "confirmed": confirmed,
             "recommendation": rec,
@@ -234,13 +253,15 @@ class TwitterScanner:
             results = []
             for tweet in tweets:
                 metrics = tweet.public_metrics or {}
-                results.append({
-                    "id": str(tweet.id),
-                    "text": tweet.text[:200],
-                    "created_at": str(tweet.created_at) if tweet.created_at else "",
-                    "likes": metrics.get("like_count", 0),
-                    "retweets": metrics.get("retweet_count", 0),
-                })
+                results.append(
+                    {
+                        "id": str(tweet.id),
+                        "text": tweet.text[:200],
+                        "created_at": str(tweet.created_at) if tweet.created_at else "",
+                        "likes": metrics.get("like_count", 0),
+                        "retweets": metrics.get("retweet_count", 0),
+                    }
+                )
             return results
 
         except Exception as e:
@@ -250,18 +271,25 @@ class TwitterScanner:
     def get_request_stats(self) -> dict:
         return {
             "requests_made": self.request_count,
-            "last_request": str(self.last_request_time) if self.last_request_time else "none",
+            "last_request": str(self.last_request_time)
+            if self.last_request_time
+            else "none",
         }
 
 
 # ─── CLI ────────────────────────────────────────────────
 if __name__ == "__main__":
     import argparse
+
     p = argparse.ArgumentParser(description="OnionQuant X/Twitter Scanner")
     p.add_argument("--ticker", type=str, required=True, help="搜索ticker (如 NVDA, MU)")
     p.add_argument("--count", type=int, default=50, help="最大推文数")
-    p.add_argument("--cross-validate", type=int, default=0,
-                   help="ApeWisdom rank_change 值 (用于交叉验证)")
+    p.add_argument(
+        "--cross-validate",
+        type=int,
+        default=0,
+        help="ApeWisdom rank_change 值 (用于交叉验证)",
+    )
     p.add_argument("--kol", type=str, help="搜索特定 KOL 的推文")
     args = p.parse_args()
 
@@ -275,9 +303,9 @@ if __name__ == "__main__":
 
     elif args.cross_validate:
         result = scanner.cross_validate(args.ticker.upper(), args.cross_validate)
-        print(f"\n{'='*55}")
+        print(f"\n{'=' * 55}")
         print(f"  交叉验证: {result['ticker']}")
-        print(f"{'='*55}")
+        print(f"{'=' * 55}")
         print(f"  X推文: {result['x_tweet_count']} | 互动: {result['x_engagement']}")
         print(f"  X热度: {result['x_buzz']}")
         print(f"  确认: {result['confirmed']}")
@@ -287,18 +315,20 @@ if __name__ == "__main__":
 
     else:
         result = scanner.search_ticker(args.ticker.upper(), max_results=args.count)
-        print(f"\n{'='*55}")
+        print(f"\n{'=' * 55}")
         print(f"  X/Twitter 扫描: ${args.ticker.upper()}")
-        print(f"{'='*55}")
+        print(f"{'=' * 55}")
         print(f"  推文数: {result['tweet_count']}")
-        print(f"  总互动: {result['total_engagement']} "
-              f"(❤️{result['total_likes']} 🔁{result['total_retweets']} 💬{result['total_replies']})")
+        print(
+            f"  总互动: {result['total_engagement']} "
+            f"(❤️{result['total_likes']} 🔁{result['total_retweets']} 💬{result['total_replies']})"
+        )
         print(f"  热度: {result['buzz_level']}")
         if result["kol_tweets"]:
             print(f"  🎯 KOL 覆盖: {len(result['kol_tweets'])} 条")
         if result["error"]:
             print(f"  ⚠️ 错误: {result['error']}")
         if result["top_tweets"]:
-            print(f"\n  🔥 最热推文:")
+            print("\n  🔥 最热推文:")
             for t in result["top_tweets"][:5]:
                 print(f"  [{t['engagement']}] {t['text'][:130]}")

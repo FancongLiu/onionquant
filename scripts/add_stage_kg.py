@@ -1,15 +1,17 @@
 #!/usr/bin/env python3
 """Add live stage + knowledge graph JS to dashboard (v2, no print issues)."""
-import sys
-sys.stdout.reconfigure(encoding='utf-8')
 
-with open('company/chairman_dashboard.html', 'r', encoding='utf-8') as f:
+import sys
+
+sys.stdout.reconfigure(encoding="utf-8")
+
+with open("company/chairman_dashboard.html", "r", encoding="utf-8") as f:
     c = f.read()
 
-idx = c.find('function collapseAllDepts()')
-end = c.find('\n\nfunction addLog', idx)
+idx = c.find("function collapseAllDepts()")
+end = c.find("\n\nfunction addLog", idx)
 if end < 0:
-    end = c.find('\n\nfunction', idx + 300)
+    end = c.find("\n\nfunction", idx + 300)
 print(f"collapseAllDepts: {idx} -> {end}")
 
 stage_js = """
@@ -140,12 +142,12 @@ c = c[:end] + stage_js + c[end:]
 old_t = "addMilestone("
 idx_t = c.find(old_t, end)
 if idx_t >= 0:
-    line_end = c.find('\n', idx_t)
+    line_end = c.find("\n", idx_t)
     old_line = c[idx_t:line_end]
     new_line = old_line + '\n  if (viewMode === "stage") renderLiveStage();'
     c = c.replace(old_line, new_line)
     print("toggleDept stage refresh added")
 
-with open('company/chairman_dashboard.html', 'w', encoding='utf-8') as f:
+with open("company/chairman_dashboard.html", "w", encoding="utf-8") as f:
     f.write(c)
 print("Done - stage + KG JS added")

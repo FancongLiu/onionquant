@@ -18,21 +18,22 @@ import yaml
 
 
 class Tier(Enum):
-    QUICK = "quick"    # Cheap, fast model — routine
-    DEEP = "deep"      # Expensive, capable model — strategic
-    LOCAL = "local"    # Free, local model — when offline/privacy needed
+    QUICK = "quick"  # Cheap, fast model — routine
+    DEEP = "deep"  # Expensive, capable model — strategic
+    LOCAL = "local"  # Free, local model — when offline/privacy needed
 
 
 @dataclass
 class ModelSpec:
     """A specific model configuration."""
-    provider: str                       # anthropic, openai, openrouter, ollama
-    model_id: str                       # e.g., claude-haiku-4-5, gpt-4o-mini
+
+    provider: str  # anthropic, openai, openrouter, ollama
+    model_id: str  # e.g., claude-haiku-4-5, gpt-4o-mini
     tier: Tier = Tier.QUICK
-    cost_per_1k_input: float = 0.0      # USD
+    cost_per_1k_input: float = 0.0  # USD
     cost_per_1k_output: float = 0.0
     max_tokens: int = 4096
-    supports_thinking: bool = False     # extended thinking / reasoning
+    supports_thinking: bool = False  # extended thinking / reasoning
     supports_structured_output: bool = False
     timeout_seconds: float = 30.0
     notes: str = ""
@@ -41,8 +42,9 @@ class ModelSpec:
 @dataclass
 class TierConfig:
     """Which tier to use for which task category."""
+
     tier: Tier
-    model: str = ""                     # model name key
+    model: str = ""  # model name key
     max_tokens: int = 4096
     temperature: float = 0.0
     retry_count: int = 3
@@ -51,7 +53,8 @@ class TierConfig:
 @dataclass
 class TaskRouting:
     """Task → tier mapping with rationale."""
-    task_category: str                  # e.g., factor_analysis, regime_detection
+
+    task_category: str  # e.g., factor_analysis, regime_detection
     tier: Tier
     rationale: str = ""
     examples: List[str] = field(default_factory=list)
@@ -63,31 +66,44 @@ class TaskRouting:
 
 DEFAULT_MODELS = {
     "claude-haiku-4-5": ModelSpec(
-        provider="anthropic", model_id="claude-haiku-4-5-20251001",
+        provider="anthropic",
+        model_id="claude-haiku-4-5-20251001",
         tier=Tier.QUICK,
-        cost_per_1k_input=0.0008, cost_per_1k_output=0.004,
-        supports_structured_output=True, timeout_seconds=15.0,
+        cost_per_1k_input=0.0008,
+        cost_per_1k_output=0.004,
+        supports_structured_output=True,
+        timeout_seconds=15.0,
         notes="Fast, cheap — ideal for routine factor scanning and standard reports",
     ),
     "claude-sonnet-4-6": ModelSpec(
-        provider="anthropic", model_id="claude-sonnet-4-6-20250514",
+        provider="anthropic",
+        model_id="claude-sonnet-4-6-20250514",
         tier=Tier.DEEP,
-        cost_per_1k_input=0.003, cost_per_1k_output=0.015,
-        supports_thinking=True, supports_structured_output=True,
-        timeout_seconds=60.0, notes="Deep reasoning — strategic decisions, regime analysis",
+        cost_per_1k_input=0.003,
+        cost_per_1k_output=0.015,
+        supports_thinking=True,
+        supports_structured_output=True,
+        timeout_seconds=60.0,
+        notes="Deep reasoning — strategic decisions, regime analysis",
     ),
     "gpt-4o-mini": ModelSpec(
-        provider="openai", model_id="gpt-4o-mini",
+        provider="openai",
+        model_id="gpt-4o-mini",
         tier=Tier.QUICK,
-        cost_per_1k_input=0.00015, cost_per_1k_output=0.0006,
-        supports_structured_output=True, timeout_seconds=20.0,
+        cost_per_1k_input=0.00015,
+        cost_per_1k_output=0.0006,
+        supports_structured_output=True,
+        timeout_seconds=20.0,
         notes="Cheapest option — high-volume simple tasks",
     ),
     "ollama-qwen": ModelSpec(
-        provider="ollama", model_id="qwen2.5:14b",
+        provider="ollama",
+        model_id="qwen2.5:14b",
         tier=Tier.LOCAL,
-        cost_per_1k_input=0.0, cost_per_1k_output=0.0,
-        timeout_seconds=120.0, notes="Free local model — offline, private, no rate limits",
+        cost_per_1k_input=0.0,
+        cost_per_1k_output=0.0,
+        timeout_seconds=120.0,
+        notes="Free local model — offline, private, no rate limits",
     ),
 }
 
@@ -111,7 +127,10 @@ DEFAULT_ROUTING = [
         task_category="regime_detection",
         tier=Tier.DEEP,
         rationale="Market regime changes are high-stakes — requires deep reasoning about macro conditions, correlations, volatility patterns.",
-        examples=["Detect regime shift from bull to bear", "Analyze correlation breakdown"],
+        examples=[
+            "Detect regime shift from bull to bear",
+            "Analyze correlation breakdown",
+        ],
         budget_tokens=3000,
     ),
     TaskRouting(
@@ -132,8 +151,12 @@ DEFAULT_ROUTING = [
         task_category="crisis_analysis",
         tier=Tier.DEEP,
         rationale="Crisis situations demand maximum reasoning — factor models may break, correlations spike, liquidity vanishes.",
-        examples=["Assess portfolio impact of flash crash", "Emergency risk scenario analysis"],
-        budget_tokens=6000, timeout_seconds=120.0,
+        examples=[
+            "Assess portfolio impact of flash crash",
+            "Emergency risk scenario analysis",
+        ],
+        budget_tokens=6000,
+        timeout_seconds=120.0,
     ),
     TaskRouting(
         task_category="chairman_summary",
@@ -160,13 +183,18 @@ DEFAULT_ROUTING = [
         task_category="offline_batch",
         tier=Tier.LOCAL,
         rationale="Offline or privacy-sensitive batch processing — use free local model.",
-        examples=["Batch factor description generation", "Overnight report summarization"],
-        budget_tokens=2000, timeout_seconds=300.0,
+        examples=[
+            "Batch factor description generation",
+            "Overnight report summarization",
+        ],
+        budget_tokens=2000,
+        timeout_seconds=300.0,
     ),
 ]
 
 
 # ── Tier Router ────────────────────────────────────────────
+
 
 class TierRouter:
     """Route tasks to appropriate model tier based on task category.
@@ -177,12 +205,14 @@ class TierRouter:
         # config.tier = Tier.DEEP, config.model = "claude-sonnet-4-6"
     """
 
-    def __init__(self,
-                 models: Optional[Dict[str, ModelSpec]] = None,
-                 routing: Optional[List[TaskRouting]] = None):
+    def __init__(
+        self,
+        models: Optional[Dict[str, ModelSpec]] = None,
+        routing: Optional[List[TaskRouting]] = None,
+    ):
         self.models = models or DEFAULT_MODELS
         self.routing: Dict[str, TaskRouting] = {}
-        for r in (routing or DEFAULT_ROUTING):
+        for r in routing or DEFAULT_ROUTING:
             self.routing[r.task_category] = r
 
     def route(self, task_category: str) -> Optional[TierConfig]:
@@ -190,13 +220,17 @@ class TierRouter:
         rt = self.routing.get(task_category)
         if rt is None:
             # Fallback: unknown tasks → deep model (safety first)
-            rt = TaskRouting(task_category=task_category, tier=Tier.DEEP,
-                           rationale="Unknown task — defaulting to deep for safety",
-                           budget_tokens=2000)
+            rt = TaskRouting(
+                task_category=task_category,
+                tier=Tier.DEEP,
+                rationale="Unknown task — defaulting to deep for safety",
+                budget_tokens=2000,
+            )
 
         # Select cheapest model in tier
-        candidates = [(name, spec) for name, spec in self.models.items()
-                      if spec.tier == rt.tier]
+        candidates = [
+            (name, spec) for name, spec in self.models.items() if spec.tier == rt.tier
+        ]
         if not candidates:
             # Fallback to any available model in tier
             candidates = [(name, spec) for name, spec in self.models.items()]
@@ -215,8 +249,9 @@ class TierRouter:
             temperature=0.0 if rt.tier != Tier.LOCAL else 0.3,
         )
 
-    def estimate_cost(self, task_category: str, input_tokens: int = 1000,
-                      output_tokens: int = 500) -> float:
+    def estimate_cost(
+        self, task_category: str, input_tokens: int = 1000, output_tokens: int = 500
+    ) -> float:
         """Estimate USD cost for a task."""
         config = self.route(task_category)
         if config is None:
@@ -224,17 +259,23 @@ class TierRouter:
         spec = self.models.get(config.model)
         if spec is None:
             return 0.0
-        return (input_tokens / 1000 * spec.cost_per_1k_input +
-                output_tokens / 1000 * spec.cost_per_1k_output)
+        return (
+            input_tokens / 1000 * spec.cost_per_1k_input
+            + output_tokens / 1000 * spec.cost_per_1k_output
+        )
 
     def routing_table(self) -> str:
         """Markdown routing table for documentation."""
-        lines = ["| Task Category | Tier | Model | Budget (tokens) | Rationale |",
-                 "|--------------|------|-------|-----------------|-----------|"]
+        lines = [
+            "| Task Category | Tier | Model | Budget (tokens) | Rationale |",
+            "|--------------|------|-------|-----------------|-----------|",
+        ]
         for cat, rt in sorted(self.routing.items()):
             config = self.route(cat)
             model = config.model if config else "N/A"
-            lines.append(f"| {cat} | {rt.tier.value} | {model} | {rt.budget_tokens} | {rt.rationale[:60]}... |")
+            lines.append(
+                f"| {cat} | {rt.tier.value} | {model} | {rt.budget_tokens} | {rt.rationale[:60]}... |"
+            )
         return "\n".join(lines)
 
     def daily_cost_estimate(self, task_volumes: Dict[str, int]) -> dict:
@@ -252,7 +293,9 @@ class TierRouter:
             cost = self.estimate_cost(cat) * calls
             per_task[cat] = round(cost, 6)
             total += cost
-            tier = self.routing.get(cat, TaskRouting(task_category=cat, tier=Tier.DEEP)).tier
+            tier = self.routing.get(
+                cat, TaskRouting(task_category=cat, tier=Tier.DEEP)
+            ).tier
             per_tier[tier.value] = per_tier.get(tier.value, 0.0) + cost
         return {
             "total_usd": round(total, 4),
@@ -263,29 +306,46 @@ class TierRouter:
 
 # ── Save/Load Config ───────────────────────────────────────
 
+
 def save_config(path: Path) -> None:
     """Save current model+tier config as YAML."""
     config = {
-        "models": {name: {
-            "provider": s.provider, "model_id": s.model_id,
-            "tier": s.tier.value,
-            "cost_per_1k_input": s.cost_per_1k_input,
-            "cost_per_1k_output": s.cost_per_1k_output,
-            "max_tokens": s.max_tokens,
-            "supports_thinking": s.supports_thinking,
-            "supports_structured_output": s.supports_structured_output,
-            "timeout_seconds": s.timeout_seconds,
-            "notes": s.notes,
-        } for name, s in DEFAULT_MODELS.items()},
-        "routing": [{
-            "task_category": r.task_category, "tier": r.tier.value,
-            "rationale": r.rationale, "budget_tokens": r.budget_tokens,
-            "timeout_seconds": r.timeout_seconds,
-        } for r in DEFAULT_ROUTING],
+        "models": {
+            name: {
+                "provider": s.provider,
+                "model_id": s.model_id,
+                "tier": s.tier.value,
+                "cost_per_1k_input": s.cost_per_1k_input,
+                "cost_per_1k_output": s.cost_per_1k_output,
+                "max_tokens": s.max_tokens,
+                "supports_thinking": s.supports_thinking,
+                "supports_structured_output": s.supports_structured_output,
+                "timeout_seconds": s.timeout_seconds,
+                "notes": s.notes,
+            }
+            for name, s in DEFAULT_MODELS.items()
+        },
+        "routing": [
+            {
+                "task_category": r.task_category,
+                "tier": r.tier.value,
+                "rationale": r.rationale,
+                "budget_tokens": r.budget_tokens,
+                "timeout_seconds": r.timeout_seconds,
+            }
+            for r in DEFAULT_ROUTING
+        ],
     }
-    path.write_text(yaml.dump(config, default_flow_style=False,
-                              allow_unicode=True, sort_keys=False, width=120),
-                    encoding="utf-8")
+    path.write_text(
+        yaml.dump(
+            config,
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+            width=120,
+        ),
+        encoding="utf-8",
+    )
 
 
 def load_config(path: Path) -> TierRouter:
@@ -304,15 +364,24 @@ def load_config(path: Path) -> TierRouter:
 
 # ── Demo ────────────────────────────────────────────────────
 
+
 def main():
     router = TierRouter()
 
     print("## Model Tier Routing Table\n")
-    for cat in ["factor_scanning", "regime_detection", "strategy_decision",
-                "crisis_analysis", "chairman_summary", "data_cleaning"]:
+    for cat in [
+        "factor_scanning",
+        "regime_detection",
+        "strategy_decision",
+        "crisis_analysis",
+        "chairman_summary",
+        "data_cleaning",
+    ]:
         config = router.route(cat)
         cost = router.estimate_cost(cat)
-        print(f"  {cat:25s} → {config.tier.value:5s} | {config.model:20s} | ~${cost:.6f}/call")
+        print(
+            f"  {cat:25s} → {config.tier.value:5s} | {config.model:20s} | ~${cost:.6f}/call"
+        )
 
     # Daily cost estimate
     volumes = {

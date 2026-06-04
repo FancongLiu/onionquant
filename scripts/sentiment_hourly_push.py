@@ -15,12 +15,11 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-import numpy as np
-import pandas as pd
 import yfinance as yf
 
 if sys.platform == "win32":
     import io
+
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -72,14 +71,14 @@ def fetch_snapshot(ticker: str, retries: int = 3) -> dict:
         except Exception as e:
             last_err = str(e)
             if attempt < retries - 1:
-                time.sleep(2 ** attempt)  # 1s, 2s, 4s backoff
+                time.sleep(2**attempt)  # 1s, 2s, 4s backoff
     return {"ticker": ticker, "error": last_err}
 
 
 def generate_report(snapshots: list) -> str:
     now = datetime.now()
     lines = [
-        f"# 📡 每小时舆情快报",
+        "# 📡 每小时舆情快报",
         f"> {now.strftime('%Y-%m-%d %H:%M')} 北京时间",
         "",
         "| 股票 | 价格 | 涨跌 | 量比 | 振幅 | MA5 | 提醒 |",
@@ -97,7 +96,9 @@ def generate_report(snapshots: list) -> str:
             f"{s['vol_ratio']:.1f}x | {s['range_pct']:.1f}% | {ma_tag} ${s['ma5']:.2f} | {alert_tag} |"
         )
         if s.get("alert"):
-            alerts.append(f"🔴 {s['ticker']}: {s['change_pct']:+.1f}%, 量比 {s['vol_ratio']:.1f}x")
+            alerts.append(
+                f"🔴 {s['ticker']}: {s['change_pct']:+.1f}%, 量比 {s['vol_ratio']:.1f}x"
+            )
 
     lines.append("")
     lines.append("## 关键新闻标题")
@@ -108,17 +109,18 @@ def generate_report(snapshots: list) -> str:
                 lines.append(f"- {n}")
 
     if alerts:
-        lines.insert(5, f"\n## ⚠️ 异常提醒\n")
+        lines.insert(5, "\n## ⚠️ 异常提醒\n")
         for a in alerts:
             lines.insert(6, f"- {a}")
         lines.insert(7, "")
 
-    lines.append(f"\n---\n*自动生成 · 下一份整点后推送*")
+    lines.append("\n---\n*自动生成 · 下一份整点后推送*")
     return "\n".join(lines)
 
 
 def main():
     import argparse
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--quick", action="store_true")
     args = parser.parse_args()
@@ -132,12 +134,16 @@ def main():
     path = OUTBOX_DIR / f"SENTINEL_hourly_{ts}.md"
     path.write_text(report, encoding="utf-8")
     print(f"  Report → {path}")
-    print(f"  Tickers: {len([s for s in snapshots if 'error' not in s])}/{len(snapshots)}")
+    print(
+        f"  Tickers: {len([s for s in snapshots if 'error' not in s])}/{len(snapshots)}"
+    )
 
     # Alert summary
     alerts = [s for s in snapshots if s.get("alert")]
     if alerts:
-        alert_names = ", ".join(f"{s['ticker']}({s['change_pct']:+.1f}%)" for s in alerts)
+        alert_names = ", ".join(
+            f"{s['ticker']}({s['change_pct']:+.1f}%)" for s in alerts
+        )
         print(f"  ⚠️ ALERTS: {alert_names}")
 
 

@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 # ── Token Bucket Rate Limiter ──────────────────────────────
 
+
 class TokenBucket:
     """Token bucket rate limiter — allows bursts up to capacity, refills at steady rate."""
 
@@ -70,15 +71,17 @@ class TokenBucket:
 
 # ── Rate Limit Config ──────────────────────────────────────
 
+
 @dataclass
 class RateConfig:
     """Per-provider rate limits."""
+
     requests_per_minute: int = 60
     requests_per_hour: int = 1000
     burst: int = 10
     retry_max: int = 3
     retry_base_delay: float = 1.0  # seconds
-    retry_backoff: float = 2.0     # exponential factor
+    retry_backoff: float = 2.0  # exponential factor
     timeout: float = 30.0
 
 
@@ -95,16 +98,18 @@ DEFAULT_RATES = {
 
 # ── Audit Logger ───────────────────────────────────────────
 
+
 @dataclass
 class CallRecord:
     """Single API call audit record."""
+
     provider: str
     endpoint: str
     method: str
     request_id: str
     started_at: str
     duration_ms: float
-    status: str           # success | retry | error | rate_limited
+    status: str  # success | retry | error | rate_limited
     attempt: int
     error_message: str = ""
     tokens_used: int = 0  # for LLM calls
@@ -155,12 +160,14 @@ class AuditLog:
             providers[r.provider]["total_ms"] += r.duration_ms
         return {
             "total_calls": len(recent),
-            "error_rate": sum(1 for r in recent if r.status == "error") / max(len(recent), 1),
+            "error_rate": sum(1 for r in recent if r.status == "error")
+            / max(len(recent), 1),
             "by_provider": providers,
         }
 
 
 # ── Provider Registry ──────────────────────────────────────
+
 
 class ProviderRegistry:
     """Registry of API providers with failover chains.
@@ -172,13 +179,18 @@ class ProviderRegistry:
     def __init__(self):
         self.providers: Dict[str, dict] = {}
 
-    def register(self, name: str, endpoints: List[str],
-                 rate_config: Optional[RateConfig] = None,
-                 headers: Optional[dict] = None):
+    def register(
+        self,
+        name: str,
+        endpoints: List[str],
+        rate_config: Optional[RateConfig] = None,
+        headers: Optional[dict] = None,
+    ):
         self.providers[name] = {
             "endpoints": endpoints,
             "current": 0,  # index into endpoints for round-robin
-            "rate_config": rate_config or DEFAULT_RATES.get(name, DEFAULT_RATES["default"]),
+            "rate_config": rate_config
+            or DEFAULT_RATES.get(name, DEFAULT_RATES["default"]),
             "headers": headers or {},
             "failures": 0,
             "last_failure": 0.0,
@@ -210,6 +222,7 @@ class ProviderRegistry:
 
 # ── API Proxy ──────────────────────────────────────────────
 
+
 class APIProxy:
     """Central API proxy with rate limiting, retry, audit, and failover.
 
@@ -228,9 +241,13 @@ class APIProxy:
         self.buckets: Dict[str, TokenBucket] = {}
         logger.info("APIProxy initialized")
 
-    def register(self, name: str, endpoints: List[str],
-                 rate_config: Optional[RateConfig] = None,
-                 headers: Optional[dict] = None):
+    def register(
+        self,
+        name: str,
+        endpoints: List[str],
+        rate_config: Optional[RateConfig] = None,
+        headers: Optional[dict] = None,
+    ):
         self.registry.register(name, endpoints, rate_config, headers)
         cfg = self.registry.providers[name]["rate_config"]
         # Token bucket: rate = RPM/60 tokens/sec, capacity = burst
@@ -238,8 +255,12 @@ class APIProxy:
             rate=cfg.requests_per_minute / 60.0,
             capacity=cfg.burst,
         )
-        logger.info("Registered provider '%s' (%d endpoints, %d rpm)",
-                     name, len(endpoints), cfg.requests_per_minute)
+        logger.info(
+            "Registered provider '%s' (%d endpoints, %d rpm)",
+            name,
+            len(endpoints),
+            cfg.requests_per_minute,
+        )
 
     def call(self, provider: str, endpoint: str = "", method: str = "POST"):
         """Decorator: wrap a function with rate limiting, retry, and audit.
@@ -247,7 +268,8 @@ class APIProxy:
         The decorated function receives the resolved endpoint URL as first argument.
         """
         cfg = self.registry.providers.get(provider, {}).get(
-            "rate_config", DEFAULT_RATES["default"])
+            "rate_config", DEFAULT_RATES["default"]
+        )
         bucket = self.buckets.get(provider)
 
         def decorator(func: Callable) -> Callable:
@@ -267,11 +289,14 @@ class APIProxy:
                     if bucket:
                         if not bucket.wait_and_acquire(timeout=cfg.timeout):
                             record = CallRecord(
-                                provider=provider, endpoint=endpoint, method=method,
+                                provider=provider,
+                                endpoint=endpoint,
+                                method=method,
                                 request_id=request_id,
                                 started_at=datetime.fromtimestamp(start).isoformat(),
                                 duration_ms=(time.time() - start) * 1000,
-                                status="rate_limited", attempt=attempt + 1,
+                                status="rate_limited",
+                                attempt=attempt + 1,
                             )
                             self.audit.record(record)
                             raise RuntimeError(f"Rate limit exceeded for '{provider}'")
@@ -280,10 +305,13 @@ class APIProxy:
                         result = func(url, *args, **kwargs)
                         duration = (time.time() - start) * 1000
                         record = CallRecord(
-                            provider=provider, endpoint=endpoint, method=method,
+                            provider=provider,
+                            endpoint=endpoint,
+                            method=method,
                             request_id=request_id,
                             started_at=datetime.fromtimestamp(start).isoformat(),
-                            duration_ms=duration, status="success",
+                            duration_ms=duration,
+                            status="success",
                             attempt=attempt + 1,
                         )
                         self.audit.record(record)
@@ -292,29 +320,41 @@ class APIProxy:
 
                     except Exception as e:
                         last_error = e
-                        logger.warning("%s attempt %d/%d: %s",
-                                       provider, attempt + 1, cfg.retry_max + 1, e)
+                        logger.warning(
+                            "%s attempt %d/%d: %s",
+                            provider,
+                            attempt + 1,
+                            cfg.retry_max + 1,
+                            e,
+                        )
                         self.registry.mark_failure(provider)
 
                         if attempt < cfg.retry_max:
-                            wait = cfg.retry_base_delay * (cfg.retry_backoff ** attempt)
+                            wait = cfg.retry_base_delay * (cfg.retry_backoff**attempt)
                             time.sleep(wait)
                             # Rotate endpoint on retry
                             base_url = self.registry.get_endpoint(provider)
 
                 duration = (time.time() - start) * 1000
                 record = CallRecord(
-                    provider=provider, endpoint=endpoint, method=method,
+                    provider=provider,
+                    endpoint=endpoint,
+                    method=method,
                     request_id=request_id,
                     started_at=datetime.fromtimestamp(start).isoformat(),
-                    duration_ms=duration, status="error", attempt=cfg.retry_max + 1,
+                    duration_ms=duration,
+                    status="error",
+                    attempt=cfg.retry_max + 1,
                     error_message=str(last_error),
                 )
                 self.audit.record(record)
-                raise RuntimeError(f"All {cfg.retry_max + 1} attempts failed for "
-                                   f"'{provider}{endpoint}': {last_error}")
+                raise RuntimeError(
+                    f"All {cfg.retry_max + 1} attempts failed for "
+                    f"'{provider}{endpoint}': {last_error}"
+                )
 
             return wrapper
+
         return decorator
 
 
@@ -333,6 +373,7 @@ def get_proxy(audit_path: Optional[Path] = None) -> APIProxy:
 
 # ── Demo ────────────────────────────────────────────────────
 
+
 def main():
     import random
     import tempfile
@@ -341,8 +382,11 @@ def main():
     proxy = APIProxy(audit_file)
 
     # Register providers
-    proxy.register("demo_provider", ["https://api.example.com"],
-                   rate_config=RateConfig(requests_per_minute=30, burst=5, retry_max=2))
+    proxy.register(
+        "demo_provider",
+        ["https://api.example.com"],
+        rate_config=RateConfig(requests_per_minute=30, burst=5, retry_max=2),
+    )
 
     # Simulate API calls
     @proxy.call("demo_provider", "/v1/test")
@@ -361,8 +405,10 @@ def main():
 
     # Audit summary
     summary = proxy.audit.summary(minutes=5)
-    print(f"\nAudit (5min): {summary['total_calls']} calls, "
-          f"error rate: {summary['error_rate']:.2%}")
+    print(
+        f"\nAudit (5min): {summary['total_calls']} calls, "
+        f"error rate: {summary['error_rate']:.2%}"
+    )
 
     # Cleanup
     audit_file.unlink(missing_ok=True)

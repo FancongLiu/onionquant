@@ -31,46 +31,44 @@ from quant_framework.strategies.qlib_factor_engine import (
     FACTOR_REGISTRY,
     FACTOR_GROUPS,
     compute_all_factors,
-    neutralize_and_standardize,
 )
-from quant_framework.strategies.factor_analysis import ic_summary as _ic_summary_base
 
 # ─── 1. Auto Symbol Standardization ───
 
 # Exchange suffix patterns (source → canonical)
 EXCHANGE_SUFFIX_MAP = {
-    ".KS": ".KS",   # Korea KOSPI
-    ".KQ": ".KQ",   # Korea KOSDAQ
-    ".T":  ".T",    # Tokyo
-    ".L":  ".L",    # London
-    ".HK": ".HK",   # Hong Kong
-    ".TW": ".TW",   # Taiwan
-    ".SZ": ".SZ",   # Shenzhen
-    ".SS": ".SS",   # Shanghai
-    ".DE": ".DE",   # Xetra/Frankfurt
-    ".PA": ".PA",   # Paris
-    ".SW": ".SW",   # Swiss
+    ".KS": ".KS",  # Korea KOSPI
+    ".KQ": ".KQ",  # Korea KOSDAQ
+    ".T": ".T",  # Tokyo
+    ".L": ".L",  # London
+    ".HK": ".HK",  # Hong Kong
+    ".TW": ".TW",  # Taiwan
+    ".SZ": ".SZ",  # Shenzhen
+    ".SS": ".SS",  # Shanghai
+    ".DE": ".DE",  # Xetra/Frankfurt
+    ".PA": ".PA",  # Paris
+    ".SW": ".SW",  # Swiss
 }
 
 # Ticker normalization table: (yfinance, OpenBB, AlphaVantage) → canonical
 # Key: any variant → Value: canonical form
 _TICKER_ALIASES = {
-    "BRK.B":  "BRK-B",
-    "BRK/B":  "BRK-B",
-    "BRK-B":  "BRK-B",
-    "BF.B":   "BF-B",
-    "BF/B":   "BF-B",
-    "BF-B":   "BF-B",
+    "BRK.B": "BRK-B",
+    "BRK/B": "BRK-B",
+    "BRK-B": "BRK-B",
+    "BF.B": "BF-B",
+    "BF/B": "BF-B",
+    "BF-B": "BF-B",
 }
 
 # Special cases: tickers that need exchange suffix normalization
 # OpenBB strips suffixes, yfinance keeps them — we canonicalize to yfinance format
 _TICKER_EXCHANGE_NORMALIZE: Dict[str, str] = {
     # Korean stocks: always append .KS for KOSPI, .KQ for KOSDAQ
-    "005930": "005930.KS",   # Samsung Electronics
-    "000660": "000660.KS",   # SK Hynix
-    "035420": "035420.KQ",   # NAVER
-    "035720": "035720.KQ",   # Kakao
+    "005930": "005930.KS",  # Samsung Electronics
+    "000660": "000660.KS",  # SK Hynix
+    "035420": "035420.KQ",  # NAVER
+    "035720": "035720.KQ",  # Kakao
 }
 
 
@@ -98,8 +96,10 @@ def normalize_ticker(ticker: str, target_source: str = "yfinance") -> str:
 
     # Step 2: Handle dot-vs-dash for class shares (generic pattern)
     # e.g., "BF.B" → "BF-B" for yfinance
-    if target_source == "yfinance" and "." in t and not any(
-        t.endswith(suffix) for suffix in EXCHANGE_SUFFIX_MAP
+    if (
+        target_source == "yfinance"
+        and "." in t
+        and not any(t.endswith(suffix) for suffix in EXCHANGE_SUFFIX_MAP)
     ):
         t = t.replace(".", "-")
 
@@ -137,9 +137,7 @@ def detect_source_mismatch(ticker: str) -> Optional[str]:
     if "-" in t and "." not in t and not t.endswith("-"):
         # Dash-separated: likely yfinance format (BRK-B)
         return "yfinance"
-    if "." in t and any(
-        t.endswith(suffix) for suffix in EXCHANGE_SUFFIX_MAP
-    ):
+    if "." in t and any(t.endswith(suffix) for suffix in EXCHANGE_SUFFIX_MAP):
         # Exchange suffix with dot: likely yfinance or Alpha Vantage
         return "yfinance"
     if "." in t and t.count(".") == 1 and t[-2] == ".":
@@ -149,6 +147,7 @@ def detect_source_mismatch(ticker: str) -> Optional[str]:
 
 
 # ─── 2. PCA Concentration Risk Detector ───
+
 
 def pca_concentration_check(
     factor_returns: pd.DataFrame,
@@ -222,11 +221,13 @@ def pca_concentration_check(
         )
 
     # Per-component summary
-    pc_summary = pd.DataFrame({
-        "component": [f"PC{i+1}" for i in range(min(10, n_factors))],
-        "var_explained": pca.explained_variance_ratio_[:10],
-        "var_cumulative": np.cumsum(pca.explained_variance_ratio_[:10]),
-    })
+    pc_summary = pd.DataFrame(
+        {
+            "component": [f"PC{i + 1}" for i in range(min(10, n_factors))],
+            "var_explained": pca.explained_variance_ratio_[:10],
+            "var_cumulative": np.cumsum(pca.explained_variance_ratio_[:10]),
+        }
+    )
     pc_summary["var_explained"] = pc_summary["var_explained"].round(4)
     pc_summary["var_cumulative"] = pc_summary["var_cumulative"].round(4)
 
@@ -234,7 +235,7 @@ def pca_concentration_check(
     loadings = pd.DataFrame(
         pca.components_[:n_top_components].T,
         index=df.columns,
-        columns=[f"PC{i+1}" for i in range(n_top_components)],
+        columns=[f"PC{i + 1}" for i in range(n_top_components)],
     )
 
     return {
@@ -279,12 +280,27 @@ def pca_concentration_report(result: Dict) -> str:
 # ─── 3. Cross-Ticker Supply Chain Correlation Matrix ───
 
 PIPELINE_TICKERS = [
-    "DXYZ", "MU", "000660.KS", "WDC", "SNDK", "STX",
-    "ANET", "NVDA",
-    "RKLB", "ASTS", "LUNR",
-    "LITE", "COHR", "RDW",
-    "AVGO", "MRVL", "AMD", "INTC",
-    "BABA", "JD", "TSEM",
+    "DXYZ",
+    "MU",
+    "000660.KS",
+    "WDC",
+    "SNDK",
+    "STX",
+    "ANET",
+    "NVDA",
+    "RKLB",
+    "ASTS",
+    "LUNR",
+    "LITE",
+    "COHR",
+    "RDW",
+    "AVGO",
+    "MRVL",
+    "AMD",
+    "INTC",
+    "BABA",
+    "JD",
+    "TSEM",
 ]
 
 # Supply chain cluster labels
@@ -356,26 +372,26 @@ def build_correlation_matrix(
     # Identify high-correlation clusters (r > 0.6)
     high_corr_pairs = []
     for i, t1 in enumerate(corr_matrix.columns):
-        for t2 in corr_matrix.columns[i + 1:]:
+        for t2 in corr_matrix.columns[i + 1 :]:
             r = corr_matrix.loc[t1, t2]
             if abs(r) > 0.6:
                 cluster1 = SUPPLY_CHAIN_CLUSTERS.get(t1, "Other")
                 cluster2 = SUPPLY_CHAIN_CLUSTERS.get(t2, "Other")
-                high_corr_pairs.append({
-                    "ticker1": t1,
-                    "ticker2": t2,
-                    "correlation": round(r, 4),
-                    "cluster1": cluster1,
-                    "cluster2": cluster2,
-                    "cross_cluster": cluster1 != cluster2,
-                })
+                high_corr_pairs.append(
+                    {
+                        "ticker1": t1,
+                        "ticker2": t2,
+                        "correlation": round(r, 4),
+                        "cluster1": cluster1,
+                        "cluster2": cluster2,
+                        "cross_cluster": cluster1 != cluster2,
+                    }
+                )
 
     high_corr_pairs.sort(key=lambda x: abs(x["correlation"]), reverse=True)
 
     # Compute average intra-cluster and inter-cluster correlation
-    clusters = list(set(
-        SUPPLY_CHAIN_CLUSTERS.get(t, "Other") for t in available
-    ))
+    clusters = list(set(SUPPLY_CHAIN_CLUSTERS.get(t, "Other") for t in available))
     cluster_stats = {}
     for cl in clusters:
         members = [t for t in available if SUPPLY_CHAIN_CLUSTERS.get(t, "Other") == cl]
@@ -393,18 +409,20 @@ def build_correlation_matrix(
     # Inter-cluster correlation
     inter_cluster_pairs = []
     for i, c1 in enumerate(clusters):
-        for c2 in clusters[i + 1:]:
+        for c2 in clusters[i + 1 :]:
             m1 = [t for t in available if SUPPLY_CHAIN_CLUSTERS.get(t, "Other") == c1]
             m2 = [t for t in available if SUPPLY_CHAIN_CLUSTERS.get(t, "Other") == c2]
             if not m1 or not m2:
                 continue
             inter = corr_matrix.loc[m1, m2].values
-            inter_cluster_pairs.append({
-                "cluster1": c1,
-                "cluster2": c2,
-                "mean_inter_corr": round(float(inter.mean()), 4),
-                "max_inter_corr": round(float(inter.max()), 4),
-            })
+            inter_cluster_pairs.append(
+                {
+                    "cluster1": c1,
+                    "cluster2": c2,
+                    "mean_inter_corr": round(float(inter.mean()), 4),
+                    "max_inter_corr": round(float(inter.max()), 4),
+                }
+            )
 
     inter_cluster_pairs.sort(key=lambda x: abs(x["mean_inter_corr"]), reverse=True)
 
@@ -434,7 +452,10 @@ def build_correlation_matrix(
         "inter_cluster_pairs": inter_cluster_pairs,
         "flags": flags,
         "avg_pairwise_corr": round(
-            float(corr_matrix.values[np.triu_indices_from(corr_matrix.values, k=1)].mean()), 4
+            float(
+                corr_matrix.values[np.triu_indices_from(corr_matrix.values, k=1)].mean()
+            ),
+            4,
         ),
     }
 
@@ -514,6 +535,7 @@ def correlation_matrix_report(corr_matrix: pd.DataFrame, report: Dict) -> str:
 
 # ─── 4. One-Click Factor Verification ───
 
+
 def verify_all_factors(
     factor_df: pd.DataFrame,
     returns: pd.Series,
@@ -568,8 +590,8 @@ def verify_all_factors(
         rolling_ics = []
         window = min(63, len(f_vals[valid]) // 2)
         for i in range(window, len(f_vals[valid])):
-            f_slice = f_vals[valid].iloc[i - window:i]
-            r_slice = r_sub[valid].iloc[i - window:i]
+            f_slice = f_vals[valid].iloc[i - window : i]
+            r_slice = r_sub[valid].iloc[i - window : i]
             ric = f_slice.corr(r_slice, method="spearman")
             if not np.isnan(ric):
                 rolling_ics.append(ric)
@@ -587,22 +609,32 @@ def verify_all_factors(
                 group = g
                 break
 
-        ic_rows.append({
-            "factor": col,
-            "group": group,
-            "direction": {1: "long", -1: "short"}.get(direction, "neutral"),
-            "mean_ic": round(ic, 4),
-            "abs_ic": round(abs(ic), 4),
-            "decay_rate": round(decay_rate, 4),
-            "n_obs": int(valid.sum()),
-            "ic_weak": abs(ic) < ic_abs_threshold,
-            "decay_flagged": decay_rate > decay_threshold,
-        })
+        ic_rows.append(
+            {
+                "factor": col,
+                "group": group,
+                "direction": {1: "long", -1: "short"}.get(direction, "neutral"),
+                "mean_ic": round(ic, 4),
+                "abs_ic": round(abs(ic), 4),
+                "decay_rate": round(decay_rate, 4),
+                "n_obs": int(valid.sum()),
+                "ic_weak": abs(ic) < ic_abs_threshold,
+                "decay_flagged": decay_rate > decay_threshold,
+            }
+        )
 
     ic_ranking = pd.DataFrame(ic_rows).sort_values("abs_ic", ascending=False)
 
-    flagged_weak = ic_ranking[ic_ranking["ic_weak"]].to_dict("records") if not ic_ranking.empty else []
-    flagged_decay = ic_ranking[ic_ranking["decay_flagged"]].to_dict("records") if not ic_ranking.empty else []
+    flagged_weak = (
+        ic_ranking[ic_ranking["ic_weak"]].to_dict("records")
+        if not ic_ranking.empty
+        else []
+    )
+    flagged_decay = (
+        ic_ranking[ic_ranking["decay_flagged"]].to_dict("records")
+        if not ic_ranking.empty
+        else []
+    )
 
     n_weak = len(flagged_weak)
     n_decay = len(flagged_decay)
@@ -684,7 +716,9 @@ def verification_report(result: Dict) -> str:
         lines.append("### ⚠️ Weak IC Factors (|IC| below threshold)")
         lines.append("")
         for f in flagged_weak:
-            lines.append(f"- **{f['factor']}** ({f['group']}): |IC| = {f['abs_ic']:.4f}, n = {f['n_obs']}")
+            lines.append(
+                f"- **{f['factor']}** ({f['group']}): |IC| = {f['abs_ic']:.4f}, n = {f['n_obs']}"
+            )
         lines.append("")
 
     # Decay flagged
@@ -693,7 +727,9 @@ def verification_report(result: Dict) -> str:
         lines.append("### ⚠️ Decay Flagged (IC decaying > threshold)")
         lines.append("")
         for f in flagged_decay:
-            lines.append(f"- **{f['factor']}** ({f['group']}): decay rate = {f['decay_rate']:.4f}")
+            lines.append(
+                f"- **{f['factor']}** ({f['group']}): decay rate = {f['decay_rate']:.4f}"
+            )
         lines.append("")
 
     # Group summary
@@ -701,8 +737,12 @@ def verification_report(result: Dict) -> str:
     if group_stats:
         lines.append("### Group-Level Summary")
         lines.append("")
-        lines.append("| Group | N Factors | Mean |IC| | Best Factor | Best |IC| | N Weak |")
-        lines.append("|-------|-----------|----------|-------------|-----------|--------|")
+        lines.append(
+            "| Group | N Factors | Mean |IC| | Best Factor | Best |IC| | N Weak |"
+        )
+        lines.append(
+            "|-------|-----------|----------|-------------|-----------|--------|"
+        )
         for g, stats in sorted(group_stats.items()):
             lines.append(
                 f"| {g} | {stats['n_factors']} | {stats['mean_abs_ic']:.4f} | "
@@ -714,6 +754,7 @@ def verification_report(result: Dict) -> str:
 
 
 # ─── Full Suite Runner ───
+
 
 def run_full_suite(
     df: pd.DataFrame,
@@ -758,7 +799,9 @@ def run_full_suite(
     if len(factor_cols) >= 3:
         results["pca_result"] = pca_concentration_check(factor_df[factor_cols])
     else:
-        results["pca_result"] = {"error": f"Need >=3 factor columns, got {len(factor_cols)}"}
+        results["pca_result"] = {
+            "error": f"Need >=3 factor columns, got {len(factor_cols)}"
+        }
 
     # 4. Supply chain correlation matrix
     if tickers:
@@ -766,7 +809,11 @@ def run_full_suite(
         if "ticker" in df.columns:
             returns_by_ticker = {}
             for t in df["ticker"].unique():
-                t_df = df[df["ticker"] == t].set_index("date") if "date" in df.columns else df[df["ticker"] == t]
+                t_df = (
+                    df[df["ticker"] == t].set_index("date")
+                    if "date" in df.columns
+                    else df[df["ticker"] == t]
+                )
                 if "close" in t_df.columns and len(t_df) > 30:
                     returns_by_ticker[t] = t_df["close"].pct_change().dropna()
             if returns_by_ticker:
@@ -777,7 +824,9 @@ def run_full_suite(
                     "report": corr_report,
                 }
             else:
-                results["corr_result"] = {"error": "No return data available for tickers"}
+                results["corr_result"] = {
+                    "error": "No return data available for tickers"
+                }
         else:
             results["corr_result"] = {"error": "DataFrame missing 'ticker' column"}
     else:
@@ -836,6 +885,7 @@ def run_full_suite(
 
 # ─── CLI ───
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Factor Engine v2 — T1050 Enhancements",
@@ -848,17 +898,39 @@ Examples:
   python factor_engine_v2.py --all --input data.parquet --output report.md
         """,
     )
-    parser.add_argument("--input", default=None, help="Input parquet/csv file with OHLCV data")
-    parser.add_argument("--output", default=None, help="Output file for report (markdown)")
-    parser.add_argument("--verify", action="store_true", help="Run one-click factor verification")
-    parser.add_argument("--pca", action="store_true", help="Run PCA concentration risk check")
-    parser.add_argument("--corr-matrix", action="store_true", help="Run supply chain correlation matrix")
+    parser.add_argument(
+        "--input", default=None, help="Input parquet/csv file with OHLCV data"
+    )
+    parser.add_argument(
+        "--output", default=None, help="Output file for report (markdown)"
+    )
+    parser.add_argument(
+        "--verify", action="store_true", help="Run one-click factor verification"
+    )
+    parser.add_argument(
+        "--pca", action="store_true", help="Run PCA concentration risk check"
+    )
+    parser.add_argument(
+        "--corr-matrix", action="store_true", help="Run supply chain correlation matrix"
+    )
     parser.add_argument("--all", action="store_true", help="Run full suite")
-    parser.add_argument("--tickers", default=None, help="Comma-separated ticker list (default: PIPELINE_TICKERS)")
-    parser.add_argument("--ic-threshold", type=float, default=0.02, help="|IC| threshold for weak flag")
-    parser.add_argument("--decay-threshold", type=float, default=0.20, help="Decay rate threshold")
-    parser.add_argument("--pca-threshold", type=float, default=0.80, help="PCA variance threshold")
-    parser.add_argument("--normalize", default=None, help="Normalize a ticker symbol and print")
+    parser.add_argument(
+        "--tickers",
+        default=None,
+        help="Comma-separated ticker list (default: PIPELINE_TICKERS)",
+    )
+    parser.add_argument(
+        "--ic-threshold", type=float, default=0.02, help="|IC| threshold for weak flag"
+    )
+    parser.add_argument(
+        "--decay-threshold", type=float, default=0.20, help="Decay rate threshold"
+    )
+    parser.add_argument(
+        "--pca-threshold", type=float, default=0.80, help="PCA variance threshold"
+    )
+    parser.add_argument(
+        "--normalize", default=None, help="Normalize a ticker symbol and print"
+    )
     args = parser.parse_args()
 
     tickers = PIPELINE_TICKERS
@@ -868,13 +940,19 @@ Examples:
     # Quick normalize
     if args.normalize:
         for source in ["yfinance", "openbb", "alphavantage"]:
-            print(f"  {args.normalize} → {source}: {normalize_ticker(args.normalize, source)}")
+            print(
+                f"  {args.normalize} → {source}: {normalize_ticker(args.normalize, source)}"
+            )
         return
 
     # Load data if needed
     df = None
     if args.input:
-        df = pd.read_parquet(args.input) if args.input.endswith(".parquet") else pd.read_csv(args.input)
+        df = (
+            pd.read_parquet(args.input)
+            if args.input.endswith(".parquet")
+            else pd.read_csv(args.input)
+        )
 
     if args.verify:
         if df is None:
@@ -882,7 +960,9 @@ Examples:
             return
         factor_df = compute_all_factors(df)
         returns = df.get("close", pd.Series(dtype=float)).pct_change().shift(-1)
-        result = verify_all_factors(factor_df, returns, args.ic_threshold, args.decay_threshold)
+        result = verify_all_factors(
+            factor_df, returns, args.ic_threshold, args.decay_threshold
+        )
         report = verification_report(result)
         if args.output:
             with open(args.output, "w") as f:
@@ -920,7 +1000,11 @@ Examples:
         if df is None:
             print("Error: --all requires --input")
             return
-        returns = df.get("close", pd.Series(dtype=float)).pct_change().shift(-1) if "close" in df.columns else None
+        returns = (
+            df.get("close", pd.Series(dtype=float)).pct_change().shift(-1)
+            if "close" in df.columns
+            else None
+        )
         results = run_full_suite(df, returns, tickers)
         report = results["combined_report"]
         if args.output:

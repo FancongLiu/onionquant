@@ -26,19 +26,23 @@ import pandas as pd
 
 # ── Evidence Record ────────────────────────────────────────
 
+
 @dataclass
 class Evidence:
     """A single piece of evidence from deterministic data fetch.
 
     Pattern: opensre's evidence dict with key/data/tool_name/source/loop_iteration.
     """
-    key: str                          # unique identifier for this evidence
-    data: Any                         # the actual data (DataFrame, dict, Series, float)
-    source: str                       # which module/function produced this
-    category: str = "market_data"     # market_data | factor | risk | portfolio | fundamental
-    timestamp: str = ""               # when this evidence was collected
-    loop_iteration: int = 0           # which reasoning loop iteration
-    ttl_seconds: int = 300            # how long this evidence is valid
+
+    key: str  # unique identifier for this evidence
+    data: Any  # the actual data (DataFrame, dict, Series, float)
+    source: str  # which module/function produced this
+    category: str = (
+        "market_data"  # market_data | factor | risk | portfolio | fundamental
+    )
+    timestamp: str = ""  # when this evidence was collected
+    loop_iteration: int = 0  # which reasoning loop iteration
+    ttl_seconds: int = 300  # how long this evidence is valid
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
@@ -91,6 +95,7 @@ class Evidence:
 
 # ── Seed Context Builder ───────────────────────────────────
 
+
 class SeedContext:
     """Accumulate evidence from deterministic data fetches before agent reasoning.
 
@@ -114,10 +119,15 @@ class SeedContext:
         self.loop_iteration = 0
         self.errors: List[Dict] = []
 
-    def seed(self, key: str, fetch_fn: Callable[[], Any],
-             source: str = "unknown", category: str = "market_data",
-             ttl_seconds: int = 300,
-             metadata: Optional[Dict[str, Any]] = None) -> Optional[Evidence]:
+    def seed(
+        self,
+        key: str,
+        fetch_fn: Callable[[], Any],
+        source: str = "unknown",
+        category: str = "market_data",
+        ttl_seconds: int = 300,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Optional[Evidence]:
         """Deterministically fetch data and record as evidence.
 
         Args:
@@ -140,21 +150,34 @@ class SeedContext:
         try:
             data = fetch_fn()
             evidence = Evidence(
-                key=key, data=data, source=source, category=category,
-                ttl_seconds=ttl_seconds, loop_iteration=self.loop_iteration,
+                key=key,
+                data=data,
+                source=source,
+                category=category,
+                ttl_seconds=ttl_seconds,
+                loop_iteration=self.loop_iteration,
                 metadata=metadata or {},
             )
             self.evidence.append(evidence)
             return evidence
         except Exception as e:
-            self.errors.append({
-                "key": key, "source": source, "error": str(e),
-                "timestamp": datetime.now().isoformat(),
-            })
+            self.errors.append(
+                {
+                    "key": key,
+                    "source": source,
+                    "error": str(e),
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
             return None
 
-    def seed_or_skip(self, key: str, fetch_fn: Callable[[], Any],
-                     max_age_seconds: int = 300, **kwargs) -> Optional[Evidence]:
+    def seed_or_skip(
+        self,
+        key: str,
+        fetch_fn: Callable[[], Any],
+        max_age_seconds: int = 300,
+        **kwargs,
+    ) -> Optional[Evidence]:
         """Seed data only if existing evidence for this key is stale or missing."""
         existing = self.get(key)
         if existing and existing.age_seconds < max_age_seconds:
@@ -171,8 +194,7 @@ class SeedContext:
     def get_category(self, category: str) -> List[Evidence]:
         return [e for e in self.evidence if e.category == category]
 
-    def build_context(self, max_tokens: int = 4000,
-                      include_raw: bool = False) -> str:
+    def build_context(self, max_tokens: int = 4000, include_raw: bool = False) -> str:
         """Build LLM-ready context string from all seed evidence.
 
         Args:
@@ -196,23 +218,33 @@ class SeedContext:
         token_estimate = 0
         for e in self.evidence:
             lines.append(f"### {e.key}")
-            lines.append(f"- **Source**: {e.source} | **Category**: {e.category} | **Age**: {e.age_seconds:.0f}s")
+            lines.append(
+                f"- **Source**: {e.source} | **Category**: {e.category} | **Age**: {e.age_seconds:.0f}s"
+            )
 
             summary = e.summarize()
             if include_raw:
-                lines.append(f"```json\n{json.dumps(summary, indent=2, ensure_ascii=False)}\n```")
+                lines.append(
+                    f"```json\n{json.dumps(summary, indent=2, ensure_ascii=False)}\n```"
+                )
                 token_estimate += len(json.dumps(summary)) // 4
             else:
                 # Compact: key stats only
                 if "stats" in summary:
                     s = summary["stats"]
-                    lines.append(f"  mean={s['mean']:.4f} std={s['std']:.4f} min={s['min']:.4f} max={s['max']:.4f}")
+                    lines.append(
+                        f"  mean={s['mean']:.4f} std={s['std']:.4f} min={s['min']:.4f} max={s['max']:.4f}"
+                    )
                 elif "value" in summary:
                     lines.append(f"  value={summary['value']}")
                 elif "shape" in summary:
-                    lines.append(f"  shape={summary['shape']} cols={summary['columns'][:8]}")
+                    lines.append(
+                        f"  shape={summary['shape']} cols={summary['columns'][:8]}"
+                    )
                     if "preview" in summary:
-                        lines.append(f"  preview={json.dumps(summary['preview'], ensure_ascii=False)[:200]}")
+                        lines.append(
+                            f"  preview={json.dumps(summary['preview'], ensure_ascii=False)[:200]}"
+                        )
                 token_estimate += 50
 
             if token_estimate > max_tokens:
@@ -253,16 +285,24 @@ class SeedContext:
             "loop_iteration": self.loop_iteration,
             "n_evidence": len(self.evidence),
             "n_errors": len(self.errors),
-            "evidence": [{"key": e.key, "source": e.source, "category": e.category,
-                          "timestamp": e.timestamp, "age_s": e.age_seconds,
-                          "summary": e.summarize()}
-                         for e in self.evidence],
+            "evidence": [
+                {
+                    "key": e.key,
+                    "source": e.source,
+                    "category": e.category,
+                    "timestamp": e.timestamp,
+                    "age_s": e.age_seconds,
+                    "summary": e.summarize(),
+                }
+                for e in self.evidence
+            ],
             "errors": self.errors,
         }
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(audit, indent=2, ensure_ascii=False),
-                        encoding="utf-8")
+        path.write_text(
+            json.dumps(audit, indent=2, ensure_ascii=False), encoding="utf-8"
+        )
 
     def clear(self):
         self.evidence.clear()
@@ -271,6 +311,7 @@ class SeedContext:
 
 
 # ── Seed Context Factory for Quant Domain ──────────────────
+
 
 class QuantSeedContext(SeedContext):
     """Pre-configured seed context for quant trading decisions.
@@ -284,8 +325,9 @@ class QuantSeedContext(SeedContext):
         prompt = ctx.build_context()
     """
 
-    def seed_market_data(self, tickers: List[str],
-                         fetcher=None, lookback_days: int = 252) -> bool:
+    def seed_market_data(
+        self, tickers: List[str], fetcher=None, lookback_days: int = 252
+    ) -> bool:
         """Seed OHLCV + returns for tickers."""
         from quant_framework.data.fetchers.yfinance_fetcher import fetch_ohlcv
 
@@ -302,17 +344,24 @@ class QuantSeedContext(SeedContext):
 
         evidence = self.seed_or_skip(
             f"market_data_{len(tickers)}tickers",
-            _fetch, source="yfinance_fetcher", category="market_data", ttl_seconds=300,
+            _fetch,
+            source="yfinance_fetcher",
+            category="market_data",
+            ttl_seconds=300,
         )
         return evidence is not None
 
-    def seed_factors(self, df: pd.DataFrame,
-                     factor_columns: Optional[List[str]] = None) -> bool:
+    def seed_factors(
+        self, df: pd.DataFrame, factor_columns: Optional[List[str]] = None
+    ) -> bool:
         """Seed factor values and basic stats."""
         if factor_columns is None:
             # Auto-detect numeric columns that look like factors
-            factor_columns = [c for c in df.select_dtypes(include=[np.number]).columns
-                            if c not in ("open", "high", "low", "close", "volume", "adj_close")]
+            factor_columns = [
+                c
+                for c in df.select_dtypes(include=[np.number]).columns
+                if c not in ("open", "high", "low", "close", "volume", "adj_close")
+            ]
 
         def _fetch():
             if df.empty:
@@ -332,14 +381,20 @@ class QuantSeedContext(SeedContext):
 
         evidence = self.seed_or_skip(
             f"factors_{len(factor_columns)}cols",
-            _fetch, source="factor_calculator", category="factor", ttl_seconds=600,
+            _fetch,
+            source="factor_calculator",
+            category="factor",
+            ttl_seconds=600,
         )
         return evidence is not None
 
     def seed_risk_metrics(self, returns: pd.Series) -> bool:
         """Seed risk metrics from returns."""
         from quant_framework.risk.risk_metrics import (
-            var_historical, cvar, sharpe_ratio, sortino_ratio,
+            var_historical,
+            cvar,
+            sharpe_ratio,
+            sortino_ratio,
         )
 
         def _fetch():
@@ -352,13 +407,16 @@ class QuantSeedContext(SeedContext):
 
         evidence = self.seed_or_skip(
             "risk_metrics",
-            _fetch, source="risk_metrics", category="risk", ttl_seconds=600,
+            _fetch,
+            source="risk_metrics",
+            category="risk",
+            ttl_seconds=600,
         )
         return evidence is not None
 
-    def seed_all(self, tickers: List[str],
-                 lookback_days: int = 252,
-                 include_risk: bool = True) -> str:
+    def seed_all(
+        self, tickers: List[str], lookback_days: int = 252, include_risk: bool = True
+    ) -> str:
         """Run full seed pipeline for typical quant decision.
 
         Returns compact context string ready for agent prompt injection.
@@ -382,12 +440,14 @@ class QuantSeedContext(SeedContext):
 
 # ── Decorator: ensure seed context ─────────────────────────
 
+
 def require_seed_context(method_name: str = "run"):
     """Class decorator: inject seed context before agent method execution.
 
     Pattern: ensures any agent that makes trading decisions first
     seeds the required data. Prevents LLM hallucination of market data.
     """
+
     def decorator(cls):
         original_run = getattr(cls, method_name, None)
         if original_run is None:
@@ -402,10 +462,12 @@ def require_seed_context(method_name: str = "run"):
 
         setattr(cls, method_name, wrapped_run)
         return cls
+
     return decorator
 
 
 # ── Demo ────────────────────────────────────────────────────
+
 
 def main():
     rng = np.random.default_rng(42)
@@ -413,23 +475,46 @@ def main():
     ctx = SeedContext()
 
     # Seed 1: simulated market data
-    ctx.seed("market_prices", lambda: pd.DataFrame({
-        "close": 100 + np.cumsum(rng.normal(0.05, 1.5, 252)),
-        "volume": rng.integers(1000, 10000, 252),
-    }, index=pd.date_range("2024-01-01", periods=252, freq="B")),
-             source="yfinance_fetcher", category="market_data")
+    ctx.seed(
+        "market_prices",
+        lambda: pd.DataFrame(
+            {
+                "close": 100 + np.cumsum(rng.normal(0.05, 1.5, 252)),
+                "volume": rng.integers(1000, 10000, 252),
+            },
+            index=pd.date_range("2024-01-01", periods=252, freq="B"),
+        ),
+        source="yfinance_fetcher",
+        category="market_data",
+    )
 
     # Seed 2: factor stats
-    ctx.seed("factor_momentum", lambda: {
-        "mean": 0.0012, "std": 0.034, "recent": 0.008,
-        "ic": 0.045, "ic_ir": 0.62,
-    }, source="factor_engine", category="factor")
+    ctx.seed(
+        "factor_momentum",
+        lambda: {
+            "mean": 0.0012,
+            "std": 0.034,
+            "recent": 0.008,
+            "ic": 0.045,
+            "ic_ir": 0.62,
+        },
+        source="factor_engine",
+        category="factor",
+    )
 
     # Seed 3: risk metrics
-    ctx.seed("risk_metrics", lambda: {
-        "var_95": -0.022, "cvar_95": -0.035,
-        "max_drawdown": -0.15, "sharpe": 1.2, "sortino": 1.8,
-    }, source="risk_metrics", category="risk")
+    ctx.seed(
+        "risk_metrics",
+        lambda: {
+            "var_95": -0.022,
+            "cvar_95": -0.035,
+            "max_drawdown": -0.15,
+            "sharpe": 1.2,
+            "sortino": 1.8,
+        },
+        source="risk_metrics",
+        category="risk",
+    )
 
     print(ctx.build_context(max_tokens=2000))
     print("\n--- Compact ---")

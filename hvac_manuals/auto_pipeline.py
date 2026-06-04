@@ -10,12 +10,12 @@ Usage:
   python auto_pipeline.py          # fresh start
   python auto_pipeline.py --resume # resume from checkpoint
 """
+
 import sys
 import io
 import re
 import json
 import time
-import hashlib
 import logging
 import argparse
 from pathlib import Path
@@ -42,23 +42,29 @@ PDF_DIR.mkdir(parents=True, exist_ok=True)
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    handlers=[logging.FileHandler(LOG_PATH, encoding="utf-8"), logging.StreamHandler(sys.stdout)],
+    handlers=[
+        logging.FileHandler(LOG_PATH, encoding="utf-8"),
+        logging.StreamHandler(sys.stdout),
+    ],
 )
 log = logging.getLogger(__name__)
 
 # --- HTTP Session ---
 session = requests.Session()
-session.headers.update({
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.5",
-})
+session.headers.update(
+    {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+    }
+)
 session.timeout = 30  # Global timeout for all requests
 
 
 # ═══════════════════════════════════════════════════════
 # HELPERS
 # ═══════════════════════════════════════════════════════
+
 
 def model_token(model: str) -> str:
     """RACG2T180AC -> RACG2T"""
@@ -80,7 +86,16 @@ def normalize_brand(brand_label: str) -> str:
     if not brand_label:
         return "UNKNOWN"
     b = str(brand_label).upper()
-    for key in ["JOHNSON CONTROLS", "CARRIER", "BRYANT", "LENNOX", "BOSCH", "RUUD", "RHEEM", "YORK"]:
+    for key in [
+        "JOHNSON CONTROLS",
+        "CARRIER",
+        "BRYANT",
+        "LENNOX",
+        "BOSCH",
+        "RUUD",
+        "RHEEM",
+        "YORK",
+    ]:
         if key in b:
             return key
     return b
@@ -109,7 +124,9 @@ def download_pdf(url: str, output_path: Path, timeout: int = 120) -> bool:
         if r.status_code == 200 and len(r.content) > 1000:
             if r.content[:4] == b"%PDF":
                 output_path.write_bytes(r.content)
-                log.info(f"  Downloaded: {output_path.name} ({len(r.content)/1024:.0f} KB)")
+                log.info(
+                    f"  Downloaded: {output_path.name} ({len(r.content) / 1024:.0f} KB)"
+                )
                 return True
         return False
     except Exception as e:
@@ -128,11 +145,20 @@ def web_search_pdfs(query: str, brand: str = "", max_results: int = 5) -> list[d
                 body = r.get("body", "")
                 if url.lower().endswith(".pdf"):
                     results.append({"url": url, "title": title, "snippet": body[:200]})
-                elif any(d in url.lower() for d in [
-                    "files.myrheem.com", "carriercca.com/pdf", "docs.johnsoncontrols.com",
-                    "cgproducts.johnsoncontrols.com", "lennox.com/dA/", "bosch-homecomfort.com/us/media",
-                    "hvacnavigator.com", "bryant.com", "york.com",
-                ]):
+                elif any(
+                    d in url.lower()
+                    for d in [
+                        "files.myrheem.com",
+                        "carriercca.com/pdf",
+                        "docs.johnsoncontrols.com",
+                        "cgproducts.johnsoncontrols.com",
+                        "lennox.com/dA/",
+                        "bosch-homecomfort.com/us/media",
+                        "hvacnavigator.com",
+                        "bryant.com",
+                        "york.com",
+                    ]
+                ):
                     results.append({"url": url, "title": title, "snippet": body[:200]})
     except Exception as e:
         log.warning(f"  Web search error: {e}")
@@ -156,14 +182,19 @@ def extract_pdf_links_from_html(html: str) -> list[dict]:
             results.append({"url": url, "source": "href"})
 
     # Pattern 3: data-url/src
-    for pattern in [r'data-url\s*=\s*"(https?://[^"]+\.pdf)"', r'data-src\s*=\s*"(https?://[^"]+\.pdf)"']:
+    for pattern in [
+        r'data-url\s*=\s*"(https?://[^"]+\.pdf)"',
+        r'data-src\s*=\s*"(https?://[^"]+\.pdf)"',
+    ]:
         for url in re.findall(pattern, html):
             if url not in [r["url"] for r in results]:
                 results.append({"url": url, "source": "data_attr"})
     return results
 
 
-def match_sitemap_urls(xml_text: str, tokens: list[str], product_pattern: str = "/product/") -> list[str]:
+def match_sitemap_urls(
+    xml_text: str, tokens: list[str], product_pattern: str = "/product/"
+) -> list[str]:
     """Find product page URLs in sitemap XML matching model tokens."""
     all_urls = re.findall(r"<loc>([^<]+)</loc>", xml_text)
     matches = []
@@ -179,6 +210,7 @@ def match_sitemap_urls(xml_text: str, tokens: list[str], product_pattern: str = 
 # ═══════════════════════════════════════════════════════
 # BRAND-SPECIFIC SEARCH STRATEGIES
 # ═══════════════════════════════════════════════════════
+
 
 def search_rheem(entry: dict) -> list[dict]:
     """Rheem: sitemap → product page → DocumentURL. Already ran, retry missing."""
@@ -205,7 +237,13 @@ def search_rheem(entry: dict) -> list[dict]:
                 if html:
                     pdf_links = extract_pdf_links_from_html(html)
                     for pl in pdf_links:
-                        results.append({"url": pl["url"], "source": f"sitemap_{pl['source']}", "brand": brand})
+                        results.append(
+                            {
+                                "url": pl["url"],
+                                "source": f"sitemap_{pl['source']}",
+                                "brand": brand,
+                            }
+                        )
             if results:
                 return results
 
@@ -213,12 +251,16 @@ def search_rheem(entry: dict) -> list[dict]:
     log.info(f"  [{brand}/{series}] Web search fallback")
     for model in models[:2]:
         token = model_token(model)
-        for q in [f"{brand} {token} specification sheet pdf",
-                   f"{brand} {token} product data pdf",
-                   f"site:files.myrheem.com {token}"]:
+        for q in [
+            f"{brand} {token} specification sheet pdf",
+            f"{brand} {token} product data pdf",
+            f"site:files.myrheem.com {token}",
+        ]:
             for r in web_search_pdfs(q, brand):
                 if r["url"] not in [x["url"] for x in results]:
-                    results.append({"url": r["url"], "source": "web_search", "brand": brand})
+                    results.append(
+                        {"url": r["url"], "source": "web_search", "brand": brand}
+                    )
     return results
 
 
@@ -240,7 +282,13 @@ def search_ruud(entry: dict) -> list[dict]:
                 if html:
                     for pl in extract_pdf_links_from_html(html):
                         # Rheem PDF but might mention Ruud
-                        results.append({"url": pl["url"], "source": "rheem_sitemap_cross", "brand": brand})
+                        results.append(
+                            {
+                                "url": pl["url"],
+                                "source": "rheem_sitemap_cross",
+                                "brand": brand,
+                            }
+                        )
 
     # Strategy 2: Try known Ruud product page URL patterns
     ruud_patterns = {
@@ -261,18 +309,28 @@ def search_ruud(entry: dict) -> list[dict]:
                 _, html = fetch_url(f"{url_base}{encoded}")
                 if html:
                     for pl in extract_pdf_links_from_html(html):
-                        results.append({"url": pl["url"], "source": "ruud_product_page", "brand": brand})
+                        results.append(
+                            {
+                                "url": pl["url"],
+                                "source": "ruud_product_page",
+                                "brand": brand,
+                            }
+                        )
 
     # Strategy 3: Web search
     if not results:
         for model in models[:2]:
             token = model_token(model)
-            for q in [f"Ruud {token} specification sheet pdf",
-                       f"Ruud {token} technical guide pdf",
-                       f"site:files.myrheem.com {token}"]:
+            for q in [
+                f"Ruud {token} specification sheet pdf",
+                f"Ruud {token} technical guide pdf",
+                f"site:files.myrheem.com {token}",
+            ]:
                 for r in web_search_pdfs(q, "Ruud"):
                     if r["url"] not in [x["url"] for x in results]:
-                        results.append({"url": r["url"], "source": "web_search", "brand": brand})
+                        results.append(
+                            {"url": r["url"], "source": "web_search", "brand": brand}
+                        )
 
     return results
 
@@ -280,6 +338,7 @@ def search_ruud(entry: dict) -> list[dict]:
 def urllib_quote_path(path: str) -> str:
     """URL-encode a path while preserving slashes."""
     import urllib.parse
+
     return urllib.parse.quote(path, safe="/")
 
 
@@ -303,11 +362,15 @@ def search_bosch(entry: dict) -> list[dict]:
 
     # Strategy 2: Web search for bosch-homecomfort.com PDFs
     for model in models[:2]:
-        for q in [f"site:bosch-homecomfort.com {token} pdf",
-                   f"Bosch {token} engineering submittal pdf",
-                   f"Bosch {token} product specification pdf"]:
+        for q in [
+            f"site:bosch-homecomfort.com {token} pdf",
+            f"Bosch {token} engineering submittal pdf",
+            f"Bosch {token} product specification pdf",
+        ]:
             for r in web_search_pdfs(q, "Bosch"):
-                results.append({"url": r["url"], "source": "web_search", "brand": brand})
+                results.append(
+                    {"url": r["url"], "source": "web_search", "brand": brand}
+                )
 
     return results
 
@@ -334,7 +397,9 @@ def search_carrier(entry: dict) -> list[dict]:
         try:
             r = session.head(cdn_url, timeout=15)
             if r.status_code == 200:
-                results.append({"url": cdn_url, "source": "carriercca_cdn", "brand": brand})
+                results.append(
+                    {"url": cdn_url, "source": "carriercca_cdn", "brand": brand}
+                )
                 break
         except Exception:
             pass
@@ -347,17 +412,29 @@ def search_carrier(entry: dict) -> list[dict]:
             for purl in purls[:1]:
                 _, html = fetch_url(purl)
                 if html:
-                    results.extend([{"url": pl["url"], "source": "carrier_sitemap", "brand": brand}
-                                    for pl in extract_pdf_links_from_html(html)])
+                    results.extend(
+                        [
+                            {
+                                "url": pl["url"],
+                                "source": "carrier_sitemap",
+                                "brand": brand,
+                            }
+                            for pl in extract_pdf_links_from_html(html)
+                        ]
+                    )
 
     # Strategy 3: Web search
     if not results:
         for model in models[:2]:
-            for q in [f"Carrier {token} product data pdf",
-                       f"Carrier {model_full} technical guide pdf",
-                       f"site:carriercca.com {token} pdf"]:
+            for q in [
+                f"Carrier {token} product data pdf",
+                f"Carrier {model_full} technical guide pdf",
+                f"site:carriercca.com {token} pdf",
+            ]:
                 for r in web_search_pdfs(q, "Carrier"):
-                    results.append({"url": r["url"], "source": "web_search", "brand": brand})
+                    results.append(
+                        {"url": r["url"], "source": "web_search", "brand": brand}
+                    )
 
     return results
 
@@ -370,11 +447,15 @@ def search_bryant(entry: dict) -> list[dict]:
 
     # Web search primary (Bryant doesn't have a known CDN)
     for model in models[:2]:
-        for q in [f"Bryant {token} product data pdf",
-                   f"Bryant {model} specification sheet pdf",
-                   f"site:bryant.com {token} pdf"]:
+        for q in [
+            f"Bryant {token} product data pdf",
+            f"Bryant {model} specification sheet pdf",
+            f"site:bryant.com {token} pdf",
+        ]:
             for r in web_search_pdfs(q, "Bryant"):
-                results.append({"url": r["url"], "source": "web_search", "brand": "BRYANT"})
+                results.append(
+                    {"url": r["url"], "source": "web_search", "brand": "BRYANT"}
+                )
     return results
 
 
@@ -391,17 +472,29 @@ def search_lennox(entry: dict) -> list[dict]:
         for purl in purls[:1]:
             _, html = fetch_url(purl)
             if html:
-                results.extend([{"url": pl["url"], "source": "lennox_sitemap", "brand": "LENNOX"}
-                                for pl in extract_pdf_links_from_html(html)])
+                results.extend(
+                    [
+                        {
+                            "url": pl["url"],
+                            "source": "lennox_sitemap",
+                            "brand": "LENNOX",
+                        }
+                        for pl in extract_pdf_links_from_html(html)
+                    ]
+                )
 
     # Web search fallback
     if not results:
         for model in models[:2]:
-            for q in [f"Lennox {token} product specification pdf",
-                       f"Lennox {model} technical guide pdf",
-                       f"site:lennox.com {token} pdf"]:
+            for q in [
+                f"Lennox {token} product specification pdf",
+                f"Lennox {model} technical guide pdf",
+                f"site:lennox.com {token} pdf",
+            ]:
                 for r in web_search_pdfs(q, "Lennox"):
-                    results.append({"url": r["url"], "source": "web_search", "brand": "LENNOX"})
+                    results.append(
+                        {"url": r["url"], "source": "web_search", "brand": "LENNOX"}
+                    )
 
     return results
 
@@ -429,7 +522,13 @@ def search_jci(entry: dict) -> list[dict]:
                             doc_id = doc.get("id", "")
                             if doc_id:
                                 pdf_url = f"https://docs.johnsoncontrols.com/ductedsystems/api/khub/documents/{doc_id}/content"
-                                results.append({"url": pdf_url, "source": "jci_api", "brand": "JCI"})
+                                results.append(
+                                    {
+                                        "url": pdf_url,
+                                        "source": "jci_api",
+                                        "brand": "JCI",
+                                    }
+                                )
                 except json.JSONDecodeError:
                     pass
         except Exception:
@@ -437,13 +536,17 @@ def search_jci(entry: dict) -> list[dict]:
 
     # Strategy 2: Web search
     for model in models[:2]:
-        for q in [f"Johnson Controls {token} technical guide pdf",
-                   f"site:docs.johnsoncontrols.com {token}",
-                   f"site:cgproducts.johnsoncontrols.com {token} pdf",
-                   f"Johnson Controls {series} product data pdf"]:
+        for q in [
+            f"Johnson Controls {token} technical guide pdf",
+            f"site:docs.johnsoncontrols.com {token}",
+            f"site:cgproducts.johnsoncontrols.com {token} pdf",
+            f"Johnson Controls {series} product data pdf",
+        ]:
             for r in web_search_pdfs(q, "Johnson Controls"):
                 if r["url"] not in [x["url"] for x in results]:
-                    results.append({"url": r["url"], "source": "web_search", "brand": "JCI"})
+                    results.append(
+                        {"url": r["url"], "source": "web_search", "brand": "JCI"}
+                    )
 
     return results
 
@@ -461,8 +564,12 @@ def search_york(entry: dict) -> list[dict]:
         for purl in purls[:1]:
             _, html = fetch_url(purl)
             if html:
-                results.extend([{"url": pl["url"], "source": "york_sitemap", "brand": "YORK"}
-                                for pl in extract_pdf_links_from_html(html)])
+                results.extend(
+                    [
+                        {"url": pl["url"], "source": "york_sitemap", "brand": "YORK"}
+                        for pl in extract_pdf_links_from_html(html)
+                    ]
+                )
 
     # Also try JCI sources (York is a JCI brand)
     results.extend([{**r, "brand": "YORK"} for r in search_jci(entry)])
@@ -470,11 +577,15 @@ def search_york(entry: dict) -> list[dict]:
     # Web search
     if not results:
         for model in models[:2]:
-            for q in [f"York {token} technical guide pdf",
-                       f"site:york.com {token} pdf",
-                       f"York {model} specification pdf"]:
+            for q in [
+                f"York {token} technical guide pdf",
+                f"site:york.com {token} pdf",
+                f"York {model} specification pdf",
+            ]:
                 for r in web_search_pdfs(q, "York"):
-                    results.append({"url": r["url"], "source": "web_search", "brand": "YORK"})
+                    results.append(
+                        {"url": r["url"], "source": "web_search", "brand": "YORK"}
+                    )
 
     return results
 
@@ -496,12 +607,17 @@ SEARCH_FUNCTIONS = {
 # PDF VERIFICATION (pdfplumber)
 # ═══════════════════════════════════════════════════════
 
+
 def verify_pdf(pdf_path: Path, entry: dict) -> dict:
     """Verify PDF content against manifest entry. Returns verdict dict."""
     try:
         import pdfplumber
     except ImportError:
-        return {"verdict": "Not verified", "score": 0, "evidence": "pdfplumber not installed"}
+        return {
+            "verdict": "Not verified",
+            "score": 0,
+            "evidence": "pdfplumber not installed",
+        }
 
     try:
         with pdfplumber.open(str(pdf_path)) as pdf:
@@ -512,7 +628,11 @@ def verify_pdf(pdf_path: Path, entry: dict) -> dict:
                     texts.append(t)
         full_text = "\n".join(texts)
     except Exception as e:
-        return {"verdict": "Not found", "score": 0, "evidence": f"PDF extraction failed: {e}"}
+        return {
+            "verdict": "Not found",
+            "score": 0,
+            "evidence": f"PDF extraction failed: {e}",
+        }
 
     if len(full_text) < 100:
         return {"verdict": "Not found", "score": 0, "evidence": "PDF text too short"}
@@ -529,9 +649,12 @@ def verify_pdf(pdf_path: Path, entry: dict) -> dict:
 
     # Brand match (5 pts)
     brand_aliases = {
-        "RHEEM": ["RHEEM", "RUUD"], "RUUD": ["RUUD", "RHEEM"],
-        "CARRIER": ["CARRIER", "BRYANT"], "BRYANT": ["BRYANT", "CARRIER"],
-        "LENNOX": ["LENNOX"], "BOSCH": ["BOSCH"],
+        "RHEEM": ["RHEEM", "RUUD"],
+        "RUUD": ["RUUD", "RHEEM"],
+        "CARRIER": ["CARRIER", "BRYANT"],
+        "BRYANT": ["BRYANT", "CARRIER"],
+        "LENNOX": ["LENNOX"],
+        "BOSCH": ["BOSCH"],
         "YORK": ["YORK", "JOHNSON CONTROLS", "JCI"],
         "JOHNSON CONTROLS": ["JOHNSON CONTROLS", "JCI", "YORK", "CHOICE"],
     }
@@ -591,7 +714,9 @@ def verify_pdf(pdf_path: Path, entry: dict) -> dict:
             break
 
     # EER/IEER (5 pts bonus if any performance data found)
-    if re.search(r'EER\s*[:\s]*\d+\.?\d*', text_upper) or re.search(r'IEER\s*[:\s]*\d+\.?\d*', text_upper):
+    if re.search(r"EER\s*[:\s]*\d+\.?\d*", text_upper) or re.search(
+        r"IEER\s*[:\s]*\d+\.?\d*", text_upper
+    ):
         evidence.append("Performance data present")
         score += 5
 
@@ -611,6 +736,7 @@ def verify_pdf(pdf_path: Path, entry: dict) -> dict:
 # ═══════════════════════════════════════════════════════
 # CORE PIPELINE
 # ═══════════════════════════════════════════════════════
+
 
 def load_excel():
     wb = openpyxl.load_workbook(EXCEL_PATH)
@@ -632,11 +758,21 @@ def build_manifest(rows):
 
         if mid not in manifest:
             manifest[mid] = {
-                "id": mid, "brand": brand, "series": series,
-                "pdf_filename": None, "pdf_url": None, "status": "searching",
-                "verdict": None, "score": 0, "evidence": "",
-                "row_indices": [], "models": [], "reference_ids": [],
-                "queries": [], "capacities": [], "refrigerants": [],
+                "id": mid,
+                "brand": brand,
+                "series": series,
+                "pdf_filename": None,
+                "pdf_url": None,
+                "status": "searching",
+                "verdict": None,
+                "score": 0,
+                "evidence": "",
+                "row_indices": [],
+                "models": [],
+                "reference_ids": [],
+                "queries": [],
+                "capacities": [],
+                "refrigerants": [],
             }
         m = manifest[mid]
         m["row_indices"].append(i)
@@ -739,7 +875,11 @@ def process_entry(entry: dict) -> bool:
     for cand in candidates[:5]:  # try up to 5 candidates
         pdf_url = cand["url"]
         ref_id = entry["reference_ids"][0] if entry["reference_ids"] else "0"
-        ref_type = (entry.get("refrigerants", ["UNKNOWN"])[0] or "UNKNOWN").replace("/", "-").replace(" ", "-")
+        ref_type = (
+            (entry.get("refrigerants", ["UNKNOWN"])[0] or "UNKNOWN")
+            .replace("/", "-")
+            .replace(" ", "-")
+        )
         stem = pdf_url.split("/")[-1].replace(".pdf", "")[:80]
         fname = safe_filename(f"{stem}__Ref{ref_id}_{brand}_{series}_{ref_type}.pdf")
         outpath = PDF_DIR / fname
@@ -770,9 +910,15 @@ def run_pipeline(resume: bool = False):
     log.info(f"Start: {datetime.now(timezone.utc).isoformat()}")
     log.info("=" * 60)
 
-    checkpoint = load_checkpoint() if resume else {"processed": [], "failed": [], "started_at": None}
+    checkpoint = (
+        load_checkpoint()
+        if resume
+        else {"processed": [], "failed": [], "started_at": None}
+    )
     if checkpoint["processed"]:
-        log.info(f"Resuming: {len(checkpoint['processed'])} already processed, {len(checkpoint['failed'])} failed")
+        log.info(
+            f"Resuming: {len(checkpoint['processed'])} already processed, {len(checkpoint['failed'])} failed"
+        )
 
     # Load & build manifest
     rows, _, _, _ = load_excel()
@@ -786,11 +932,23 @@ def run_pipeline(resume: bool = False):
             manifest[mid]["status"] = "found"
 
     # Sort by brand priority (easiest → hardest)
-    brand_order = ["RHEEM", "RUUD", "BOSCH", "CARRIER", "BRYANT", "LENNOX", "YORK", "JOHNSON CONTROLS"]
-    entries = sorted(manifest.values(), key=lambda e: (
-        brand_order.index(e["brand"]) if e["brand"] in brand_order else 99,
-        e["series"],
-    ))
+    brand_order = [
+        "RHEEM",
+        "RUUD",
+        "BOSCH",
+        "CARRIER",
+        "BRYANT",
+        "LENNOX",
+        "YORK",
+        "JOHNSON CONTROLS",
+    ]
+    entries = sorted(
+        manifest.values(),
+        key=lambda e: (
+            brand_order.index(e["brand"]) if e["brand"] in brand_order else 99,
+            e["series"],
+        ),
+    )
 
     pending = [e for e in entries if e["status"] == "searching"]
     log.info(f"Pending: {len(pending)}/{len(manifest)}")
@@ -800,7 +958,7 @@ def run_pipeline(resume: bool = False):
     for i, entry in enumerate(pending):
         brand = entry["brand"]
         series = entry["series"]
-        log.info(f"[{i+1}/{len(pending)}] {brand}/{series}")
+        log.info(f"[{i + 1}/{len(pending)}] {brand}/{series}")
 
         try:
             success = process_entry(entry)
@@ -828,7 +986,9 @@ def run_pipeline(resume: bool = False):
     total = len(manifest)
     found = sum(1 for m in manifest.values() if m.get("status") == "found")
     high = sum(1 for m in manifest.values() if m.get("verdict") == "High confidence")
-    needs_review = sum(1 for m in manifest.values() if m.get("verdict") == "Needs human confirmation")
+    needs_review = sum(
+        1 for m in manifest.values() if m.get("verdict") == "Needs human confirmation"
+    )
     low = sum(1 for m in manifest.values() if m.get("verdict") == "Low confidence")
     not_found = sum(1 for m in manifest.values() if m.get("verdict") == "Not found")
 

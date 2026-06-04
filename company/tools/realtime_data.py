@@ -21,7 +21,6 @@ import sys
 import time
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
-from typing import Any
 
 import requests
 
@@ -39,10 +38,10 @@ USER_AGENT = (
 # ET时区大致偏移 (不考虑夏令时切换, 对市场时间足够)
 ET_OFFSET = timedelta(hours=-4)  # EDT = UTC-4
 # 关键市场时间 (ET)
-PREMARKET_START = 4   # 4:00 AM ET
-REGULAR_START = 9     # 9:30 AM ET
-REGULAR_END = 16      # 4:00 PM ET
-AFTERHOURS_END = 20   # 8:00 PM ET
+PREMARKET_START = 4  # 4:00 AM ET
+REGULAR_START = 9  # 9:30 AM ET
+REGULAR_END = 16  # 4:00 PM ET
+AFTERHOURS_END = 20  # 8:00 PM ET
 
 
 def _et_now() -> datetime:
@@ -87,10 +86,14 @@ def detect_market_session() -> dict:
             result["session"] = data.get("session") or "closed"
             if result["holiday"]:
                 result["next_session"] = f"Next session after {result['holiday']}"
-            elif result["session"] == "closed" and weekday < 5 and hour < PREMARKET_START:
+            elif (
+                result["session"] == "closed" and weekday < 5 and hour < PREMARKET_START
+            ):
                 result["session"] = "closed"
                 et_pre = et.replace(hour=PREMARKET_START, minute=0, second=0)
-                result["next_session"] = f"Pre-market starts {et_pre.strftime('%H:%M ET')}"
+                result["next_session"] = (
+                    f"Pre-market starts {et_pre.strftime('%H:%M ET')}"
+                )
             return result
     except Exception:
         pass
@@ -105,11 +108,11 @@ def detect_market_session() -> dict:
         result["next_session"] = f"Pre-market starts {et_pre.strftime('%H:%M ET')}"
     elif hour < REGULAR_START:
         result["session"] = "premarket"
-        result["next_session"] = f"Market opens 9:30 AM ET"
+        result["next_session"] = "Market opens 9:30 AM ET"
     elif hour < REGULAR_END:
         result["session"] = "regular"
         result["is_open"] = True
-        result["next_session"] = f"Market closes 4:00 PM ET"
+        result["next_session"] = "Market closes 4:00 PM ET"
     elif hour < AFTERHOURS_END:
         result["session"] = "afterhours"
         result["next_session"] = "Next session tomorrow pre-market 4:00 AM ET"
@@ -182,7 +185,9 @@ def finnhub_quote(ticker: str) -> dict | None:
             "change": data.get("d"),
             "change_pct": data.get("dp"),
             "timestamp": ts,
-            "timestamp_display": ts_dt.strftime("%Y-%m-%d %H:%M UTC") if ts_dt else None,
+            "timestamp_display": ts_dt.strftime("%Y-%m-%d %H:%M UTC")
+            if ts_dt
+            else None,
             "source": "Finnhub",
             "data_freshness": _classify_freshness(ts_dt) if ts_dt else "unknown",
         }
@@ -221,7 +226,9 @@ def yahoo_prepost(ticker: str) -> dict | None:
             "change": round(change, 2) if change else None,
             "change_pct": round(pct, 2) if pct else None,
             "timestamp": ts,
-            "timestamp_display": ts_dt.strftime("%Y-%m-%d %H:%M UTC") if ts_dt else None,
+            "timestamp_display": ts_dt.strftime("%Y-%m-%d %H:%M UTC")
+            if ts_dt
+            else None,
             "source": "Yahoo Finance v8",
             "data_freshness": _classify_freshness(ts_dt) if ts_dt else "unknown",
         }
@@ -244,7 +251,11 @@ def alpha_vantage_quote(ticker: str) -> dict | None:
         if not gq:
             return {"error": "no data (rate limit?)"}
         price = float(gq.get("05. price", 0)) if gq.get("05. price") else None
-        prev = float(gq.get("08. previous close", 0)) if gq.get("08. previous close") else None
+        prev = (
+            float(gq.get("08. previous close", 0))
+            if gq.get("08. previous close")
+            else None
+        )
         change = float(gq.get("09. change", 0)) if gq.get("09. change") else None
         pct_str = gq.get("10. change percent", "0%").replace("%", "")
         pct = float(pct_str) if pct_str else None
@@ -270,7 +281,7 @@ def _classify_freshness(ts_dt: datetime) -> str:
     elif age < timedelta(hours=1):
         return "RECENT (<1h)"
     elif age < timedelta(hours=24):
-        return f"STALE ({age.total_seconds()/3600:.0f}h old)"
+        return f"STALE ({age.total_seconds() / 3600:.0f}h old)"
     else:
         return f"EOD ({ts_dt.strftime('%Y-%m-%d')})"
 
@@ -349,7 +360,11 @@ def format_quote_display(ticker: str, data: dict) -> str:
     lines = [f"{ticker}: ${price:.2f}" if price else f"{ticker}: N/A"]
     if change is not None:
         sign = "+" if change >= 0 else ""
-        lines.append(f"  Δ {sign}{change:.2f} ({sign}{pct:.2f}%)" if pct is not None else f"  Δ {sign}{change:.2f}")
+        lines.append(
+            f"  Δ {sign}{change:.2f} ({sign}{pct:.2f}%)"
+            if pct is not None
+            else f"  Δ {sign}{change:.2f}"
+        )
     lines.append(f"  src: {source} | {freshness}")
     if market.get("holiday"):
         lines.append(f"  HOLIDAY: {market['holiday']}")
@@ -362,8 +377,9 @@ if __name__ == "__main__":
     import argparse
 
     p = argparse.ArgumentParser(description="OnionQuant Real-Time Data Engine")
-    p.add_argument("--tickers", type=str, default="MU,INTC,MRVL,NVDA",
-                   help="逗号分隔的股票代码")
+    p.add_argument(
+        "--tickers", type=str, default="MU,INTC,MRVL,NVDA", help="逗号分隔的股票代码"
+    )
     p.add_argument("--market-status", action="store_true", help="只显示市场状态")
     p.add_argument("--futures", action="store_true", help="显示期货数据")
     p.add_argument("--json", action="store_true", help="JSON输出")
@@ -391,12 +407,16 @@ if __name__ == "__main__":
                     chg = d.get("change", 0) or 0
                     pct = d.get("change_pct", 0) or 0
                     sign = "+" if chg >= 0 else ""
-                    print(f"{d['name']} ({sym}): {d.get('price')}  {sign}{chg} ({sign}{pct}%)")
+                    print(
+                        f"{d['name']} ({sym}): {d.get('price')}  {sign}{chg} ({sign}{pct}%)"
+                    )
     else:
         tickers = [t.strip().upper() for t in args.tickers.split(",")]
         ms = detect_market_session()
         if not args.json:
-            print(f"=== Market: {ms['et_time']} | {ms['session']} | {'HOLIDAY: '+ms['holiday'] if ms.get('holiday') else 'Open: '+str(ms['is_open'])} ===\n")
+            print(
+                f"=== Market: {ms['et_time']} | {ms['session']} | {'HOLIDAY: ' + ms['holiday'] if ms.get('holiday') else 'Open: ' + str(ms['is_open'])} ===\n"
+            )
         for t in tickers:
             data = get_realtime_quote(t)
             if args.json:

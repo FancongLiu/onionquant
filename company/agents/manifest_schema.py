@@ -32,45 +32,54 @@ class SkillRef:
 @dataclass
 class AgentManifest:
     """Self-describing agent definition, following financial-services pattern."""
-    name: str                          # unique agent identifier
-    display_name: str = ""             # human-readable name
-    department: str = ""               # owning department (matches directory)
-    role: str = ""                     # one-line role description
-    version: str = "1.0.0"
-    status: str = "active"             # active | draft | deprecated
 
-    system_prompt: str = ""            # Core system prompt (Markdown)
+    name: str  # unique agent identifier
+    display_name: str = ""  # human-readable name
+    department: str = ""  # owning department (matches directory)
+    role: str = ""  # one-line role description
+    version: str = "1.0.0"
+    status: str = "active"  # active | draft | deprecated
+
+    system_prompt: str = ""  # Core system prompt (Markdown)
     skills: List[SkillRef] = field(default_factory=list)
     workers: List[WorkerAgent] = field(default_factory=list)
     steering_examples: List[str] = field(default_factory=list)
 
     # Permission model: allow | deny | ask
     tool_permissions: Dict[str, str] = field(default_factory=dict)
-    bash_permission: str = "ask"       # allow | deny | ask
-    write_permission: str = "allow"    # allow | deny | ask
-    api_permission: str = "ask"        # allow | deny | ask
+    bash_permission: str = "ask"  # allow | deny | ask
+    write_permission: str = "allow"  # allow | deny | ask
+    api_permission: str = "ask"  # allow | deny | ask
 
     # Operational
-    schedule: Optional[str] = None     # cron expression for autonomous runs
+    schedule: Optional[str] = None  # cron expression for autonomous runs
     max_retries: int = 3
     timeout_seconds: int = 300
-    requires_approval: List[str] = field(default_factory=list)  # actions needing chairman
+    requires_approval: List[str] = field(
+        default_factory=list
+    )  # actions needing chairman
 
     # Memory & context
     context_budget_tokens: int = 4000
-    memory_categories: List[str] = field(default_factory=list)  # relevant memory categories
+    memory_categories: List[str] = field(
+        default_factory=list
+    )  # relevant memory categories
 
     # Metadata
     created_at: str = ""
     updated_at: str = ""
-    description: str = ""              # longer description
+    description: str = ""  # longer description
 
     def to_dict(self) -> dict:
         d = {}
         for k, v in self.__dataclass_fields__.items():
             val = getattr(self, k)
-            if isinstance(val, list) and val and isinstance(val[0], (WorkerAgent, SkillRef)):
-                d[k] = [x.__dict__ if hasattr(x, '__dict__') else x for x in val]
+            if (
+                isinstance(val, list)
+                and val
+                and isinstance(val[0], (WorkerAgent, SkillRef))
+            ):
+                d[k] = [x.__dict__ if hasattr(x, "__dict__") else x for x in val]
             elif isinstance(val, list):
                 d[k] = val
             elif isinstance(val, dict):
@@ -80,8 +89,13 @@ class AgentManifest:
         return d
 
     def to_yaml(self) -> str:
-        return yaml.dump(self.to_dict(), default_flow_style=False,
-                         allow_unicode=True, sort_keys=False, width=120)
+        return yaml.dump(
+            self.to_dict(),
+            default_flow_style=False,
+            allow_unicode=True,
+            sort_keys=False,
+            width=120,
+        )
 
     @classmethod
     def from_yaml(cls, path: Path) -> "AgentManifest":
@@ -103,6 +117,7 @@ class AgentManifest:
 
 
 # ── Manifest Registry ──────────────────────────────────────
+
 
 class ManifestRegistry:
     """Load and validate all agent manifests from a directory."""
@@ -162,8 +177,10 @@ class ManifestRegistry:
 
 # ── Demo ────────────────────────────────────────────────────
 
+
 def main():
     import tempfile
+
     d = Path(tempfile.gettempdir()) / "demo_manifests"
     d.mkdir(exist_ok=True)
 

@@ -17,8 +17,9 @@ from datetime import datetime
 
 # ========== 配置区（您可以根据需要修改） ==========
 AUTO_COMMIT_MESSAGE = "🤖 自动同步更新"  # 提交时的默认说明
-LOG_FILE = "auto_sync_log.txt"           # 日志文件名
+LOG_FILE = "auto_sync_log.txt"  # 日志文件名
 # =================================================
+
 
 def run_cmd(command, show_output=True):
     """运行一条命令，返回是否成功"""
@@ -28,8 +29,8 @@ def run_cmd(command, show_output=True):
             shell=True,
             capture_output=True,
             text=True,
-            encoding='utf-8',
-            cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            encoding="utf-8",
+            cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
         )
         if show_output and result.stdout:
             print(result.stdout.strip())
@@ -40,12 +41,14 @@ def run_cmd(command, show_output=True):
         print(f"❌ 出错了: {e}")
         return False, ""
 
+
 def log(msg):
     """写日志"""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open(LOG_FILE, "a", encoding="utf-8") as f:
         f.write(f"[{timestamp}] {msg}\n")
     print(f"📝 日志: {msg}")
+
 
 def main():
     print("=" * 50)
@@ -68,12 +71,14 @@ def main():
         log("⚠️  没有配置 GitHub 远程仓库，跳过上传步骤")
         print("⚠️  还没有连接 GitHub 远程仓库，跳过上传")
         print("💡 如果想上传到 GitHub，需要先设置远程仓库地址")
-        print("   在终端运行: git remote add origin https://github.com/你的用户名/仓库名.git")
+        print(
+            "   在终端运行: git remote add origin https://github.com/你的用户名/仓库名.git"
+        )
 
     # 第3步：添加所有修改过的文件
     print("\n📂 正在检查修改过的文件...")
     run_cmd("git add -A")
-    
+
     # 第4步：检查有没有需要提交的变更
     success, status = run_cmd("git status --porcelain", show_output=False)
     if not status:
@@ -90,10 +95,10 @@ def main():
 
     # 第5步：提交（commit）修改
     print("\n💾 正在保存修改（commit）...")
-    changes = len(status.strip().split('\n')) if status else 0
+    changes = len(status.strip().split("\n")) if status else 0
     commit_msg = f"{AUTO_COMMIT_MESSAGE} ({changes} 个文件变更)"
     success, _ = run_cmd(f'git commit -m "{commit_msg}"')
-    
+
     if success:
         log(f"✅ 提交成功: {commit_msg}")
         print(f"✅ 提交成功！共 {changes} 个文件")
@@ -119,6 +124,7 @@ def main():
     print("\n" + "=" * 50)
     print("  ✅ 自动同步完成！")
     print("=" * 50)
+
 
 if __name__ == "__main__":
     main()

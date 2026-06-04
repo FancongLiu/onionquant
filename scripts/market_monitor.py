@@ -12,7 +12,7 @@ market_monitor.py — OnionQuant 市场监控守护进程
 工具栈: yfinance + risk_threshold_engine + statsmodels + catalyst_decision_model
        + decision_engine_v2 + knowledge_graph + wechat_bot
 """
-import io
+
 import json
 import os
 import sys
@@ -21,43 +21,58 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Optional
 
-if sys.platform == 'win32':
-    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-import numpy as np
-import pandas as pd
 import yfinance as yf
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 OUTBOX_DIR = PROJECT_ROOT / "company" / "chairman_outbox"
-STATE_FILE = PROJECT_ROOT / "company" / "departments" / "execution" / "monitor_state.json"
-POSITION_MEMORY = Path(os.path.expanduser(
-    "~/.claude/projects/e--2026-AgentStudy-Python-code/memory/chairman_position.md"
-))
+STATE_FILE = (
+    PROJECT_ROOT / "company" / "departments" / "execution" / "monitor_state.json"
+)
+POSITION_MEMORY = Path(
+    os.path.expanduser(
+        "~/.claude/projects/e--2026-AgentStudy-Python-code/memory/chairman_position.md"
+    )
+)
 
 # ─── 真实工具导入 ──────────────────────────────────
 from risk_threshold_engine import RiskThresholdEngine, FactorScores
-from quant_framework.strategies.regime_detector import classify_current, rolling_regime_simple
+from quant_framework.strategies.regime_detector import (
+    classify_current,
+    rolling_regime_simple,
+)
 from quant_framework.strategies.catalyst_decision_model import (
-    evaluate_position, Catalyst, CatalystOutcome,
-    dxyz_catalysts, DecisionOutput,
+    evaluate_position,
+    dxyz_catalysts,
 )
 from quant_framework.knowledge_graph.quant_graph_builder import SECTOR_MAP
 
 # ─── 配置 ─────────────────────────────────────────
 
 WATCHLIST = [
-    "DXYZ", "MU", "NVDA", "COHR", "RKLB", "LITE", "AVGO", "SNDK", "ASTS", "LUNR",
+    "DXYZ",
+    "MU",
+    "NVDA",
+    "COHR",
+    "RKLB",
+    "LITE",
+    "AVGO",
+    "SNDK",
+    "ASTS",
+    "LUNR",
 ]
 MACRO_SYMBOLS = ["^VIX", "^TNX", "CL=F"]  # VIX, 10Y, Crude Oil
 
 # 触发推送的阈值
-PRICE_MOVE_THRESHOLD = 0.03       # 5分钟内涨跌 3% → 推送
-STOP_LOSS_PROXIMITY = 0.05        # 距止损 5% → 推送
-REGIME_CHANGE_THRESHOLD = 15      # RTE 综合分变化 >15 → 推送
+PRICE_MOVE_THRESHOLD = 0.03  # 5分钟内涨跌 3% → 推送
+STOP_LOSS_PROXIMITY = 0.05  # 距止损 5% → 推送
+REGIME_CHANGE_THRESHOLD = 15  # RTE 综合分变化 >15 → 推送
 
 # ─── 市场时段 ─────────────────────────────────────
+
 
 def market_session() -> str:
     """判断当前市场时段 (ET)."""
@@ -83,8 +98,13 @@ def market_session() -> str:
 
 
 def session_emoji(session: str) -> str:
-    return {"pre_market": "🌅", "regular": "📈", "after_hours": "🌙",
-            "overnight": "💤", "weekend": "📴"}.get(session, "❓")
+    return {
+        "pre_market": "🌅",
+        "regular": "📈",
+        "after_hours": "🌙",
+        "overnight": "💤",
+        "weekend": "📴",
+    }.get(session, "❓")
 
 
 # ─── 自适应间隔 ─────────────────────────────────────
@@ -92,15 +112,25 @@ def session_emoji(session: str) -> str:
 
 # 催化事件时间窗口 (从 CATALYST_CALENDAR 读取, 这里定义简化版)
 CATALYST_WINDOWS = [
-    {"event": "Starship IFT-12", "date": "2026-05-19", "time_et": "18:30", "tickers": ["DXYZ"]},
-    {"event": "NVDA Q1 财报", "date": "2026-05-20", "time_et": "16:20", "tickers": ["NVDA"]},
+    {
+        "event": "Starship IFT-12",
+        "date": "2026-05-19",
+        "time_et": "18:30",
+        "tickers": ["DXYZ"],
+    },
+    {
+        "event": "NVDA Q1 财报",
+        "date": "2026-05-20",
+        "time_et": "16:20",
+        "tickers": ["NVDA"],
+    },
     {"event": "三星罢工", "date": "2026-05-21", "time_et": "09:00", "tickers": ["MU"]},
 ]
 
 # 最小间隔 (不能短于一轮分析耗时 ~14s + 缓冲)
-MIN_INTERVAL = 60        # 1 分钟
-MAX_INTERVAL = 1800      # 30 分钟
-CYCLE_BUFFER = 20        # 分析耗时 + 缓冲 (秒)
+MIN_INTERVAL = 60  # 1 分钟
+MAX_INTERVAL = 1800  # 30 分钟
+CYCLE_BUFFER = 20  # 分析耗时 + 缓冲 (秒)
 
 
 def catalyst_proximity_hours() -> float:
@@ -109,7 +139,9 @@ def catalyst_proximity_hours() -> float:
     closest_h = 999.0
     for cat in CATALYST_WINDOWS:
         try:
-            cat_dt = datetime.strptime(f"{cat['date']} {cat['time_et']}", "%Y-%m-%d %H:%M")
+            cat_dt = datetime.strptime(
+                f"{cat['date']} {cat['time_et']}", "%Y-%m-%d %H:%M"
+            )
             delta_h = (cat_dt - now).total_seconds() / 3600
             if delta_h < -2:  # 已经过了 2 小时以上
                 continue
@@ -119,8 +151,9 @@ def catalyst_proximity_hours() -> float:
     return closest_h
 
 
-def adaptive_interval(session: str, urgency: str = "normal",
-                       user_override: int = None) -> int:
+def adaptive_interval(
+    session: str, urgency: str = "normal", user_override: int = None
+) -> int:
     """根据市场时段 + 催化接近度 + 紧急度, 计算合适的监控间隔。
 
     Parameters
@@ -141,20 +174,20 @@ def adaptive_interval(session: str, urgency: str = "normal",
 
     # 基础间隔 (按市场时段)
     base = {
-        "weekend": MAX_INTERVAL,      # 30min — 没开盘
-        "overnight": 900,             # 15min
-        "pre_market": 600 if has_catalyst else 900,   # 10/15min
-        "regular": 600,               # 10min — 正常交易
-        "after_hours": 900,           # 15min
+        "weekend": MAX_INTERVAL,  # 30min — 没开盘
+        "overnight": 900,  # 15min
+        "pre_market": 600 if has_catalyst else 900,  # 10/15min
+        "regular": 600,  # 10min — 正常交易
+        "after_hours": 900,  # 15min
     }.get(session, MAX_INTERVAL)
 
     # 催化接近 → 加速
     if cat_hours < 1:
-        base = 60      # 1min — 发射/财报前1小时
+        base = 60  # 1min — 发射/财报前1小时
     elif cat_hours < 3:
-        base = 120     # 2min
+        base = 120  # 2min
     elif cat_hours < 6:
-        base = 180     # 3min
+        base = 180  # 3min
 
     # 紧急度 → 加速
     if urgency == "critical":
@@ -177,6 +210,7 @@ def interval_reason(interval: int) -> str:
 
 # ─── 数据获取 ─────────────────────────────────────
 
+
 def fetch_market_data() -> dict:
     """拉取所有需要的数据。"""
     session = market_session()
@@ -195,7 +229,11 @@ def fetch_market_data() -> dict:
                 if "Close" in daily.columns.levels[0]:
                     series = daily.xs("Close", axis=1, level=1)[t].dropna()
                 else:
-                    series = daily["Close"][t].dropna() if t in daily["Close"].columns else None
+                    series = (
+                        daily["Close"][t].dropna()
+                        if t in daily["Close"].columns
+                        else None
+                    )
                 if series is not None and len(series) > 0:
                     prices[t] = round(float(series.iloc[-1]), 2)
             except (KeyError, IndexError):
@@ -209,9 +247,11 @@ def fetch_market_data() -> dict:
                 tk = yf.Ticker(t)
                 info = tk.fast_info
                 # 优先: 盘前价 > 实时价 > 昨日收盘
-                pre = (getattr(info, 'pre_market_price', None)
-                       or getattr(info, 'regular_market_price', None)
-                       or getattr(info, 'previous_close', None))
+                pre = (
+                    getattr(info, "pre_market_price", None)
+                    or getattr(info, "regular_market_price", None)
+                    or getattr(info, "previous_close", None)
+                )
                 if pre and pre > 0:
                     pre_market_prices[t] = round(float(pre), 2)
             except Exception:
@@ -225,7 +265,9 @@ def fetch_market_data() -> dict:
                 for t in WATCHLIST:
                     try:
                         if "Close" in live.columns.levels[0]:
-                            last = live.xs("Close", axis=1, level=1)[t].dropna().iloc[-1]
+                            last = (
+                                live.xs("Close", axis=1, level=1)[t].dropna().iloc[-1]
+                            )
                         elif t in live["Close"].columns:
                             last = live["Close"][t].dropna().iloc[-1]
                         else:
@@ -248,7 +290,11 @@ def fetch_market_data() -> dict:
             for sym in MACRO_SYMBOLS:
                 try:
                     if "Close" in macro_data.columns.levels[0]:
-                        val = macro_data.xs("Close", axis=1, level=1)[sym].dropna().iloc[-1]
+                        val = (
+                            macro_data.xs("Close", axis=1, level=1)[sym]
+                            .dropna()
+                            .iloc[-1]
+                        )
                     elif sym in macro_data["Close"].columns:
                         val = macro_data["Close"][sym].dropna().iloc[-1]
                     else:
@@ -270,6 +316,7 @@ def fetch_market_data() -> dict:
 
 # ─── 分析管道 ─────────────────────────────────────
 
+
 def analyze_pipeline(data: dict, positions: dict) -> dict:
     """跑完整分析管道: 因子 → 风险 → 催化 → 决策。"""
     results = {}
@@ -278,6 +325,7 @@ def analyze_pipeline(data: dict, positions: dict) -> dict:
     if data["daily"] is not None:
         try:
             from scripts.decision_engine_v2 import compute_factor_scores
+
             close, returns = None, None
             daily = data["daily"]
             if "Close" in daily.columns.levels[0]:
@@ -293,8 +341,11 @@ def analyze_pipeline(data: dict, positions: dict) -> dict:
     try:
         engine = RiskThresholdEngine()
         scores = FactorScores(
-            volatility_score=35, momentum_score=45, breadth_score=40,
-            macro_score=25, drawdown_score=55,
+            volatility_score=35,
+            momentum_score=45,
+            breadth_score=40,
+            macro_score=25,
+            drawdown_score=55,
             as_of=datetime.now().isoformat(),
         )
         rte = engine.evaluate(scores)
@@ -302,7 +353,9 @@ def analyze_pipeline(data: dict, positions: dict) -> dict:
             "composite": rte.composite_score,
             "regime": rte.regime.value,
             "decision": str(rte.decision),
-            "actions": [{"type": a.action_type, "rationale": a.rationale} for a in rte.actions],
+            "actions": [
+                {"type": a.action_type, "rationale": a.rationale} for a in rte.actions
+            ],
         }
     except Exception as e:
         results["risk_error"] = str(e)[:100]
@@ -311,7 +364,11 @@ def analyze_pipeline(data: dict, positions: dict) -> dict:
     try:
         if data["daily"] is not None and "Close" in data["daily"].columns:
             daily = data["daily"]
-            close = daily.xs("Close", axis=1, level=1) if "Close" in daily.columns.levels[0] else daily["Close"]
+            close = (
+                daily.xs("Close", axis=1, level=1)
+                if "Close" in daily.columns.levels[0]
+                else daily["Close"]
+            )
             market_ret = close.pct_change().mean(axis=1).dropna()
             regime = classify_current(market_ret, n_regimes=2)
             results["market_regime"] = regime
@@ -321,17 +378,26 @@ def analyze_pipeline(data: dict, positions: dict) -> dict:
         try:
             if data["daily"] is not None:
                 daily = data["daily"]
-                close = daily.xs("Close", axis=1, level=1) if "Close" in daily.columns.levels[0] else daily["Close"]
+                close = (
+                    daily.xs("Close", axis=1, level=1)
+                    if "Close" in daily.columns.levels[0]
+                    else daily["Close"]
+                )
                 market_ret = close.pct_change().mean(axis=1).dropna()
                 rolling = rolling_regime_simple(market_ret)
-                results["market_regime"] = {"method": "rolling", "label": rolling["regime"].iloc[-1]}
+                results["market_regime"] = {
+                    "method": "rolling",
+                    "label": rolling["regime"].iloc[-1],
+                }
         except Exception:
             pass
 
     # 4. 持仓催化分析
     for pos_ticker, pos_info in positions.items():
         try:
-            current_price = data["prices"].get(pos_ticker) or data["pre_market"].get(pos_ticker)
+            current_price = data["prices"].get(pos_ticker) or data["pre_market"].get(
+                pos_ticker
+            )
             if not current_price:
                 continue
 
@@ -348,7 +414,9 @@ def analyze_pipeline(data: dict, positions: dict) -> dict:
                 catalysts=catalysts,
                 max_position_pct=1.0,
                 max_loss_pct=-0.20,
-                nav_premium_pct=(current_price / 24.56 - 1) if pos_ticker == "DXYZ" else None,
+                nav_premium_pct=(current_price / 24.56 - 1)
+                if pos_ticker == "DXYZ"
+                else None,
             )
 
             results[f"position_{pos_ticker}"] = {
@@ -357,7 +425,9 @@ def analyze_pipeline(data: dict, positions: dict) -> dict:
                 "cost_basis": pos_info["cost_basis"],
                 "shares": pos_info["shares"],
                 "pnl_pct": round((current_price / pos_info["cost_basis"] - 1) * 100, 1),
-                "pnl_usd": round(pos_info["shares"] * (current_price - pos_info["cost_basis"]), 0),
+                "pnl_usd": round(
+                    pos_info["shares"] * (current_price - pos_info["cost_basis"]), 0
+                ),
                 "recommended_action": decision.recommended_action,
                 "position_pct": decision.position_pct,
                 "stop_loss": decision.stop_loss,
@@ -406,18 +476,21 @@ def _detect_price_moves(data: dict, positions: dict) -> list:
         if t in prev_prices:
             move = (current - prev_prices[t]) / prev_prices[t]
             if abs(move) >= PRICE_MOVE_THRESHOLD:
-                alerts.append({
-                    "ticker": t,
-                    "move_pct": round(move * 100, 1),
-                    "from_price": prev_prices[t],
-                    "to_price": current,
-                    "direction": "up" if move > 0 else "down",
-                })
+                alerts.append(
+                    {
+                        "ticker": t,
+                        "move_pct": round(move * 100, 1),
+                        "from_price": prev_prices[t],
+                        "to_price": current,
+                        "direction": "up" if move > 0 else "down",
+                    }
+                )
 
     return alerts
 
 
 # ─── 决策合成 ─────────────────────────────────────
+
 
 def synthesize_decision(analysis: dict, positions: dict) -> dict:
     """将所有分析结果合成为一个可执行的决策。"""
@@ -446,18 +519,20 @@ def synthesize_decision(analysis: dict, positions: dict) -> dict:
         ev_ret = pos_data.get("expected_return_pct", 0)
         kelly_pos = pos_data.get("position_pct", 1.0)
         if ev_ret > 10:
-            ticker_reasons.append(f"催化EV +{ev_ret:.0f}%, Kelly建议{kelly_pos:.0%}仓位")
+            ticker_reasons.append(
+                f"催化EV +{ev_ret:.0f}%, Kelly建议{kelly_pos:.0%}仓位"
+            )
         elif ev_ret < -5:
             ticker_reasons.append(f"催化EV {ev_ret:.0f}%, 负期望")
             urgency = "urgent"
 
         # 风险状态理由
         if regime == "ELEVATED":
-            ticker_reasons.append(f"风险状态ELEVATED, 建议减量")
+            ticker_reasons.append("风险状态ELEVATED, 建议减量")
             if action == "持有":
                 action = "减仓观望"
         elif regime == "SEVERE":
-            ticker_reasons.append(f"⚠️ 风险状态SEVERE")
+            ticker_reasons.append("⚠️ 风险状态SEVERE")
             urgency = "critical"
             action = "减仓"
 
@@ -482,16 +557,18 @@ def synthesize_decision(analysis: dict, positions: dict) -> dict:
         if pnl_pct > 15:
             ticker_reasons.append(f"浮盈 +{pnl_pct:.1f}%, 考虑锁利")
 
-        actions.append({
-            "ticker": ticker,
-            "action": action,
-            "position_pct": pos_data.get("position_pct", 1.0),
-            "current_price": current_price,
-            "pnl_pct": pnl_pct,
-            "stop_loss": stop_loss,
-            "take_profit": pos_data.get("take_profit", 0),
-            "reasons": ticker_reasons,
-        })
+        actions.append(
+            {
+                "ticker": ticker,
+                "action": action,
+                "position_pct": pos_data.get("position_pct", 1.0),
+                "current_price": current_price,
+                "pnl_pct": pnl_pct,
+                "stop_loss": stop_loss,
+                "take_profit": pos_data.get("take_profit", 0),
+                "reasons": ticker_reasons,
+            }
+        )
         reasons.extend(ticker_reasons)
 
     # 宏观理由
@@ -529,6 +606,7 @@ def synthesize_decision(analysis: dict, positions: dict) -> dict:
 
 # ─── 推送 ────────────────────────────────────────
 
+
 def push_decision(decision: dict, force: bool = False):
     """推送决策到董事长微信 (通过 outbox)。"""
     prev = load_previous_state()
@@ -557,7 +635,9 @@ def push_decision(decision: dict, force: bool = False):
         "",
     ]
 
-    urgency_icon = {"normal": "ℹ️", "urgent": "⚡", "critical": "🔴"}.get(decision["urgency"], "")
+    urgency_icon = {"normal": "ℹ️", "urgent": "⚡", "critical": "🔴"}.get(
+        decision["urgency"], ""
+    )
     if is_urgent:
         lines.append(f"**{urgency_icon} {decision['urgency'].upper()}**")
         lines.append("")
@@ -565,12 +645,18 @@ def push_decision(decision: dict, force: bool = False):
     # 每个持仓的建议
     for a in current_actions:
         action_icon = {
-            "加仓": "🟢", "持有": "🟡", "持有观望": "🟡",
-            "减仓": "🟠", "减仓观望": "🟠", "清仓": "🔴",
+            "加仓": "🟢",
+            "持有": "🟡",
+            "持有观望": "🟡",
+            "减仓": "🟠",
+            "减仓观望": "🟠",
+            "清仓": "🔴",
         }.get(a["action"], "⚪")
 
         lines.append(f"**{a['ticker']}** — {action_icon} {a['action']}")
-        lines.append(f"${a['current_price']:.2f} | 浮盈 {a['pnl_pct']:+.1f}% | 仓位建议 {a['position_pct']:.0%}")
+        lines.append(
+            f"${a['current_price']:.2f} | 浮盈 {a['pnl_pct']:+.1f}% | 仓位建议 {a['position_pct']:.0%}"
+        )
         if a.get("stop_loss"):
             lines.append(f"止损 ${a['stop_loss']:.2f} | 止盈 ${a['take_profit']:.2f}")
 
@@ -580,7 +666,9 @@ def push_decision(decision: dict, force: bool = False):
 
     # 宏观
     macro = decision.get("macro", {})
-    lines.append(f"**宏观**: {macro.get('regime', '?')} (RTE {macro.get('rte_score', '?')}) | 市场: {macro.get('market_label', '?')}")
+    lines.append(
+        f"**宏观**: {macro.get('regime', '?')} (RTE {macro.get('rte_score', '?')}) | 市场: {macro.get('market_label', '?')}"
+    )
 
     # 理由摘要
     if decision.get("reasons"):
@@ -604,6 +692,7 @@ def push_decision(decision: dict, force: bool = False):
 
 
 # ─── 状态持久化 ───────────────────────────────────
+
 
 def load_previous_state() -> dict:
     """加载上次的决策状态。"""
@@ -632,10 +721,13 @@ def save_current_state(decision: dict):
         "last_urgency": decision.get("urgency", "normal"),
     }
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    STATE_FILE.write_text(json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8")
+    STATE_FILE.write_text(
+        json.dumps(state, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
 
 
 # ─── 持仓读取 ─────────────────────────────────────
+
 
 def load_positions() -> dict:
     """从记忆文件读取当前持仓。"""
@@ -652,6 +744,7 @@ def load_positions() -> dict:
 
 
 # ─── 主循环 ────────────────────────────────────────
+
 
 def run_once(force_push: bool = False):
     """执行一次完整的监控周期。"""
@@ -679,8 +772,10 @@ def run_once(force_push: bool = False):
         pos_key = f"position_{ticker}"
         if pos_key in analysis:
             p = analysis[pos_key]
-            print(f"    {ticker}: {p['recommended_action']} | EV {p['expected_return_pct']:+.1f}% | "
-                  f"PnL {p['pnl_pct']:+.1f}% | 止损 ${p['stop_loss']:.2f}")
+            print(
+                f"    {ticker}: {p['recommended_action']} | EV {p['expected_return_pct']:+.1f}% | "
+                f"PnL {p['pnl_pct']:+.1f}% | 止损 ${p['stop_loss']:.2f}"
+            )
 
     risk = analysis.get("risk_regime", {})
     print(f"  风险: {risk.get('regime', '?')} ({risk.get('composite', '?')})")
@@ -695,7 +790,7 @@ def run_once(force_push: bool = False):
     if result:
         print(f"  ✅ 已推送 → {result.name}")
     else:
-        print(f"  🔇 无变化, 静默")
+        print("  🔇 无变化, 静默")
 
     print(f"[{datetime.now().strftime('%H:%M:%S')}] 周期完成")
     return analysis, decision
@@ -747,10 +842,10 @@ def run_loop(interval: int = None):
     ----------
     interval: 固定间隔(秒)。None=自适应, 指定值=覆盖。
     """
-    print(f"🔄 启动市场监控循环 (自适应间隔)")
-    print(f"  停止: Ctrl+C")
+    print("🔄 启动市场监控循环 (自适应间隔)")
+    print("  停止: Ctrl+C")
     print(f"  最小间隔: {MIN_INTERVAL}s | 最大间隔: {MAX_INTERVAL}s")
-    print(f"  一轮分析耗时: ~14s")
+    print("  一轮分析耗时: ~14s")
     print()
 
     last_urgency = "normal"
@@ -765,6 +860,7 @@ def run_loop(interval: int = None):
         except Exception as e:
             print(f"  ❌ 错误: {e}")
             import traceback
+
             traceback.print_exc()
             last_urgency = "normal"
 
@@ -787,7 +883,7 @@ def run_loop(interval: int = None):
                         pass
             if cmd_text:
                 user_override = None
-                print(f"  📩 收到指令 → 恢复自适应频率")
+                print("  📩 收到指令 → 恢复自适应频率")
 
         # 计算间隔
         session = market_session()
@@ -800,19 +896,26 @@ def run_loop(interval: int = None):
         marker = "⚡" if interval_s <= 60 else ("🔶" if interval_s <= 180 else "🔹")
         print(f"  {marker} 下次: {sleep_s:.0f}s 后 ({interval_reason(interval_s)})")
         if user_override:
-            print(f"     (用户覆盖中, 否则自适应: {adaptive_interval(session, last_urgency)}s)")
+            print(
+                f"     (用户覆盖中, 否则自适应: {adaptive_interval(session, last_urgency)}s)"
+            )
 
         time.sleep(sleep_s)
 
 
 def main():
     import argparse
+
     parser = argparse.ArgumentParser(description="OnionQuant Market Monitor")
     parser.add_argument("--once", action="store_true", help="单次执行")
     parser.add_argument("--loop", action="store_true", help="持续循环 (自适应间隔)")
     parser.add_argument("--push", action="store_true", help="强制推送")
-    parser.add_argument("--interval", type=int, default=None,
-                       help="固定间隔(秒)。不指定则自适应: 催化前1h→60s, 正常→10min, 周末→30min")
+    parser.add_argument(
+        "--interval",
+        type=int,
+        default=None,
+        help="固定间隔(秒)。不指定则自适应: 催化前1h→60s, 正常→10min, 周末→30min",
+    )
     args = parser.parse_args()
 
     if args.loop:

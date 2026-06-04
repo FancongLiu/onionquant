@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Add anime game-like Live Stage + vis.js Knowledge Graph to dashboard."""
 
-with open('company/chairman_dashboard.html', 'r', encoding='utf-8') as f:
+with open("company/chairman_dashboard.html", "r", encoding="utf-8") as f:
     c = f.read()
 
 changes = 0
@@ -15,8 +15,8 @@ if old_cdn in c:
     print("1. vis.js CDN added")
 
 # ==== 2. Add CSS for Live Stage (anime game-like) ====
-old_css_section = '/* ─── Compact Department Grid ─── */'
-new_css_block = '''/* ─── View Toggle ─── */
+old_css_section = "/* ─── Compact Department Grid ─── */"
+new_css_block = """/* ─── View Toggle ─── */
 .view-toggle { display: flex; gap: 4px; }
 .view-toggle button {
   background: var(--card-bg); border: 1px solid var(--border); border-radius: 6px;
@@ -90,7 +90,7 @@ new_css_block = '''/* ─── View Toggle ─── */
 .kg-modal-content { max-width: 95vw !important; width: 1100px !important; }
 .kg-container { width: 100%; height: 65vh; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); }
 
-/* ─── Compact Department Grid ─── */'''
+/* ─── Compact Department Grid ─── */"""
 
 if old_css_section in c:
     c = c.replace(old_css_section, new_css_block)
@@ -98,8 +98,8 @@ if old_css_section in c:
     print("2. Live Stage + Knowledge Graph CSS added")
 
 # ==== 3. Add view toggle and live stage HTML ====
-old_dept_section = '<!-- Department Compact Grid -->'
-new_dept_section = '''<!-- View Toggle & Department Section -->
+old_dept_section = "<!-- Department Compact Grid -->"
+new_dept_section = """<!-- View Toggle & Department Section -->
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
         <span class="section-title" style="margin-bottom:0;">\U0001f3e2 16 部门 · 组织架构</span>
         <div class="view-toggle">
@@ -115,15 +115,15 @@ new_dept_section = '''<!-- View Toggle & Department Section -->
         <div class="stage-characters" id="stageCharacters"></div>
         <div class="stage-floor"></div>
       </div>
-      <!-- Original (hidden) -->'''
+      <!-- Original (hidden) -->"""
 
 # Actually, let me just replace the entire department section HTML
-old = '<!-- Department Compact Grid -->'
+old = "<!-- Department Compact Grid -->"
 if old in c:
     start = c.find(old)
-    end = c.find('<!-- Sidebar -->', start)
+    end = c.find("<!-- Sidebar -->", start)
     if start >= 0 and end >= 0:
-        new_html = '''<!-- View Toggle & Departments -->
+        new_html = """<!-- View Toggle & Departments -->
       <div>
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
           <span class="section-title" style="margin-bottom:0;">\U0001f3e2 16 部门 · 组织架构 (点击查看)</span>
@@ -146,14 +146,14 @@ if old in c:
         </div>
       </div>
 
-      '''
+      """
         c = c[:start] + new_html + c[end:]
         changes += 1
         print("3. View toggle + live stage HTML added")
 
 # ==== 4. Add Knowledge Graph Modal HTML ====
-old_kg_marker = '<!-- Department Detail Modal -->'
-new_kg_modal = '''<!-- Knowledge Graph Modal -->
+old_kg_marker = "<!-- Department Detail Modal -->"
+new_kg_modal = """<!-- Knowledge Graph Modal -->
 <div class="modal-overlay" id="kgModal">
   <div class="modal-content kg-modal-content">
     <button class="modal-close" onclick="document.getElementById('kgModal').classList.remove('active')">✕</button>
@@ -163,7 +163,7 @@ new_kg_modal = '''<!-- Knowledge Graph Modal -->
   </div>
 </div>
 
-<!-- Department Detail Modal -->'''
+<!-- Department Detail Modal -->"""
 
 if old_kg_marker in c:
     c = c.replace(old_kg_marker, new_kg_modal)
@@ -310,7 +310,7 @@ setTimeout(() => {
 """
 
 if old_collapse in c:
-    c = c.replace(old_collapse, old_collapse + '\n\n' + new_stage_js)
+    c = c.replace(old_collapse, old_collapse + "\n\n" + new_stage_js)
     changes += 1
     print("5. Stage view + Knowledge Graph JS added")
 else:
@@ -325,7 +325,7 @@ if old_render_end in c:
     changes += 1
     print("6. renderDepts stage refresh added")
 
-with open('company/chairman_dashboard.html', 'w', encoding='utf-8') as f:
+with open("company/chairman_dashboard.html", "w", encoding="utf-8") as f:
     f.write(c)
 
 print(f"\n=== Done: {changes} changes ===")

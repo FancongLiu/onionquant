@@ -18,15 +18,18 @@ class SlippageModel:
     proportional_bp: proportional slippage in bp per % of daily volume traded
     sqrt_coef: square-root impact coefficient (Almgren-Chriss style)
     """
+
     fixed_bp: float = 0.5
     proportional_bp: float = 1.0
     sqrt_coef: float = 0.1
 
     def apply(self, order_size: float, daily_volume: float, price: float) -> float:
         vol_frac = min(order_size / max(daily_volume, 1), 1.0)
-        impact_bp = (self.fixed_bp
-                     + self.proportional_bp * vol_frac * 100
-                     + self.sqrt_coef * np.sqrt(vol_frac) * 100)
+        impact_bp = (
+            self.fixed_bp
+            + self.proportional_bp * vol_frac * 100
+            + self.sqrt_coef * np.sqrt(vol_frac) * 100
+        )
         return price * impact_bp / 10000
 
 
@@ -85,18 +88,30 @@ def simulate_orders(
     pivot_vol = prices.pivot_table(
         index="date", columns="ticker", values="volume", aggfunc="last"
     ).sort_index()
-    pivot_sig = signals.pivot_table(
-        index="date", columns="ticker", values="signal", aggfunc="last"
-    ).sort_index().fillna(0)
+    pivot_sig = (
+        signals.pivot_table(
+            index="date", columns="ticker", values="signal", aggfunc="last"
+        )
+        .sort_index()
+        .fillna(0)
+    )
 
     common_dates = pivot_prices.index.intersection(pivot_sig.index)
     tickers = pivot_prices.columns.intersection(pivot_sig.columns)
     if len(common_dates) < 2 or len(tickers) == 0:
-        return {"error": "Insufficient overlapping data", "trades": [], "equity": [initial_cash]}
+        return {
+            "error": "Insufficient overlapping data",
+            "trades": [],
+            "equity": [initial_cash],
+        }
 
     pivot_prices = pivot_prices.loc[common_dates, tickers]
     pivot_sig = pivot_sig.loc[common_dates, tickers]
-    pivot_vol = pivot_vol.loc[common_dates, tickers] if set(tickers) <= set(pivot_vol.columns) else None
+    pivot_vol = (
+        pivot_vol.loc[common_dates, tickers]
+        if set(tickers) <= set(pivot_vol.columns)
+        else None
+    )
 
     cash = initial_cash
     positions = {}  # ticker -> shares
@@ -107,7 +122,11 @@ def simulate_orders(
     for i, date in enumerate(dates):
         today_prices = pivot_prices.loc[date].to_dict()
         today_sig = pivot_sig.loc[date].to_dict()
-        today_vol = pivot_vol.loc[date].to_dict() if pivot_vol is not None else {t: 1e6 for t in tickers}
+        today_vol = (
+            pivot_vol.loc[date].to_dict()
+            if pivot_vol is not None
+            else {t: 1e6 for t in tickers}
+        )
 
         # Liquidate positions where signal flipped or went to 0
         for ticker in list(positions.keys()):
@@ -120,9 +139,16 @@ def simulate_orders(
                     fill_price = price - impact if shares > 0 else price + impact
                     proceeds = shares * fill_price - shares * commission_per_share
                     cash += proceeds
-                    trades.append({"date": date, "ticker": ticker, "side": "SELL",
-                                   "shares": shares, "price": round(fill_price, 4),
-                                   "slippage_bp": round(impact / price * 10000, 2)})
+                    trades.append(
+                        {
+                            "date": date,
+                            "ticker": ticker,
+                            "side": "SELL",
+                            "shares": shares,
+                            "price": round(fill_price, 4),
+                            "slippage_bp": round(impact / price * 10000, 2),
+                        }
+                    )
                     del positions[ticker]
 
         # Enter positions based on signals
@@ -151,9 +177,16 @@ def simulate_orders(
 
             cash -= cost
             positions[ticker] = max_shares
-            trades.append({"date": date, "ticker": ticker, "side": "BUY",
-                           "shares": max_shares, "price": round(fill_price, 4),
-                           "slippage_bp": round(impact / price * 10000, 2)})
+            trades.append(
+                {
+                    "date": date,
+                    "ticker": ticker,
+                    "side": "BUY",
+                    "shares": max_shares,
+                    "price": round(fill_price, 4),
+                    "slippage_bp": round(impact / price * 10000, 2),
+                }
+            )
 
         # Mark-to-market
         mtm = cash
@@ -169,8 +202,16 @@ def simulate_orders(
             price = final_prices.get(ticker, 0)
             if price > 0:
                 cash += shares * price
-                trades.append({"date": last_date, "ticker": ticker, "side": "SELL (final)",
-                               "shares": shares, "price": round(price, 4), "slippage_bp": 0})
+                trades.append(
+                    {
+                        "date": last_date,
+                        "ticker": ticker,
+                        "side": "SELL (final)",
+                        "shares": shares,
+                        "price": round(price, 4),
+                        "slippage_bp": 0,
+                    }
+                )
         del positions[ticker]
         equity[-1] = cash
 
@@ -193,6 +234,7 @@ def _compute_metrics(equity: pd.Series, returns: pd.Series) -> Dict:
     ppy = 252
     try:
         from empyrical import sharpe_ratio, sortino_ratio, calmar_ratio, max_drawdown
+
         sr = sharpe_ratio(returns.values)
         so = sortino_ratio(returns.values)
         cr = calmar_ratio(returns.values)
@@ -200,7 +242,11 @@ def _compute_metrics(equity: pd.Series, returns: pd.Series) -> Dict:
     except ImportError:
         r = returns.values
         sr = float(np.mean(r) / max(np.std(r), 1e-10) * np.sqrt(ppy))
-        so = float(np.mean(r) / max(np.std(r[r < 0]) if (r < 0).any() else np.std(r), 1e-10) * np.sqrt(ppy))
+        so = float(
+            np.mean(r)
+            / max(np.std(r[r < 0]) if (r < 0).any() else np.std(r), 1e-10)
+            * np.sqrt(ppy)
+        )
         peak = np.maximum.accumulate(equity.values)
         dd = (peak - equity.values) / peak
         mdd = float(dd.max())
@@ -208,7 +254,9 @@ def _compute_metrics(equity: pd.Series, returns: pd.Series) -> Dict:
 
     return {
         "total_return": float(equity.iloc[-1] / equity.iloc[0] - 1),
-        "annual_return": float((equity.iloc[-1] / equity.iloc[0]) ** (ppy / max(len(returns), 1)) - 1),
+        "annual_return": float(
+            (equity.iloc[-1] / equity.iloc[0]) ** (ppy / max(len(returns), 1)) - 1
+        ),
         "annual_volatility": float(returns.std() * np.sqrt(ppy)),
         "sharpe_ratio": round(sr, 4),
         "sortino_ratio": round(so, 4),
@@ -217,8 +265,9 @@ def _compute_metrics(equity: pd.Series, returns: pd.Series) -> Dict:
     }
 
 
-def execution_quality_report(prices: pd.DataFrame, trades: List[Dict],
-                              schedule: str = "VWAP") -> Dict:
+def execution_quality_report(
+    prices: pd.DataFrame, trades: List[Dict], schedule: str = "VWAP"
+) -> Dict:
     """Compute execution quality metrics: implementation shortfall, VWAP slippage."""
     if not trades:
         return {"error": "No trades"}
@@ -252,7 +301,9 @@ def execution_quality_report(prices: pd.DataFrame, trades: List[Dict],
     }
 
 
-def _make_demo_data(n_dates: int = 252, n_tickers: int = 5, seed: int = 42) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def _make_demo_data(
+    n_dates: int = 252, n_tickers: int = 5, seed: int = 42
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """Generate demo prices and signals for testing."""
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2024-01-01", periods=n_dates, freq="B")
@@ -263,12 +314,15 @@ def _make_demo_data(n_dates: int = 252, n_tickers: int = 5, seed: int = 42) -> T
     for t in tickers:
         close = 50 + np.cumsum(rng.normal(0.02, 1.0, n_dates))
         for i, d in enumerate(dates):
-            price_records.append({
-                "date": d, "ticker": t,
-                "open": close[i] * (1 + rng.normal(0, 0.002)),
-                "close": close[i],
-                "volume": float(rng.integers(500_000, 5_000_000)),
-            })
+            price_records.append(
+                {
+                    "date": d,
+                    "ticker": t,
+                    "open": close[i] * (1 + rng.normal(0, 0.002)),
+                    "close": close[i],
+                    "volume": float(rng.integers(500_000, 5_000_000)),
+                }
+            )
             if i > 0 and i % 21 == 0:
                 signal_records.append({"date": d, "ticker": t, "signal": 1})
 

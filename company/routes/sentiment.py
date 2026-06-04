@@ -1,10 +1,9 @@
 """Sentiment routes — DXYZ + storage stock news & social sentiment."""
-from datetime import datetime, timedelta
+
+from datetime import datetime
 
 from fastapi import APIRouter
-from fastapi.responses import JSONResponse
 
-from .shared import PROJECT_ROOT
 
 router = APIRouter(tags=["sentiment"])
 
@@ -15,17 +14,20 @@ def _yf_news(ticker: str, max_items: int = 10) -> list:
     """Fetch news from yfinance (no API key needed)."""
     try:
         import yfinance as yf
+
         t = yf.Ticker(ticker)
         news = t.news[:max_items] if hasattr(t, "news") else []
         items = []
         for n in news:
             content = n.get("content", n)
-            items.append({
-                "title": content.get("title", content.get("summary", "")),
-                "source": content.get("source", content.get("provider", "")),
-                "published": content.get("pubDate", ""),
-                "url": content.get("canonicalUrl", content.get("url", "")),
-            })
+            items.append(
+                {
+                    "title": content.get("title", content.get("summary", "")),
+                    "source": content.get("source", content.get("provider", "")),
+                    "published": content.get("pubDate", ""),
+                    "url": content.get("canonicalUrl", content.get("url", "")),
+                }
+            )
         return items
     except Exception:
         return []
@@ -34,7 +36,6 @@ def _yf_news(ticker: str, max_items: int = 10) -> list:
 def _price_sentiment(ticker: str) -> dict:
     """Compute simple sentiment from recent price action."""
     try:
-        import numpy as np
         import yfinance as yf
     except Exception:
         return {}
@@ -48,7 +49,11 @@ def _price_sentiment(ticker: str) -> dict:
         ret_5d = float(hist.pct_change(5).iloc[-1] * 100)
         ret_1m = float(hist.pct_change(len(hist) - 1).iloc[-1] * 100)
         vol_ratio = float(hist.iloc[-5:].std() / hist.std()) if hist.std() > 0 else 1.0
-        trend = "bullish" if close > ma5 > ma20 else ("bearish" if close < ma5 < ma20 else "neutral")
+        trend = (
+            "bullish"
+            if close > ma5 > ma20
+            else ("bearish" if close < ma5 < ma20 else "neutral")
+        )
         return {
             "close": round(close, 2),
             "ma5": round(ma5, 2),

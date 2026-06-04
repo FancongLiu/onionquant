@@ -17,6 +17,7 @@ from scipy.stats import spearmanr
 
 # ── Helpers ─────────────────────────────────────────────────
 
+
 def _rolling_spearman(a: pd.Series, b: pd.Series, window: int) -> pd.Series:
     """Compute rolling Spearman rank correlation between two series."""
     combined = pd.DataFrame({"a": a, "b": b}).dropna()
@@ -25,8 +26,8 @@ def _rolling_spearman(a: pd.Series, b: pd.Series, window: int) -> pd.Series:
         return result
     combined["_r"] = np.nan
     for i in range(window - 1, len(combined)):
-        wa = combined["a"].iloc[i - window + 1:i + 1]
-        wb = combined["b"].iloc[i - window + 1:i + 1]
+        wa = combined["a"].iloc[i - window + 1 : i + 1]
+        wb = combined["b"].iloc[i - window + 1 : i + 1]
         if wa.nunique() < 2 or wb.nunique() < 2:
             continue
         combined.iloc[i, combined.columns.get_loc("_r")] = spearmanr(wa, wb)[0]
@@ -36,6 +37,7 @@ def _rolling_spearman(a: pd.Series, b: pd.Series, window: int) -> pd.Series:
 
 
 # ── Core weighting methods ─────────────────────────────────
+
 
 def ic_weighted(
     factor_df: pd.DataFrame,
@@ -64,18 +66,22 @@ def ic_weighted(
     for col in factor_cols:
         if col not in factor_df.columns:
             continue
-        fwd_aligned = pd.DataFrame({
-            "f": factor_df[col],
-            "r": forward_returns,
-        }).dropna()
+        fwd_aligned = pd.DataFrame(
+            {
+                "f": factor_df[col],
+                "r": forward_returns,
+            }
+        ).dropna()
 
         if len(fwd_aligned) < 20:
             ic_series[col] = pd.Series(0.0, index=factor_df.index)
             continue
 
-        ic_series[col] = _rolling_spearman(
-            fwd_aligned["f"], fwd_aligned["r"], window
-        ).reindex(factor_df.index).fillna(0.0)
+        ic_series[col] = (
+            _rolling_spearman(fwd_aligned["f"], fwd_aligned["r"], window)
+            .reindex(factor_df.index)
+            .fillna(0.0)
+        )
 
     if not ic_series:
         return result
@@ -116,10 +122,12 @@ def ic_ir_weighted(
     for col in factor_cols:
         if col not in factor_df.columns:
             continue
-        fwd_aligned = pd.DataFrame({
-            "f": factor_df[col],
-            "r": forward_returns,
-        }).dropna()
+        fwd_aligned = pd.DataFrame(
+            {
+                "f": factor_df[col],
+                "r": forward_returns,
+            }
+        ).dropna()
 
         if len(fwd_aligned) < 20:
             continue
@@ -167,17 +175,21 @@ def bayesian_shrinkage_weights(
     for col in factor_cols:
         if col not in factor_df.columns:
             continue
-        fwd_aligned = pd.DataFrame({
-            "f": factor_df[col],
-            "r": forward_returns,
-        }).dropna()
+        fwd_aligned = pd.DataFrame(
+            {
+                "f": factor_df[col],
+                "r": forward_returns,
+            }
+        ).dropna()
 
         if len(fwd_aligned) < 20:
             continue
 
-        ic_dict[col] = _rolling_spearman(
-            fwd_aligned["f"], fwd_aligned["r"], window
-        ).reindex(factor_df.index).fillna(0.0)
+        ic_dict[col] = (
+            _rolling_spearman(fwd_aligned["f"], fwd_aligned["r"], window)
+            .reindex(factor_df.index)
+            .fillna(0.0)
+        )
 
     if not ic_dict:
         return result
@@ -197,6 +209,7 @@ def bayesian_shrinkage_weights(
 
 
 # ── Signal decay adjustment ─────────────────────────────────
+
 
 def decay_adjusted_scores(
     factor_df: pd.DataFrame,
@@ -224,6 +237,7 @@ def decay_adjusted_scores(
 
 
 # ── Turnover-constrained blending ───────────────────────────
+
 
 def turnover_constrained_combine(
     factor_df: pd.DataFrame,
@@ -263,7 +277,9 @@ def turnover_constrained_combine(
 
     if prev_weights is not None and max_turnover < 1.0:
         blend = np.clip(1 - max_turnover, 0, 1)
-        result["combined_score"] = blend * prev_weights.fillna(0) + (1 - blend) * target_score
+        result["combined_score"] = (
+            blend * prev_weights.fillna(0) + (1 - blend) * target_score
+        )
     else:
         result["combined_score"] = target_score
 
@@ -271,6 +287,7 @@ def turnover_constrained_combine(
 
 
 # ── Regime-aware blending ───────────────────────────────────
+
 
 def regime_aware_combine(
     factor_df: pd.DataFrame,
@@ -326,9 +343,12 @@ def regime_aware_combine(
 
 # ── Unified pipeline ────────────────────────────────────────
 
+
 @dataclass
 class CombineConfig:
-    method: str = "ic_weighted"  # ic_weighted | ic_ir | bayesian | equal | regime | turnover
+    method: str = (
+        "ic_weighted"  # ic_weighted | ic_ir | bayesian | equal | regime | turnover
+    )
     factor_cols: List[str] = field(default_factory=list)
     window: int = 252
     shrinkage: float = 0.3
@@ -363,9 +383,21 @@ def combine_alphas(
         config = CombineConfig()
 
     factor_cols = config.factor_cols or [
-        c for c in factor_df.columns
-        if c not in {"date", "ticker", "open", "high", "low", "close", "volume",
-                       "industry", "combined_score", "signal"}
+        c
+        for c in factor_df.columns
+        if c
+        not in {
+            "date",
+            "ticker",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "industry",
+            "combined_score",
+            "signal",
+        }
     ]
 
     if not factor_cols:
@@ -373,8 +405,12 @@ def combine_alphas(
 
     # Apply decay adjustment if configured
     if config.decay_half_lives:
-        factor_df = decay_adjusted_scores(factor_df, factor_cols, config.decay_half_lives)
-        decay_cols = [c + "_decay" for c in factor_cols if c + "_decay" in factor_df.columns]
+        factor_df = decay_adjusted_scores(
+            factor_df, factor_cols, config.decay_half_lives
+        )
+        decay_cols = [
+            c + "_decay" for c in factor_cols if c + "_decay" in factor_df.columns
+        ]
         if decay_cols:
             factor_cols = decay_cols
 
@@ -388,35 +424,52 @@ def combine_alphas(
         return result
 
     elif method == "ic_weighted":
-        return ic_weighted(factor_df, factor_cols, forward_returns,
-                           window=config.window, floor=config.floor)
+        return ic_weighted(
+            factor_df,
+            factor_cols,
+            forward_returns,
+            window=config.window,
+            floor=config.floor,
+        )
 
     elif method == "ic_ir":
-        return ic_ir_weighted(factor_df, factor_cols, forward_returns,
-                              estimation_window=config.window)
+        return ic_ir_weighted(
+            factor_df, factor_cols, forward_returns, estimation_window=config.window
+        )
 
     elif method == "bayesian":
-        return bayesian_shrinkage_weights(factor_df, factor_cols, forward_returns,
-                                          shrinkage=config.shrinkage, window=config.window)
+        return bayesian_shrinkage_weights(
+            factor_df,
+            factor_cols,
+            forward_returns,
+            shrinkage=config.shrinkage,
+            window=config.window,
+        )
 
     elif method == "turnover":
         if ic_summary_df is None:
             return ic_weighted(factor_df, factor_cols, forward_returns)
-        return turnover_constrained_combine(factor_df, factor_cols, ic_summary_df,
-                                            max_turnover=config.max_turnover,
-                                            prev_weights=prev_scores)
+        return turnover_constrained_combine(
+            factor_df,
+            factor_cols,
+            ic_summary_df,
+            max_turnover=config.max_turnover,
+            prev_weights=prev_scores,
+        )
 
     elif method == "regime":
         if regime_labels is None:
             return ic_weighted(factor_df, factor_cols, forward_returns)
-        return regime_aware_combine(factor_df, factor_cols, regime_labels,
-                                    config.regime_weights or {})
+        return regime_aware_combine(
+            factor_df, factor_cols, regime_labels, config.regime_weights or {}
+        )
 
     else:
         return ic_weighted(factor_df, factor_cols, forward_returns)
 
 
 # ── Evaluation helpers ──────────────────────────────────────
+
 
 def estimate_ic_weights(
     factor_df: pd.DataFrame,
@@ -447,10 +500,12 @@ def evaluate_combination(
     n_quantiles: int = 5,
 ) -> Dict:
     """Evaluate a combined alpha score: quantile spread, IC, hit rate."""
-    aligned = pd.DataFrame({
-        "score": combined_score,
-        "fwd": forward_returns,
-    }).dropna()
+    aligned = pd.DataFrame(
+        {
+            "score": combined_score,
+            "fwd": forward_returns,
+        }
+    ).dropna()
 
     if len(aligned) < n_quantiles * 10:
         return {"error": "Insufficient data"}
@@ -460,12 +515,17 @@ def evaluate_combination(
     bottom = aligned[aligned["quantile"] == 0]["fwd"].mean()
     spread = float(top - bottom)
     spread_t = float(
-        (top - bottom) / max(aligned["fwd"].std() / np.sqrt(len(aligned) / n_quantiles), 1e-10)
+        (top - bottom)
+        / max(aligned["fwd"].std() / np.sqrt(len(aligned) / n_quantiles), 1e-10)
     )
 
     ic = float(aligned["score"].corr(aligned["fwd"], method="spearman"))
-    hit_rate = float(((aligned["score"] > 0) & (aligned["fwd"] > 0) |
-                      (aligned["score"] < 0) & (aligned["fwd"] < 0)).mean())
+    hit_rate = float(
+        (
+            (aligned["score"] > 0) & (aligned["fwd"] > 0)
+            | (aligned["score"] < 0) & (aligned["fwd"] < 0)
+        ).mean()
+    )
 
     return {
         "ic": round(ic, 6),
@@ -514,6 +574,7 @@ def report_markdown(config: CombineConfig, evaluation: Dict) -> str:
 
 # ── Demo ────────────────────────────────────────────────────
 
+
 def _make_demo_data(
     n: int = 252, n_factors: int = 5, n_tickers: int = 10, seed: int = 42
 ) -> Tuple[pd.DataFrame, pd.Series, pd.Series]:
@@ -538,8 +599,12 @@ def _make_demo_data(
     noise = rng.normal(0, 0.02, len(df))
     df["close"] = 100.0  # placeholder
     forward_returns = (
-        df["factor_0"] * 0.01 + df["factor_1"] * 0.02 + df["factor_2"] * 0.03
-        + df["factor_3"] * 0.04 + df["factor_4"] * 0.05 + noise
+        df["factor_0"] * 0.01
+        + df["factor_1"] * 0.02
+        + df["factor_2"] * 0.03
+        + df["factor_3"] * 0.04
+        + df["factor_4"] * 0.05
+        + noise
     )
 
     # Regime labels for regime-aware testing
@@ -571,8 +636,10 @@ def main():
         r2 = combine_alphas(df, forward_returns, cfg2)
         ev = evaluate_combination(r2["combined_score"], forward_returns)
         if "error" not in ev:
-            print(f"| {method} | {ev['ic']:.4f} | {ev['hit_rate']:.2%} | "
-                  f"{ev['quantile_spread']:.4%} | {ev['spread_t_stat']:.2f} |")
+            print(
+                f"| {method} | {ev['ic']:.4f} | {ev['hit_rate']:.2%} | "
+                f"{ev['quantile_spread']:.4%} | {ev['spread_t_stat']:.2f} |"
+            )
 
     # Estimate static weights
     w = estimate_ic_weights(df, factor_cols, forward_returns)

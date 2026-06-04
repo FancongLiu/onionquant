@@ -47,13 +47,15 @@ def parse_tracker():
         if current_sprint and line.startswith("| T"):
             parts = [p.strip() for p in line.split("|")[1:-1]]
             if len(parts) >= 5:
-                sprints[current_sprint].append({
-                    "id": parts[0],
-                    "desc": parts[1],
-                    "dept": parts[2],
-                    "priority": parts[3],
-                    "status": parts[4] if len(parts) > 4 else "",
-                })
+                sprints[current_sprint].append(
+                    {
+                        "id": parts[0],
+                        "desc": parts[1],
+                        "dept": parts[2],
+                        "priority": parts[3],
+                        "status": parts[4] if len(parts) > 4 else "",
+                    }
+                )
 
     # Extract waiting items
     waiting = []
@@ -66,7 +68,12 @@ def parse_tracker():
             break
         if in_waiting and line.startswith("|"):
             parts = [p.strip() for p in line.split("|")[1:-1]]
-            if parts and parts[0] and not parts[0].startswith("---") and not parts[0].startswith("ID"):
+            if (
+                parts
+                and parts[0]
+                and not parts[0].startswith("---")
+                and not parts[0].startswith("ID")
+            ):
                 waiting.append(parts)
 
     # Determine active tasks (🆕 or not ✅)
@@ -95,7 +102,7 @@ def main():
     dry = "--dry-run" in sys.argv
     counts, active, waiting = parse_tracker()
 
-    print(f"=== TASK_TRACKER.md → Kanban Sync ===")
+    print("=== TASK_TRACKER.md → Kanban Sync ===")
     print(f"Board: {BOARD}")
     print(f"Completed: {counts.get('已完成', '?')}")
     print(f"Active tasks (not done): {len(active)}")
@@ -143,11 +150,16 @@ def main():
             continue
 
         priority_num = task["priority"].replace("P", "")
-        result = run_kanban("create",
-                            "--body", f"Dept: {task['dept']} | Priority: {task['priority']} | {task['status']}",
-                            "--priority", priority_num,
-                            "--idempotency-key", f"sprint-{tid}",
-                            title)
+        result = run_kanban(
+            "create",
+            "--body",
+            f"Dept: {task['dept']} | Priority: {task['priority']} | {task['status']}",
+            "--priority",
+            priority_num,
+            "--idempotency-key",
+            f"sprint-{tid}",
+            title,
+        )
         if kanban_status == "triage":
             # parse task id from result and block it
             pass

@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 """Quantitative scan for 12 target stocks — DXYZ priority."""
-import yfinance as yf, pandas as pd, numpy as np
 
-TICKERS = ['DXYZ', 'INTC', 'MU', 'AMD', 'GE', 'BABA', 'JD', 'NOK', 'WDC']
+import yfinance as yf
+import pandas as pd
+import numpy as np
+
+TICKERS = ["DXYZ", "INTC", "MU", "AMD", "GE", "BABA", "JD", "NOK", "WDC"]
 data = {}
 for t in TICKERS:
-    h = yf.Ticker(t).history('1y')['Close']
+    h = yf.Ticker(t).history("1y")["Close"]
     if len(h) > 100:
         data[t] = h
 df = pd.DataFrame(data)
@@ -29,20 +32,20 @@ for t1 in TICKERS:
 
 print("\n=== DXYZ Correlations ===")
 for t in TICKERS:
-    if t != 'DXYZ' and t in corr.index:
-        r = corr.loc['DXYZ', t]
+    if t != "DXYZ" and t in corr.index:
+        r = corr.loc["DXYZ", t]
         tag = "HIGH" if abs(r) > 0.5 else ("MED" if abs(r) > 0.3 else "LOW")
         print(f"DXYZ vs {t:6s}: r = {r:+.3f}  [{tag}]")
 
 # DXYZ specific
 print("\n=== DXYZ Metrics ===")
-dxyz_r = rets['DXYZ'].dropna()
+dxyz_r = rets["DXYZ"].dropna()
 roll_sharpe = dxyz_r.rolling(30).mean() / dxyz_r.rolling(30).std() * (252**0.5)
 print(f"Rolling 30d Sharpe: {roll_sharpe.iloc[-1]:.2f}")
 print(f"30d ago Sharpe:     {roll_sharpe.iloc[-30]:.2f}")
 print(f"Min Sharpe (1Y):    {roll_sharpe.min():.2f}")
 print(f"Max Sharpe (1Y):    {roll_sharpe.max():.2f}")
-print(f"Annual Vol:         {dxyz_r.std()*(252**0.5)*100:.1f}%")
+print(f"Annual Vol:         {dxyz_r.std() * (252**0.5) * 100:.1f}%")
 print(f"Skewness:           {dxyz_r.skew():+.2f}")
 print(f"Kurtosis:           {dxyz_r.kurtosis():+.2f}")
 
@@ -52,11 +55,21 @@ stats = []
 for t in TICKERS:
     r = rets[t].dropna()
     sharpe = (r.mean() / r.std()) * (252**0.5)
-    cagr = (1 + r.mean())**252 - 1
+    cagr = (1 + r.mean()) ** 252 - 1
     maxdd = (df[t] / df[t].cummax() - 1).min()
-    stats.append({'Ticker': t, 'Sharpe': sharpe, 'CAGR': cagr, 'MaxDD': maxdd, 'Vol': r.std()*(252**0.5)})
-sdf = pd.DataFrame(stats).sort_values('Sharpe', ascending=False)
+    stats.append(
+        {
+            "Ticker": t,
+            "Sharpe": sharpe,
+            "CAGR": cagr,
+            "MaxDD": maxdd,
+            "Vol": r.std() * (252**0.5),
+        }
+    )
+sdf = pd.DataFrame(stats).sort_values("Sharpe", ascending=False)
 for _, row in sdf.iterrows():
-    print(f"{row['Ticker']:6s}: Sharpe {row['Sharpe']:5.2f} | CAGR {row['CAGR']*100:6.1f}% | Vol {row['Vol']*100:5.1f}% | MaxDD {row['MaxDD']*100:6.1f}%")
+    print(
+        f"{row['Ticker']:6s}: Sharpe {row['Sharpe']:5.2f} | CAGR {row['CAGR'] * 100:6.1f}% | Vol {row['Vol'] * 100:5.1f}% | MaxDD {row['MaxDD'] * 100:6.1f}%"
+    )
 
 print("\nDone — quant_scan_12stocks")

@@ -10,8 +10,6 @@ Usage:
 """
 
 import argparse
-import json
-import sys
 from pathlib import Path
 
 import networkx as nx
@@ -30,6 +28,7 @@ def scan_departments() -> dict:
     for yf in manifest_dir.glob("*.yaml"):
         try:
             import yaml
+
             data = yaml.safe_load(yf.read_text(encoding="utf-8"))
             name = data.get("name", yf.stem)
             dept_info[yf.stem] = {
@@ -74,8 +73,20 @@ def scan_tech_stack() -> list:
                 if pkg and len(pkg) > 2:
                     techs.add(pkg)
     # Manual additions from CLAUDE.md
-    techs.update(["Python3.12", "FastAPI", "SSE", "Docker", "TimescaleDB",
-                  "Dagster", "WeChat-SDK", "LedoitWolf", "NetworkX", "PyVis"])
+    techs.update(
+        [
+            "Python3.12",
+            "FastAPI",
+            "SSE",
+            "Docker",
+            "TimescaleDB",
+            "Dagster",
+            "WeChat-SDK",
+            "LedoitWolf",
+            "NetworkX",
+            "PyVis",
+        ]
+    )
     return sorted(techs)
 
 
@@ -85,6 +96,7 @@ def scan_stocks() -> list:
     if not tracker.exists():
         return ["DXYZ", "INTC", "MU", "AMD", "NVDA"]
     import re
+
     text = tracker.read_text(encoding="utf-8")
     m = re.search(r"PIPELINE_TICKERS\s*\|\s*(.+?)\s*\|", text)
     if m:
@@ -96,7 +108,9 @@ def build_graph(dept_info: dict, techs: list, stocks: list) -> nx.DiGraph:
     G = nx.DiGraph()
 
     for did, info in dept_info.items():
-        G.add_node(did, label=info["name"], title=info["name"], group="department", size=40)
+        G.add_node(
+            did, label=info["name"], title=info["name"], group="department", size=40
+        )
 
     for t in techs:
         G.add_node(t, label=t, title=t, group="tech", size=20)
@@ -106,7 +120,12 @@ def build_graph(dept_info: dict, techs: list, stocks: list) -> nx.DiGraph:
 
     # Edges: tech → departments
     tech_dept_map = {
-        "yfinance": ["data_engineering", "sentiment_intel", "trading_execution", "strategy_research"],
+        "yfinance": [
+            "data_engineering",
+            "sentiment_intel",
+            "trading_execution",
+            "strategy_research",
+        ],
         "OpenBB": ["data_engineering"],
         "Qlib": ["strategy_research"],
         "Riskfolio-Lib": ["risk_management", "trading_execution"],
@@ -144,7 +163,9 @@ def build_graph(dept_info: dict, techs: list, stocks: list) -> nx.DiGraph:
 
 
 def render_html(G: nx.DiGraph, out_path: Path):
-    net = Network(height="800px", width="100%", directed=True, notebook=False, bgcolor="#0a0e17")
+    net = Network(
+        height="800px", width="100%", directed=True, notebook=False, bgcolor="#0a0e17"
+    )
     net.from_nx(G)
 
     colors = {"department": "#3b82f6", "tech": "#10b981", "stock": "#f0b90b"}
@@ -158,9 +179,17 @@ def render_html(G: nx.DiGraph, out_path: Path):
 
     net.options = {
         "nodes": {"font": {"size": 14, "color": "#e2e8f0"}, "borderWidth": 2},
-        "edges": {"color": {"color": "#475569", "opacity": 0.6},
-                  "arrows": {"to": {"enabled": True, "scaleFactor": 0.5}}},
-        "physics": {"barnesHut": {"gravitationalConstant": -3000, "centralGravity": 0.3, "springLength": 180}},
+        "edges": {
+            "color": {"color": "#475569", "opacity": 0.6},
+            "arrows": {"to": {"enabled": True, "scaleFactor": 0.5}},
+        },
+        "physics": {
+            "barnesHut": {
+                "gravitationalConstant": -3000,
+                "centralGravity": 0.3,
+                "springLength": 180,
+            }
+        },
         "interaction": {"hover": True, "tooltipDelay": 100, "navigationButtons": True},
     }
     net.save_graph(str(out_path))
@@ -175,11 +204,15 @@ def main():
     techs = scan_tech_stack()
     stocks = [] if args.no_stocks else scan_stocks()
 
-    print(f"Building knowledge graph: {len(depts)} depts, {len(techs)} techs, {len(stocks)} stocks")
+    print(
+        f"Building knowledge graph: {len(depts)} depts, {len(techs)} techs, {len(stocks)} stocks"
+    )
     G = build_graph(depts, techs, stocks)
     OUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     render_html(G, OUT_PATH)
-    print(f"Done: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges → {OUT_PATH}")
+    print(
+        f"Done: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges → {OUT_PATH}"
+    )
 
 
 if __name__ == "__main__":

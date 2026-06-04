@@ -15,11 +15,11 @@ from datetime import datetime
 @dataclass
 class PredictorConfig:
     model: str = "ridge"  # "ridge" | "rf" | "xgb"
-    alpha: float = 1.0    # Ridge regularization
+    alpha: float = 1.0  # Ridge regularization
     n_estimators: int = 100
     max_depth: int = 5
     test_size: float = 0.2
-    n_splits: int = 5      # time-series CV splits
+    n_splits: int = 5  # time-series CV splits
     random_state: int = 42
 
 
@@ -27,31 +27,43 @@ def _get_model(config: PredictorConfig):
     """Get sklearn estimator from config."""
     if config.model == "ridge":
         from sklearn.linear_model import Ridge
+
         return Ridge(alpha=config.alpha, random_state=config.random_state)
 
     elif config.model == "rf":
         from sklearn.ensemble import RandomForestRegressor
+
         return RandomForestRegressor(
-            n_estimators=config.n_estimators, max_depth=config.max_depth,
-            random_state=config.random_state, n_jobs=-1,
+            n_estimators=config.n_estimators,
+            max_depth=config.max_depth,
+            random_state=config.random_state,
+            n_jobs=-1,
         )
 
     elif config.model == "xgb":
         try:
             from xgboost import XGBRegressor
+
             return XGBRegressor(
-                n_estimators=config.n_estimators, max_depth=config.max_depth,
-                learning_rate=0.05, random_state=config.random_state, verbosity=0,
+                n_estimators=config.n_estimators,
+                max_depth=config.max_depth,
+                learning_rate=0.05,
+                random_state=config.random_state,
+                verbosity=0,
             )
         except ImportError:
             from sklearn.ensemble import RandomForestRegressor
+
             return RandomForestRegressor(
-                n_estimators=config.n_estimators, max_depth=config.max_depth,
-                random_state=config.random_state, n_jobs=-1,
+                n_estimators=config.n_estimators,
+                max_depth=config.max_depth,
+                random_state=config.random_state,
+                n_jobs=-1,
             )
 
     else:
         from sklearn.linear_model import Ridge
+
         return Ridge(alpha=config.alpha)
 
 
@@ -96,10 +108,12 @@ def time_series_split(
         train_end = test_end - test_len
         if train_end <= train_start:
             continue
-        splits.append((
-            np.arange(0, train_end),
-            np.arange(train_end, test_end),
-        ))
+        splits.append(
+            (
+                np.arange(0, train_end),
+                np.arange(train_end, test_end),
+            )
+        )
 
     return splits
 
@@ -127,6 +141,7 @@ def train_predict(
 
     # Metrics
     from sklearn.metrics import r2_score, mean_squared_error
+
     r2 = float(r2_score(y, y_pred))
     mse = float(mean_squared_error(y, y_pred))
     ic = float(pd.Series(y_pred).corr(pd.Series(y), method="spearman"))
@@ -187,6 +202,7 @@ def cross_validate(
         y_pred = model.predict(X_test)
 
         from sklearn.metrics import r2_score
+
         r2 = float(r2_score(y_test, y_pred))
         ic = float(pd.Series(y_pred).corr(pd.Series(y_test), method="spearman"))
         mse = float(np.mean((y_test - y_pred) ** 2))
@@ -194,17 +210,21 @@ def cross_validate(
         # Top features by importance
         imp = _feature_importance(model, config, X.shape[1])
         top_idx = np.argsort(imp)[-3:][::-1]
-        top_features = [factor_cols[i] if i < len(factor_cols) else f"f{i}" for i in top_idx]
+        top_features = [
+            factor_cols[i] if i < len(factor_cols) else f"f{i}" for i in top_idx
+        ]
 
-        rows.append({
-            "fold": fold_idx + 1,
-            "train_n": len(train_idx),
-            "test_n": len(test_idx),
-            "r2": round(r2, 6),
-            "ic": round(ic, 4),
-            "mse": round(mse, 8),
-            "top_features": ", ".join(top_features),
-        })
+        rows.append(
+            {
+                "fold": fold_idx + 1,
+                "train_n": len(train_idx),
+                "test_n": len(test_idx),
+                "r2": round(r2, 6),
+                "ic": round(ic, 4),
+                "mse": round(mse, 8),
+                "top_features": ", ".join(top_features),
+            }
+        )
 
     return pd.DataFrame(rows)
 
@@ -251,10 +271,12 @@ def predict_returns(
     # Build importance DataFrame
     imp = result["feature_importance"]
     if len(imp) == len(valid_cols):
-        imp_df = pd.DataFrame({
-            "factor": valid_cols,
-            "importance": imp,
-        }).sort_values("importance", ascending=False)
+        imp_df = pd.DataFrame(
+            {
+                "factor": valid_cols,
+                "importance": imp,
+            }
+        ).sort_values("importance", ascending=False)
     else:
         imp_df = pd.DataFrame()
 
@@ -282,17 +304,23 @@ def evaluate_prediction(
     n_quantiles: int = 5,
 ) -> Dict:
     """Evaluate ML predictions: IC, quantile spread, hit rate."""
-    aligned = pd.DataFrame({
-        "pred": predictions,
-        "actual": actual_returns,
-    }).dropna()
+    aligned = pd.DataFrame(
+        {
+            "pred": predictions,
+            "actual": actual_returns,
+        }
+    ).dropna()
 
     if len(aligned) < n_quantiles * 10:
         return {"error": "Insufficient data for evaluation"}
 
     ic = float(aligned["pred"].corr(aligned["actual"], method="spearman"))
-    hit = float(((aligned["pred"] > 0) & (aligned["actual"] > 0) |
-                 (aligned["pred"] < 0) & (aligned["actual"] < 0)).mean())
+    hit = float(
+        (
+            (aligned["pred"] > 0) & (aligned["actual"] > 0)
+            | (aligned["pred"] < 0) & (aligned["actual"] < 0)
+        ).mean()
+    )
 
     aligned["quantile"] = pd.qcut(aligned["pred"], n_quantiles, labels=False)
     top = aligned[aligned["quantile"] == n_quantiles - 1]["actual"].mean()
@@ -365,8 +393,10 @@ def report_markdown(result: Dict, eval_result: Optional[Dict] = None) -> str:
 
 # ── Demo ────────────────────────────────────────────────────
 
-def _make_demo_data(n: int = 252, n_factors: int = 8, n_tickers: int = 10, seed: int = 42
-                    ) -> Tuple[pd.DataFrame, List[str]]:
+
+def _make_demo_data(
+    n: int = 252, n_factors: int = 8, n_tickers: int = 10, seed: int = 42
+) -> Tuple[pd.DataFrame, List[str]]:
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2024-01-01", periods=n, freq="B")
     tickers = [f"T{i}" for i in range(n_tickers)]
@@ -387,9 +417,9 @@ def _make_demo_data(n: int = 252, n_factors: int = 8, n_tickers: int = 10, seed:
 
     # Forward returns: linear combination of factors + noise
     noise = rng.normal(0, 0.015, len(df))
-    df["forward_return"] = sum(
-        df[f"factor_{i}"] * true_betas[i] for i in range(n_factors)
-    ) + noise
+    df["forward_return"] = (
+        sum(df[f"factor_{i}"] * true_betas[i] for i in range(n_factors)) + noise
+    )
     df["close"] = 100.0
 
     return df, factor_cols
@@ -413,13 +443,17 @@ def main():
         r2 = predict_returns(df, factor_cols, cfg2)
         cv_mean_r2 = r2["cv_results"]["r2"].mean() if not r2["cv_results"].empty else 0
         cv_mean_ic = r2["cv_results"]["ic"].mean() if not r2["cv_results"].empty else 0
-        print(f"| {model_name} | {r2['r2']:.4f} | {r2['ic']:.4f} | "
-              f"{cv_mean_r2:.4f} | {cv_mean_ic:.4f} |")
+        print(
+            f"| {model_name} | {r2['r2']:.4f} | {r2['ic']:.4f} | "
+            f"{cv_mean_r2:.4f} | {cv_mean_ic:.4f} |"
+        )
 
     # Feature importance
     if not result["feature_importance"].empty:
-        print(f"\nTop 3 features: "
-              f"{result['feature_importance'].head(3)['factor'].tolist()}")
+        print(
+            f"\nTop 3 features: "
+            f"{result['feature_importance'].head(3)['factor'].tolist()}"
+        )
 
 
 if __name__ == "__main__":

@@ -22,7 +22,14 @@ import argparse
 
 
 def run(cmd, cwd=None):
-    return subprocess.run(cmd, cwd=cwd, check=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+    return subprocess.run(
+        cmd,
+        cwd=cwd,
+        check=False,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
 
 
 def has_changes(repo_root):
@@ -65,8 +72,16 @@ def do_push(repo_root):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--interval", type=float, default=float(os.environ.get("AGENT_AUTO_COMMIT_INTERVAL", 5)), help="Polling interval seconds")
-    parser.add_argument("--message", default=os.environ.get("AGENT_AUTO_COMMIT_MESSAGE", "Auto-commit by agent"))
+    parser.add_argument(
+        "--interval",
+        type=float,
+        default=float(os.environ.get("AGENT_AUTO_COMMIT_INTERVAL", 5)),
+        help="Polling interval seconds",
+    )
+    parser.add_argument(
+        "--message",
+        default=os.environ.get("AGENT_AUTO_COMMIT_MESSAGE", "Auto-commit by agent"),
+    )
     parser.add_argument("--author", default=os.environ.get("AGENT_AUTO_COMMIT_AUTHOR"))
     parser.add_argument("--push", action="store_true", help="Push after commit")
     args = parser.parse_args()
@@ -85,5 +100,5 @@ def main():
         print("Stopping watcher")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

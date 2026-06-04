@@ -29,7 +29,9 @@ load_dotenv(PROJECT_ROOT / ".env")
 # ── config ──────────────────────────────────────────────
 CLOUDFLARED = os.path.expandvars(r"C:\Users\28462\cloudflared.exe")
 LOCAL_PORT = 8765
-CTX_STATE = PROJECT_ROOT / "company" / "departments" / "execution" / "context_state.json"
+CTX_STATE = (
+    PROJECT_ROOT / "company" / "departments" / "execution" / "context_state.json"
+)
 LAST_URL_FILE = PROJECT_ROOT / "company" / ".last_tunnel_url"
 
 CORP_ID = os.getenv("WECHAT_CORP_ID", "")
@@ -78,7 +80,8 @@ def push_url_via_wechat(url: str):
         }
         r = requests.post(
             f"https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={token}",
-            json=body, timeout=10,
+            json=body,
+            timeout=10,
         )
         result = r.json()
         if result.get("errcode") == 0:
@@ -101,19 +104,19 @@ def update_context_state(url: str):
         CTX_STATE.write_text(
             json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8"
         )
-        print(f"  context_state.json updated")
+        print("  context_state.json updated")
     except Exception as e:
         print(f"  Failed to update context_state.json: {e}")
 
 
 def on_new_url(url: str):
     """Called when a new tunnel URL is detected."""
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print(f"  New tunnel URL: {url}")
     update_context_state(url)
     LAST_URL_FILE.write_text(url, encoding="utf-8")
     push_url_via_wechat(url)
-    print(f"{'='*50}\n")
+    print(f"{'=' * 50}\n")
 
 
 # ── cloudflared process manager ─────────────────────────

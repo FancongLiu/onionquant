@@ -16,7 +16,7 @@ Usage:
 import json
 import sys
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -28,11 +28,24 @@ DATA_DIR = PROJECT_ROOT / "company" / "sentiment_data" / "google_trends"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 AI_CHAIN_TICKERS = [
-    "NVDA", "AMD", "INTC", "TSM", "AVGO", "MRVL",
-    "MU", "LITE", "COHR", "AAOI",
-    "ANET", "CIEN",
-    "RKLB", "ASTS", "LUNR", "RDW",
+    "NVDA",
+    "AMD",
+    "INTC",
+    "TSM",
+    "AVGO",
+    "MRVL",
+    "MU",
+    "LITE",
+    "COHR",
+    "AAOI",
+    "ANET",
+    "CIEN",
+    "RKLB",
+    "ASTS",
+    "LUNR",
+    "RDW",
 ]
+
 
 # ─── 搜索词优化: 加 "stock" 去除噪音 ───
 def _stock_kw(ticker: str) -> str:
@@ -106,10 +119,12 @@ class GoogleTrendsHeat:
             daily = []
             for idx, val in interest_df[kw].items():
                 if val > 0:
-                    daily.append({
-                        "date": idx.strftime("%Y-%m-%d"),
-                        "interest": int(val),
-                    })
+                    daily.append(
+                        {
+                            "date": idx.strftime("%Y-%m-%d"),
+                            "interest": int(val),
+                        }
+                    )
 
             # 相关搜索词
             related = self._get_related_queries(kw)
@@ -153,10 +168,12 @@ class GoogleTrendsHeat:
                 return []
             results = []
             for _, row in rising.head(10).iterrows():
-                results.append({
-                    "query": row.get("query", ""),
-                    "value": int(row.get("value", 0)),
-                })
+                results.append(
+                    {
+                        "query": row.get("query", ""),
+                        "value": int(row.get("value", 0)),
+                    }
+                )
             return results
         except Exception:
             return []
@@ -164,7 +181,9 @@ class GoogleTrendsHeat:
     # ─── 批量对比 ───
 
     def compare_tickers(
-        self, tickers: list[str], timeframe: str = "today 7-d",
+        self,
+        tickers: list[str],
+        timeframe: str = "today 7-d",
     ) -> list[dict]:
         """对比多个 ticker 的相对搜索热度.
 
@@ -180,7 +199,7 @@ class GoogleTrendsHeat:
         # 分批对比 (每批5个)
         batch_size = 5
         for i in range(0, len(tickers), batch_size):
-            batch = tickers[i:i + batch_size]
+            batch = tickers[i : i + batch_size]
             kw_list = [_stock_kw(t) for t in batch]
             try:
                 self.pytrends.build_payload(
@@ -202,15 +221,17 @@ class GoogleTrendsHeat:
                     peak = float(values.max())
                     avg = float(values.mean())
 
-                    results.append({
-                        "ticker": t,
-                        "search_term": kw,
-                        "current_interest": round(current, 1),
-                        "peak_interest": round(peak, 1),
-                        "avg_interest": round(avg, 1),
-                        "relative_to_nvda": round(current / max(base_val, 1), 2),
-                        "data_volume": "GOOGLE_SCALE",
-                    })
+                    results.append(
+                        {
+                            "ticker": t,
+                            "search_term": kw,
+                            "current_interest": round(current, 1),
+                            "peak_interest": round(peak, 1),
+                            "avg_interest": round(avg, 1),
+                            "relative_to_nvda": round(current / max(base_val, 1), 2),
+                            "data_volume": "GOOGLE_SCALE",
+                        }
+                    )
                 time.sleep(2)  # Google Trends rate limit
             except Exception as e:
                 print(f"  [WARN] Google Trends batch {batch}: {e}")
@@ -221,7 +242,9 @@ class GoogleTrendsHeat:
     # ─── 上升榜 ───
 
     def rising_leaders(
-        self, tickers: list[str], threshold_pct: float = 15.0,
+        self,
+        tickers: list[str],
+        threshold_pct: float = 15.0,
     ) -> list[dict]:
         """找出搜索热度正在飙升的 ticker."""
         rising = []
@@ -271,28 +294,30 @@ class GoogleTrendsHeat:
         hot = snapshot["hot_ranking"]
         rising = snapshot["rising_leaders"]
 
-        print(f"\n{'='*60}")
-        print(f"  GOOGLE TRENDS HEAT — US Search Interest (7-day)")
-        print(f"  Data Scale: Billions of daily searches → millions of stock queries")
-        print(f"{'='*60}")
+        print(f"\n{'=' * 60}")
+        print("  GOOGLE TRENDS HEAT — US Search Interest (7-day)")
+        print("  Data Scale: Billions of daily searches → millions of stock queries")
+        print(f"{'=' * 60}")
 
-        print(f"\n  >> 搜索热度 TOP 10:")
+        print("\n  >> 搜索热度 TOP 10:")
         for i, s in enumerate(hot[:10]):
             rel = s.get("relative_to_nvda", 0)
-            print(f"  {i+1}. {s['ticker']:<6} interest:{s['current_interest']:>6.1f} "
-                  f"peak:{s['peak_interest']:>6.1f} vsNVDA:{rel:.2f}x")
+            print(
+                f"  {i + 1}. {s['ticker']:<6} interest:{s['current_interest']:>6.1f} "
+                f"peak:{s['peak_interest']:>6.1f} vsNVDA:{rel:.2f}x"
+            )
 
-        print(f"\n  >> 搜索量飙升榜 (Google Trends rising):")
+        print("\n  >> 搜索量飙升榜 (Google Trends rising):")
         if rising:
             for i, s in enumerate(rising[:10]):
                 related_str = ""
                 if s.get("related_queries"):
                     top_q = s["related_queries"][:3]
-                    related_str = " | " + ", ".join(
-                        q["query"] for q in top_q
-                    )
-                print(f"  {i+1}. {s['ticker']:<6} Δ{ s['change_pct']:+.1f}% "
-                      f"interest:{s['current_interest']:.1f}{related_str}")
+                    related_str = " | " + ", ".join(q["query"] for q in top_q)
+                print(
+                    f"  {i + 1}. {s['ticker']:<6} Δ{s['change_pct']:+.1f}% "
+                    f"interest:{s['current_interest']:.1f}{related_str}"
+                )
         else:
             print("  (no tickers with >15% search surge in past 7 days)")
 
@@ -300,6 +325,7 @@ class GoogleTrendsHeat:
 # ─── CLI ────────────────────────────────────────────────
 if __name__ == "__main__":
     import argparse
+
     p = argparse.ArgumentParser(description="OnionQuant Google Trends Heat Engine")
     p.add_argument("--ticker", type=str, help="单票深度搜索趋势")
     p.add_argument("--ai-chain", action="store_true", help="AI产业链全量扫描")
@@ -312,15 +338,17 @@ if __name__ == "__main__":
     if args.ticker:
         data = gt.get_interest(args.ticker.upper())
         print(f"\n  Google Trends: ${args.ticker.upper()}")
-        print(f"  当前搜索兴趣: {data['current_interest']} (峰值: {data['peak_interest']})")
+        print(
+            f"  当前搜索兴趣: {data['current_interest']} (峰值: {data['peak_interest']})"
+        )
         print(f"  趋势: {data['trend']} ({data['change_pct']:+.1f}%)")
         print(f"  数据规模: {data['data_volume']}")
         if data["related_queries"]:
-            print(f"  相关热搜:")
+            print("  相关热搜:")
             for q in data["related_queries"][:5]:
                 print(f"    ↑{q['value']}% {q['query']}")
         if data["daily_data"]:
-            print(f"  每日趋势:")
+            print("  每日趋势:")
             for d in data["daily_data"]:
                 bar = "█" * int(d["interest"] / 2)
                 print(f"    {d['date']} {bar} {d['interest']}")
@@ -329,18 +357,22 @@ if __name__ == "__main__":
         tickers = [t.strip().upper() for t in args.compare.split(",")]
         results = gt.compare_tickers(tickers)
         results.sort(key=lambda x: -x["current_interest"])
-        print(f"\n  Google Trends Comparison (锚定 NVDA):")
+        print("\n  Google Trends Comparison (锚定 NVDA):")
         for r in results:
             rel = r.get("relative_to_nvda", "?")
-            print(f"  {r['ticker']:<6} interest:{r['current_interest']:>6.1f} "
-                  f"peak:{r['peak_interest']:>6.1f} vsNVDA:{rel}x")
+            print(
+                f"  {r['ticker']:<6} interest:{r['current_interest']:>6.1f} "
+                f"peak:{r['peak_interest']:>6.1f} vsNVDA:{rel}x"
+            )
 
     elif args.rising:
         rising = gt.rising_leaders(AI_CHAIN_TICKERS)
-        print(f"\n  Google Trends 飙升榜 (Δ>15%):")
+        print("\n  Google Trends 飙升榜 (Δ>15%):")
         for r in rising:
-            print(f"  {r['ticker']:<6} Δ{r['change_pct']:+.1f}% "
-                  f"interest:{r['current_interest']:.1f}")
+            print(
+                f"  {r['ticker']:<6} Δ{r['change_pct']:+.1f}% "
+                f"interest:{r['current_interest']:.1f}"
+            )
 
     elif args.ai_chain:
         snapshot = gt.full_scan(AI_CHAIN_TICKERS)
@@ -351,7 +383,9 @@ if __name__ == "__main__":
         # 默认: 快速展示 AI 链 top 8
         results = gt.compare_tickers(AI_CHAIN_TICKERS[:8])
         results.sort(key=lambda x: -x["current_interest"])
-        print(f"\n  Google Trends Quick View:")
+        print("\n  Google Trends Quick View:")
         for r in results:
-            print(f"  {r['ticker']:<6} interest:{r['current_interest']:>6.1f} "
-                  f"peak:{r['peak_interest']:>6.1f}")
+            print(
+                f"  {r['ticker']:<6} interest:{r['current_interest']:>6.1f} "
+                f"peak:{r['peak_interest']:>6.1f}"
+            )

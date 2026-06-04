@@ -199,7 +199,8 @@ class HeatRankings:
         return stocks
 
     def fetch_all_filters(
-        self, max_pages_per_filter: int = 5,
+        self,
+        max_pages_per_filter: int = 5,
         skip_crypto: bool = True,
     ) -> dict[str, list[dict]]:
         """🔥 v2.0: 拉满全部独立子版块 filter, 做跨社区热度分析.
@@ -214,8 +215,14 @@ class HeatRankings:
         """
         # 独立子版块 (非聚合)
         individual_filters = [
-            "wallstreetbets", "WallstreetbetsELITE", "Wallstreetbetsnew",
-            "stocks", "options", "investing", "Daytrading", "SPACs",
+            "wallstreetbets",
+            "WallstreetbetsELITE",
+            "Wallstreetbetsnew",
+            "stocks",
+            "options",
+            "investing",
+            "Daytrading",
+            "SPACs",
         ]
         # 聚合 filter (用于主数据)
         aggregate_filter = "all-stocks"
@@ -224,8 +231,10 @@ class HeatRankings:
 
         all_to_fetch = [aggregate_filter] + individual_filters + special_filters
 
-        print(f"\n  [🔥] ApeWisdom v2.0: {len(all_to_fetch)} filters "
-              f"(1 aggregate + {len(individual_filters)} individual + 4chan)")
+        print(
+            f"\n  [🔥] ApeWisdom v2.0: {len(all_to_fetch)} filters "
+            f"(1 aggregate + {len(individual_filters)} individual + 4chan)"
+        )
 
         self._filter_data = {}
 
@@ -253,31 +262,37 @@ class HeatRankings:
         stock_list = []
         for ticker, base in primary.items():
             subs = subreddit_map.get(ticker, {})
-            stock_list.append({
-                "ticker": ticker,
-                "name": base["name"],
-                "rank": base["rank"],
-                "mentions": base["mentions"],  # 主数据: all-stocks 聚合值
-                "upvotes": base["upvotes"],
-                "rank_24h_ago": base["rank_24h_ago"],
-                "mentions_24h_ago": base["mentions_24h_ago"],
-                "rank_change": base["rank_change"],
-                "mentions_change": base["mentions_change"],
-                "subreddit_count": len(subs),
-                "subreddit_mentions": subs,
-                "subreddits": sorted(subs.keys()),
-                "total_individual_mentions": sum(subs.values()),  # 独立子版块加总(不含聚合)
-                "in_ai_chain": ticker in AI_CHAIN_TICKERS,
-                "ai_chain_role": AI_CHAIN_TICKERS.get(ticker, ""),
-            })
+            stock_list.append(
+                {
+                    "ticker": ticker,
+                    "name": base["name"],
+                    "rank": base["rank"],
+                    "mentions": base["mentions"],  # 主数据: all-stocks 聚合值
+                    "upvotes": base["upvotes"],
+                    "rank_24h_ago": base["rank_24h_ago"],
+                    "mentions_24h_ago": base["mentions_24h_ago"],
+                    "rank_change": base["rank_change"],
+                    "mentions_change": base["mentions_change"],
+                    "subreddit_count": len(subs),
+                    "subreddit_mentions": subs,
+                    "subreddits": sorted(subs.keys()),
+                    "total_individual_mentions": sum(
+                        subs.values()
+                    ),  # 独立子版块加总(不含聚合)
+                    "in_ai_chain": ticker in AI_CHAIN_TICKERS,
+                    "ai_chain_role": AI_CHAIN_TICKERS.get(ticker, ""),
+                }
+            )
 
         stock_list.sort(key=lambda x: -x["mentions"])
         self.all_stocks = stock_list
         self.fetch_time = datetime.now(timezone.utc)
 
         total_raw = sum(len(v) for v in self._filter_data.values())
-        print(f"    Total: {total_raw} raw records → {len(stock_list)} unique tickers "
-              f"(主数据: all-stocks, +{len(individual_filters)}子版块分布)\n")
+        print(
+            f"    Total: {total_raw} raw records → {len(stock_list)} unique tickers "
+            f"(主数据: all-stocks, +{len(individual_filters)}子版块分布)\n"
+        )
 
         return self._filter_data
 
@@ -313,8 +328,7 @@ class HeatRankings:
     def new_hot(self, top_n: int = 30) -> list[dict]:
         """新晋热榜 — 24h前排名很低(>200), 现在冲进前50."""
         newcomers = [
-            s for s in self.all_stocks
-            if s["rank_24h_ago"] > 200 and s["rank"] <= 50
+            s for s in self.all_stocks if s["rank_24h_ago"] > 200 and s["rank"] <= 50
         ]
         return sorted(newcomers, key=lambda x: x["rank"])[:top_n]
 
@@ -329,7 +343,9 @@ class HeatRankings:
             "total_stocks": len(self.all_stocks),
             "stocks": self.all_stocks[:200],  # 只存前200只, 省空间
         }
-        path.write_text(json.dumps(snapshot, indent=1, ensure_ascii=False, default=str), "utf-8")
+        path.write_text(
+            json.dumps(snapshot, indent=1, ensure_ascii=False, default=str), "utf-8"
+        )
         return path
 
     def load_trend(self, ticker: str, max_files: int = 24) -> list[dict]:
@@ -340,12 +356,14 @@ class HeatRankings:
             data = json.loads(f.read_text("utf-8"))
             for s in data.get("stocks", []):
                 if s["ticker"] == ticker:
-                    trend.append({
-                        "time": data["timestamp"],
-                        "rank": s["rank"],
-                        "mentions": s["mentions"],
-                        "upvotes": s["upvotes"],
-                    })
+                    trend.append(
+                        {
+                            "time": data["timestamp"],
+                            "rank": s["rank"],
+                            "mentions": s["mentions"],
+                            "upvotes": s["upvotes"],
+                        }
+                    )
                     break
         return trend
 
@@ -353,19 +371,25 @@ class HeatRankings:
 
     def print_table(self, stocks: list[dict], title: str, top_n: int = 20):
         """打印格式化榜单."""
-        print(f"\n{'='*80}")
-        print(f"  {title}  |  {self.fetch_time.strftime('%Y-%m-%d %H:%M UTC') if self.fetch_time else ''}")
-        print(f"{'='*80}")
+        print(f"\n{'=' * 80}")
+        print(
+            f"  {title}  |  {self.fetch_time.strftime('%Y-%m-%d %H:%M UTC') if self.fetch_time else ''}"
+        )
+        print(f"{'=' * 80}")
         # 如果有子版块数据, 用宽格式
         has_subs = any("subreddit_count" in s for s in stocks[:top_n])
         if has_subs:
-            header = (f"  {'#':<4} {'Ticker':<8} {'Mentions':>7} {'Upvotes':>8} "
-                      f"{'Rank':>5} {'ΔRank':>7} {'Subs':>5} {'讨论区'}")
+            header = (
+                f"  {'#':<4} {'Ticker':<8} {'Mentions':>7} {'Upvotes':>8} "
+                f"{'Rank':>5} {'ΔRank':>7} {'Subs':>5} {'讨论区'}"
+            )
         else:
-            header = (f"  {'#':<4} {'Ticker':<8} {'Mentions':>7} {'Upvotes':>8} "
-                      f"{'Rank':>5} {'24hΔRank':>9}")
+            header = (
+                f"  {'#':<4} {'Ticker':<8} {'Mentions':>7} {'Upvotes':>8} "
+                f"{'Rank':>5} {'24hΔRank':>9}"
+            )
         print(header)
-        print(f"  {'-'*76}")
+        print(f"  {'-' * 76}")
         for i, s in enumerate(stocks[:top_n]):
             rank_chg = s.get("rank_change", 0)
             arrow = f"+{rank_chg}" if rank_chg > 0 else str(rank_chg)
@@ -377,33 +401,43 @@ class HeatRankings:
                 sub_str = ", ".join(
                     f"{SUBREDDIT_NAMES.get(n, n)}({c})" for n, c in top_subs
                 )
-                print(f"  {i+1:<4} {s['ticker']:<8} {s['mentions']:>7} "
-                      f"{s['upvotes']:>8} {s['rank']:>5} {arrow:>7} "
-                      f"{sub_count:>5} {sub_str}")
+                print(
+                    f"  {i + 1:<4} {s['ticker']:<8} {s['mentions']:>7} "
+                    f"{s['upvotes']:>8} {s['rank']:>5} {arrow:>7} "
+                    f"{sub_count:>5} {sub_str}"
+                )
             else:
-                print(f"  {i+1:<4} {s['ticker']:<8} {s['mentions']:>7} "
-                      f"{s['upvotes']:>8} {s['rank']:>5} {arrow:>9}")
+                print(
+                    f"  {i + 1:<4} {s['ticker']:<8} {s['mentions']:>7} "
+                    f"{s['upvotes']:>8} {s['rank']:>5} {arrow:>9}"
+                )
 
     def print_summary_dashboard(self):
         """打印总览仪表盘 (同花顺风格)."""
         has_subs = any("subreddit_count" in s for s in self.all_stocks[:5])
         mode = "v2.0 18-filter" if has_subs else "v1.0 all-stocks only"
-        print(f"\n{'#'*80}")
+        print(f"\n{'#' * 80}")
         print(f"#  OnionQuant 热度仪表盘 ({mode})")
         print(f"#  数据: ApeWisdom | {len(self.all_stocks)} stocks")
-        print(f"#  更新: {self.fetch_time.strftime('%Y-%m-%d %H:%M UTC') if self.fetch_time else 'N/A'}")
-        print(f"{'#'*80}")
+        print(
+            f"#  更新: {self.fetch_time.strftime('%Y-%m-%d %H:%M UTC') if self.fetch_time else 'N/A'}"
+        )
+        print(f"{'#' * 80}")
 
         # 1. 总热度 Top 10
         self.print_table(self.absolute_ranking(10), "[1] 总热度 TOP 10", 10)
 
         # 2. 24h 上升榜 Top 10
-        self.print_table(self.rising_ranking(10), "[2] 24h 上升榜 TOP 10 (Rank改善最大)", 10)
+        self.print_table(
+            self.rising_ranking(10), "[2] 24h 上升榜 TOP 10 (Rank改善最大)", 10
+        )
 
         # 3. 新晋热榜
         newcomers = self.new_hot(10)
         if newcomers:
-            self.print_table(newcomers, "[3] 新晋热榜 (24h前还在200名外, 已冲进Top50)", 10)
+            self.print_table(
+                newcomers, "[3] 新晋热榜 (24h前还在200名外, 已冲进Top50)", 10
+            )
 
         # 4. AI产业链榜
         self.print_table(self.ai_chain_ranking(), "[4] AI产业链专属榜", 30)
@@ -415,8 +449,13 @@ class HeatRankings:
 # ─── CLI ────────────────────────────────────────────────
 if __name__ == "__main__":
     import argparse
-    p = argparse.ArgumentParser(description="OnionQuant Heat Rankings v2.0 (Tonghuashun-style)")
-    p.add_argument("--all-filters", action="store_true", help="🔥 v2.0: 拉满全部18个filter聚合")
+
+    p = argparse.ArgumentParser(
+        description="OnionQuant Heat Rankings v2.0 (Tonghuashun-style)"
+    )
+    p.add_argument(
+        "--all-filters", action="store_true", help="🔥 v2.0: 拉满全部18个filter聚合"
+    )
     p.add_argument("--top", type=int, default=0, help="总热度榜 Top N")
     p.add_argument("--rising", type=int, default=0, help="24h上升榜 Top N")
     p.add_argument("--falling", type=int, default=0, help="24h下降榜 Top N")
@@ -452,24 +491,47 @@ if __name__ == "__main__":
         if trend:
             print(f"\n  {args.trend.upper()} 热度趋势:")
             for t in trend:
-                print(f"  {t['time'][:16]} | rank:{t['rank']:>4} | mentions:{t['mentions']:>4} | upvotes:{t['upvotes']:>4}")
+                print(
+                    f"  {t['time'][:16]} | rank:{t['rank']:>4} | mentions:{t['mentions']:>4} | upvotes:{t['upvotes']:>4}"
+                )
         else:
             print(f"  No trend data for {args.trend.upper()} (need snapshots)")
 
     if args.top:
-        engine.print_table(engine.absolute_ranking(args.top), f"总热度 TOP {args.top}", args.top)
+        engine.print_table(
+            engine.absolute_ranking(args.top), f"总热度 TOP {args.top}", args.top
+        )
     if args.rising:
-        engine.print_table(engine.rising_ranking(args.rising), f"24h 上升 TOP {args.rising}", args.rising)
+        engine.print_table(
+            engine.rising_ranking(args.rising),
+            f"24h 上升 TOP {args.rising}",
+            args.rising,
+        )
     if args.falling:
-        engine.print_table(engine.falling_ranking(args.falling), f"24h 下降 TOP {args.falling}", args.falling)
+        engine.print_table(
+            engine.falling_ranking(args.falling),
+            f"24h 下降 TOP {args.falling}",
+            args.falling,
+        )
     if args.surge:
-        engine.print_table(engine.mentions_surge(args.surge), f"热度突变 TOP {args.surge}", args.surge)
+        engine.print_table(
+            engine.mentions_surge(args.surge), f"热度突变 TOP {args.surge}", args.surge
+        )
     if args.ai_chain:
         engine.print_table(engine.ai_chain_ranking(), "AI产业链", 30)
     if args.new_hot:
         engine.print_table(engine.new_hot(args.new_hot), "新晋热榜", args.new_hot)
 
     # 默认显示总览仪表盘
-    if not any([args.top, args.rising, args.falling, args.surge,
-                args.ai_chain, args.new_hot, args.trend]):
+    if not any(
+        [
+            args.top,
+            args.rising,
+            args.falling,
+            args.surge,
+            args.ai_chain,
+            args.new_hot,
+            args.trend,
+        ]
+    ):
         engine.print_summary_dashboard()

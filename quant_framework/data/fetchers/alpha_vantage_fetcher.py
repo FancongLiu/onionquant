@@ -98,12 +98,20 @@ def fetch_news_sentiment(
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Fetch news sentiment from Alpha Vantage")
-    parser.add_argument("--tickers", default="AAPL", help="Comma-separated tickers, e.g. AAPL,MSFT")
-    parser.add_argument("--limit", type=int, default=50, help="Max news items (max 1000)")
+    parser = argparse.ArgumentParser(
+        description="Fetch news sentiment from Alpha Vantage"
+    )
+    parser.add_argument(
+        "--tickers", default="AAPL", help="Comma-separated tickers, e.g. AAPL,MSFT"
+    )
+    parser.add_argument(
+        "--limit", type=int, default=50, help="Max news items (max 1000)"
+    )
     parser.add_argument("--time_from", help="Start time (YYYYMMDDTHHMM)")
     parser.add_argument("--time_to", help="End time (YYYYMMDDTHHMM)")
-    parser.add_argument("--output", default="news_sentiment.parquet", help="Output Parquet filename")
+    parser.add_argument(
+        "--output", default="news_sentiment.parquet", help="Output Parquet filename"
+    )
     return parser.parse_args()
 
 
@@ -111,7 +119,9 @@ def main():
     args = parse_args()
     api_key = get_api_key()
     logger.info("Fetching news sentiment for tickers: %s", args.tickers)
-    df = fetch_news_sentiment(args.tickers, api_key, args.time_from, args.time_to, args.limit)
+    df = fetch_news_sentiment(
+        args.tickers, api_key, args.time_from, args.time_to, args.limit
+    )
     if df is None or df.empty:
         logger.error("No data fetched.")
         return

@@ -21,8 +21,9 @@ from statsmodels.tsa.regime_switching.markov_regression import MarkovRegression
 warnings.filterwarnings("ignore")
 
 
-def detect_regimes(returns: pd.Series, n_regimes: int = 2,
-                   switch_variance: bool = True, **kwargs) -> Dict:
+def detect_regimes(
+    returns: pd.Series, n_regimes: int = 2, switch_variance: bool = True, **kwargs
+) -> Dict:
     """使用 Markov Switching 模型检测市场状态。
 
     Args:
@@ -45,7 +46,7 @@ def detect_regimes(returns: pd.Series, n_regimes: int = 2,
     model = MarkovRegression(
         endog=r.values,
         k_regimes=n_regimes,
-        trend='c',
+        trend="c",
         switching_variance=switch_variance,
         **kwargs,
     )
@@ -53,7 +54,8 @@ def detect_regimes(returns: pd.Series, n_regimes: int = 2,
 
     probs = result.smoothed_marginal_probabilities
     prob_df = pd.DataFrame(
-        probs, index=r.index[-len(probs):],
+        probs,
+        index=r.index[-len(probs) :],
         columns=[f"regime_{i}" for i in range(n_regimes)],
     )
     regime_idx = prob_df.values.argmax(axis=1)
@@ -65,7 +67,9 @@ def detect_regimes(returns: pd.Series, n_regimes: int = 2,
         mask = regime_labels == i
         regime_ret = r.loc[prob_df.index][mask]
         ann_mean = float(regime_ret.mean() * 252) if len(regime_ret) > 0 else np.nan
-        ann_vol = float(regime_ret.std() * np.sqrt(252)) if len(regime_ret) > 1 else np.nan
+        ann_vol = (
+            float(regime_ret.std() * np.sqrt(252)) if len(regime_ret) > 1 else np.nan
+        )
         freq = mask.mean()
         regime_stats[f"regime_{i}"] = {
             "annual_return": round(ann_mean, 4),
@@ -109,8 +113,10 @@ def classify_current(returns: pd.Series, n_regimes: int = 2) -> Dict:
     current_regime = int(current_prob.values.argmax())
     return {
         "current_regime": current_regime,
-        "regime_prob": {f"regime_{i}": round(float(current_prob.iloc[i]), 4)
-                        for i in range(n_regimes)},
+        "regime_prob": {
+            f"regime_{i}": round(float(current_prob.iloc[i]), 4)
+            for i in range(n_regimes)
+        },
         "label": result["regime_stats"][f"regime_{current_regime}"]["label"],
     }
 
@@ -139,8 +145,9 @@ def regime_transition_matrix(result: Dict) -> Optional[pd.DataFrame]:
 
 
 # ─── Rolling regime (lightweight, no MS model) ───────────────────
-def rolling_regime_simple(returns: pd.Series, window: int = 63,
-                          vol_threshold: float = 0.20) -> pd.DataFrame:
+def rolling_regime_simple(
+    returns: pd.Series, window: int = 63, vol_threshold: float = 0.20
+) -> pd.DataFrame:
     """轻量滚动状态分类 (基于收益+波动率，不依赖 Markov 模型)。
 
     Returns:
@@ -164,11 +171,14 @@ def rolling_regime_simple(returns: pd.Series, window: int = 63,
         [_label(ret, vol) for ret, vol in zip(roll_ret, roll_vol)],
         index=r.index,
     )
-    return pd.DataFrame({
-        "regime": regime,
-        "ann_ret": roll_ret,
-        "ann_vol": roll_vol,
-    }, index=r.index)
+    return pd.DataFrame(
+        {
+            "regime": regime,
+            "ann_ret": roll_ret,
+            "ann_vol": roll_vol,
+        },
+        index=r.index,
+    )
 
 
 # ─── Demo ────────────────────────────────────────────────────────
@@ -193,15 +203,27 @@ def _make_demo_returns(n: int = 500, seed: int = 42) -> pd.Series:
 
 # ─── CLI ─────────────────────────────────────────────────────────
 def main():
-    parser = argparse.ArgumentParser(description="Market Regime Detection (statsmodels)")
+    parser = argparse.ArgumentParser(
+        description="Market Regime Detection (statsmodels)"
+    )
     parser.add_argument("--input", help="Input parquet/csv with 'close' column")
     parser.add_argument("--column", default="close", help="Price column name")
-    parser.add_argument("--n-regimes", type=int, default=2, help="Number of regimes (2 or 3)")
-    parser.add_argument("--simple", action="store_true", help="Use rolling (lightweight) instead of Markov")
+    parser.add_argument(
+        "--n-regimes", type=int, default=2, help="Number of regimes (2 or 3)"
+    )
+    parser.add_argument(
+        "--simple",
+        action="store_true",
+        help="Use rolling (lightweight) instead of Markov",
+    )
     args = parser.parse_args()
 
     if args.input:
-        df = pd.read_parquet(args.input) if args.input.endswith(".parquet") else pd.read_csv(args.input)
+        df = (
+            pd.read_parquet(args.input)
+            if args.input.endswith(".parquet")
+            else pd.read_csv(args.input)
+        )
         if "date" in df.columns:
             df["date"] = pd.to_datetime(df["date"])
             df = df.set_index("date").sort_index()
@@ -224,24 +246,28 @@ def main():
         print(f"Error: {result['error']}")
         return
 
-    print(f"\n{'='*56}")
+    print(f"\n{'=' * 56}")
     print(f"  Markov Switching Regime Detection ({args.n_regimes} regimes)")
-    print(f"{'='*56}")
+    print(f"{'=' * 56}")
     print(f"  AIC: {result['aic']}, BIC: {result['bic']}")
 
     print("\n  Regime Statistics:")
     for name, stats in result["regime_stats"].items():
-        print(f"    {name} ({stats['label']}): "
-              f"ret={stats['annual_return']:.2%} "
-              f"vol={stats['annual_vol']:.2%} "
-              f"sharpe={stats['sharpe']:.2f} "
-              f"freq={stats['frequency']:.1%}")
+        print(
+            f"    {name} ({stats['label']}): "
+            f"ret={stats['annual_return']:.2%} "
+            f"vol={stats['annual_vol']:.2%} "
+            f"sharpe={stats['sharpe']:.2f} "
+            f"freq={stats['frequency']:.1%}"
+        )
 
     current = classify_current(returns, n_regimes=args.n_regimes)
     if "error" not in current:
-        print(f"\n  Current Regime: {current['label']} "
-              f"(regime {current['current_regime']}, "
-              f"prob={current['regime_prob']})")
+        print(
+            f"\n  Current Regime: {current['label']} "
+            f"(regime {current['current_regime']}, "
+            f"prob={current['regime_prob']})"
+        )
 
     tm = regime_transition_matrix(result)
     if tm is not None:

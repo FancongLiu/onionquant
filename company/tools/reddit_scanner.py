@@ -16,9 +16,7 @@ Usage:
     python company/tools/reddit_scanner.py --cross-validate NVDA 5
 """
 
-import json
 import re
-import sys
 import threading
 import time
 from datetime import datetime, timezone
@@ -44,24 +42,69 @@ TRACKED_SUBREDDITS = [
 
 # ─── AI 产业链 ticker ───
 AI_CHAIN_TICKERS = [
-    "LITE", "COHR", "SIVEF", "AAOI",
-    "AVGO", "MRVL", "NVDA", "AMD",
-    "INTC", "TSM", "FN",
-    "MU", "SNDK",
-    "RKLB", "ASTS", "LUNR", "RDW",
-    "ANET", "CIEN",
+    "LITE",
+    "COHR",
+    "SIVEF",
+    "AAOI",
+    "AVGO",
+    "MRVL",
+    "NVDA",
+    "AMD",
+    "INTC",
+    "TSM",
+    "FN",
+    "MU",
+    "SNDK",
+    "RKLB",
+    "ASTS",
+    "LUNR",
+    "RDW",
+    "ANET",
+    "CIEN",
 ]
 
 # ─── 关键词情绪 ───
 _POSITIVE_KW = {
-    "bullish", "moon", "rocket", "buy", "calls", "long", "squeeze",
-    "undervalued", "breakout", "rally", "gain", "profit", "surge",
-    "diamond hands", "hold", "yolo", "green", "tendies", "rip",
+    "bullish",
+    "moon",
+    "rocket",
+    "buy",
+    "calls",
+    "long",
+    "squeeze",
+    "undervalued",
+    "breakout",
+    "rally",
+    "gain",
+    "profit",
+    "surge",
+    "diamond hands",
+    "hold",
+    "yolo",
+    "green",
+    "tendies",
+    "rip",
 }
 _NEGATIVE_KW = {
-    "bearish", "puts", "short", "sell", "crash", "dump", "overvalued",
-    "loss", "red", "bag", "bagholder", "drop", "tank", "plunge",
-    "recession", "bankrupt", "fraud", "scam", "rug pull",
+    "bearish",
+    "puts",
+    "short",
+    "sell",
+    "crash",
+    "dump",
+    "overvalued",
+    "loss",
+    "red",
+    "bag",
+    "bagholder",
+    "drop",
+    "tank",
+    "plunge",
+    "recession",
+    "bankrupt",
+    "fraud",
+    "scam",
+    "rug pull",
 }
 
 USER_AGENT = (
@@ -102,8 +145,11 @@ class RedditScanner:
         self.session.headers.update({"User-Agent": USER_AGENT})
 
     def search_ticker(
-        self, ticker: str, subreddits: list[str] | None = None,
-        limit: int = 25, time_filter: str = "week",
+        self,
+        ticker: str,
+        subreddits: list[str] | None = None,
+        limit: int = 25,
+        time_filter: str = "week",
     ) -> list[dict]:
         """搜索 Reddit 帖子 (公开 JSON, 无需认证).
 
@@ -131,11 +177,17 @@ class RedditScanner:
                 seen_ids.add(pid)
                 unique.append(p)
 
-        unique.sort(key=lambda p: p.get("score", 0) + p.get("num_comments", 0), reverse=True)
+        unique.sort(
+            key=lambda p: p.get("score", 0) + p.get("num_comments", 0), reverse=True
+        )
         return unique
 
     def _search_subreddit(
-        self, subreddit: str, ticker: str, limit: int, time_filter: str,
+        self,
+        subreddit: str,
+        ticker: str,
+        limit: int,
+        time_filter: str,
     ) -> list[dict]:
         """搜索单个子版块."""
         _rate_limiter.wait_if_needed()
@@ -203,33 +255,40 @@ class RedditScanner:
             created_utc = post_data.get("created_utc", 0)
             created_str = (
                 datetime.fromtimestamp(created_utc, tz=timezone.utc).isoformat()
-                if created_utc else ""
+                if created_utc
+                else ""
             )
 
-            posts.append({
-                "id": post_data.get("id", ""),
-                "subreddit": subreddit,
-                "title": title,
-                "selftext": selftext[:300],
-                "score": post_data.get("score", 0),
-                "num_comments": post_data.get("num_comments", 0),
-                "upvote_ratio": post_data.get("upvote_ratio", 0.5),
-                "url": f"https://www.reddit.com{post_data.get('permalink', '')}",
-                "author": post_data.get("author", "[deleted]"),
-                "created_utc": created_utc,
-                "created_at": created_str,
-                "sentiment_score": round(sentiment_score, 3),
-                "sentiment_label": sentiment_label,
-            })
+            posts.append(
+                {
+                    "id": post_data.get("id", ""),
+                    "subreddit": subreddit,
+                    "title": title,
+                    "selftext": selftext[:300],
+                    "score": post_data.get("score", 0),
+                    "num_comments": post_data.get("num_comments", 0),
+                    "upvote_ratio": post_data.get("upvote_ratio", 0.5),
+                    "url": f"https://www.reddit.com{post_data.get('permalink', '')}",
+                    "author": post_data.get("author", "[deleted]"),
+                    "created_utc": created_utc,
+                    "created_at": created_str,
+                    "sentiment_score": round(sentiment_score, 3),
+                    "sentiment_label": sentiment_label,
+                }
+            )
 
         return posts
 
     def count_mentions(
-        self, ticker: str, subreddits: list[str] | None = None,
+        self,
+        ticker: str,
+        subreddits: list[str] | None = None,
         time_filter: str = "week",
     ) -> dict:
         """统计 Reddit 提及量 (帖子+情绪)."""
-        posts = self.search_ticker(ticker, subreddits, limit=25, time_filter=time_filter)
+        posts = self.search_ticker(
+            ticker, subreddits, limit=25, time_filter=time_filter
+        )
         total_score = sum(p.get("score", 0) for p in posts)
         total_comments = sum(p.get("num_comments", 0) for p in posts)
         sentiments = [p.get("sentiment_score", 0) for p in posts]
@@ -276,7 +335,9 @@ class RedditScanner:
             rec = "CONFIRMED: Reddit mentions confirm ApeWisdom signal"
         elif data["total_posts"] >= 5:
             confirmed = True
-            rec = "Reddit has discussion but ApeWisdom not yet picking up — early signal?"
+            rec = (
+                "Reddit has discussion but ApeWisdom not yet picking up — early signal?"
+            )
         elif abs(apewisdom_rank_change) >= 5 and data["total_posts"] < 3:
             confirmed = False
             rec = "ApeWisdom signal strong but Reddit sparse — may be noise"
@@ -300,7 +361,9 @@ class RedditScanner:
         if tickers is None:
             tickers = AI_CHAIN_TICKERS
 
-        print(f"\n  [>] Reddit scan: {len(tickers)} tickers (public JSON, no API key)...")
+        print(
+            f"\n  [>] Reddit scan: {len(tickers)} tickers (public JSON, no API key)..."
+        )
         results = []
         for i, ticker in enumerate(tickers):
             data = self.count_mentions(ticker, time_filter="week")
@@ -315,51 +378,74 @@ class RedditScanner:
 # ─── CLI ────────────────────────────────────────────────
 if __name__ == "__main__":
     import argparse
+
     p = argparse.ArgumentParser(description="OnionQuant Reddit Scanner (Public JSON)")
     p.add_argument("--ticker", type=str, help="搜索单个 ticker")
     p.add_argument("--watchlist", action="store_true", help="扫描 AI 产业链")
-    p.add_argument("--cross-validate", type=str, metavar="TICKER",
-                   help="交叉验证 (ApeWisdom + Reddit)")
-    p.add_argument("--apewisdom-delta", type=int, default=0,
-                   help="ApeWisdom rank_change 值")
-    p.add_argument("--subreddits", type=str, default="",
-                   help="指定子版块 (逗号分隔)")
+    p.add_argument(
+        "--cross-validate",
+        type=str,
+        metavar="TICKER",
+        help="交叉验证 (ApeWisdom + Reddit)",
+    )
+    p.add_argument(
+        "--apewisdom-delta", type=int, default=0, help="ApeWisdom rank_change 值"
+    )
+    p.add_argument("--subreddits", type=str, default="", help="指定子版块 (逗号分隔)")
     args = p.parse_args()
 
     scanner = RedditScanner()
 
     if args.ticker:
-        sub_list = [s.strip() for s in args.subreddits.split(",") if s.strip()] if args.subreddits else None
+        sub_list = (
+            [s.strip() for s in args.subreddits.split(",") if s.strip()]
+            if args.subreddits
+            else None
+        )
         data = scanner.count_mentions(args.ticker.upper(), subreddits=sub_list)
-        print(f"\n{'='*55}")
+        print(f"\n{'=' * 55}")
         print(f"  Reddit: ${args.ticker.upper()} (公开JSON, 无需API)")
-        print(f"{'='*55}")
-        print(f"  帖子: {data['total_posts']} | 总分: {data['total_score']} | "
-              f"评论: {data['total_comments']}")
-        print(f"  情绪: {data['avg_sentiment']:.2f} "
-              f"(+{data['positive_pct']}%/-{data['negative_pct']}%)")
+        print(f"{'=' * 55}")
+        print(
+            f"  帖子: {data['total_posts']} | 总分: {data['total_score']} | "
+            f"评论: {data['total_comments']}"
+        )
+        print(
+            f"  情绪: {data['avg_sentiment']:.2f} "
+            f"(+{data['positive_pct']}%/-{data['negative_pct']}%)"
+        )
         print(f"  热度: {data['buzz_level']}")
         if data["top_posts"]:
-            print(f"\n  [=] 最热帖子:")
+            print("\n  [=] 最热帖子:")
             for post in data["top_posts"][:5]:
-                flair = f" [{post['sentiment_label']}]" if post['sentiment_label'] != 'neutral' else ""
-                print(f"  [{post['score']}↑] r/{post['subreddit']}{flair} — {post['title'][:90]}")
+                flair = (
+                    f" [{post['sentiment_label']}]"
+                    if post["sentiment_label"] != "neutral"
+                    else ""
+                )
+                print(
+                    f"  [{post['score']}↑] r/{post['subreddit']}{flair} — {post['title'][:90]}"
+                )
 
     elif args.cross_validate:
         ticker = args.cross_validate.upper()
         result = scanner.cross_validate(ticker, args.apewisdom_delta)
-        print(f"  {ticker}: Reddit {result['reddit_posts']}帖 | "
-              f"确认:{result['confirmed']} | {result['recommendation']}")
+        print(
+            f"  {ticker}: Reddit {result['reddit_posts']}帖 | "
+            f"确认:{result['confirmed']} | {result['recommendation']}"
+        )
 
     elif args.watchlist:
         hot = scanner.scan_watchlist()
-        print(f"\n{'='*55}")
-        print(f"  Reddit 热度排行 (AI产业链)")
-        print(f"{'='*55}")
+        print(f"\n{'=' * 55}")
+        print("  Reddit 热度排行 (AI产业链)")
+        print(f"{'=' * 55}")
         for r in hot:
             if r["total_posts"] >= 2:
-                print(f"\n  {r['ticker']:<6} {r['buzz_level']:<16} "
-                      f"{r['total_posts']:>2}帖 | sentiment:{r['avg_sentiment']:.2f}")
+                print(
+                    f"\n  {r['ticker']:<6} {r['buzz_level']:<16} "
+                    f"{r['total_posts']:>2}帖 | sentiment:{r['avg_sentiment']:.2f}"
+                )
                 if r["top_posts"]:
                     print(f"         {r['top_posts'][0]['title'][:90]}")
 
@@ -367,4 +453,6 @@ if __name__ == "__main__":
         # 默认显示 WSB 热点
         for t in ["NVDA", "MU", "LITE"]:
             data = scanner.count_mentions(t)
-            print(f"${t}: {data['total_posts']} posts | sentiment:{data['avg_sentiment']:.2f} | {data['buzz_level']}")
+            print(
+                f"${t}: {data['total_posts']} posts | sentiment:{data['avg_sentiment']:.2f} | {data['buzz_level']}"
+            )

@@ -5,24 +5,25 @@
 输出: 情景矩阵 + EV + 仓位建议 + 止损/止盈
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Optional
-import math
 
 
 @dataclass
 class CatalystOutcome:
     """单个催化事件的可能结果"""
-    label: str                    # 结果名称, 如 "发射成功" / "发射失败"
-    probability: float            # 概率 0.0-1.0
-    price_impact_pct: float       # 对股价的百分比影响, 如 +0.15 = +15%
+
+    label: str  # 结果名称, 如 "发射成功" / "发射失败"
+    probability: float  # 概率 0.0-1.0
+    price_impact_pct: float  # 对股价的百分比影响, 如 +0.15 = +15%
 
 
 @dataclass
 class Catalyst:
     """单个催化事件"""
-    name: str                     # 事件名, 如 "Starship V3 IFT-12"
-    date: str                     # 日期
+
+    name: str  # 事件名, 如 "Starship V3 IFT-12"
+    date: str  # 日期
     outcomes: list[CatalystOutcome]
     time_to_event_hours: float = 0  # 距事件还有多少小时
 
@@ -30,26 +31,28 @@ class Catalyst:
 @dataclass
 class Scenario:
     """多个催化结果的组合 → 一个完整情景"""
+
     label: str
     catalyst_outcomes: dict[str, str]  # {事件名: 结果label}
-    joint_probability: float           # 联合概率
-    aggregate_impact_pct: float        # 累计价格影响 %
-    price_target: float                # 情景目标价
+    joint_probability: float  # 联合概率
+    aggregate_impact_pct: float  # 累计价格影响 %
+    price_target: float  # 情景目标价
 
 
 @dataclass
 class DecisionOutput:
     """模型输出"""
+
     scenarios: list[Scenario]
-    expected_value: float              # 持仓 EV ($)
-    expected_return_pct: float         # 预期收益率
-    recommended_action: str            # "持有"/"加仓"/"减仓"/"清仓"
-    position_pct: float                # 建议仓位占比 (0.0-1.0)
-    stop_loss: float                   # 止损价
-    take_profit: float                 # 止盈价
-    risk_reward_ratio: float           # 风险收益比
-    key_risk: str                      # 最大风险描述
-    catalyst_timeline: list[str]       # 催化时间线摘要
+    expected_value: float  # 持仓 EV ($)
+    expected_return_pct: float  # 预期收益率
+    recommended_action: str  # "持有"/"加仓"/"减仓"/"清仓"
+    position_pct: float  # 建议仓位占比 (0.0-1.0)
+    stop_loss: float  # 止损价
+    take_profit: float  # 止盈价
+    risk_reward_ratio: float  # 风险收益比
+    key_risk: str  # 最大风险描述
+    catalyst_timeline: list[str]  # 催化时间线摘要
 
 
 def build_scenarios(catalysts: list[Catalyst], current_price: float) -> list[Scenario]:
@@ -59,17 +62,23 @@ def build_scenarios(catalysts: list[Catalyst], current_price: float) -> list[Sce
 
     scenarios: list[Scenario] = []
 
-    def recurse(idx: int, current_outcomes: dict[str, str],
-                current_prob: float, current_impact: float):
+    def recurse(
+        idx: int,
+        current_outcomes: dict[str, str],
+        current_prob: float,
+        current_impact: float,
+    ):
         if idx == len(catalysts):
             label_parts = [f"{cat}:{out}" for cat, out in current_outcomes.items()]
-            scenarios.append(Scenario(
-                label=" | ".join(label_parts),
-                catalyst_outcomes=dict(current_outcomes),
-                joint_probability=current_prob,
-                aggregate_impact_pct=current_impact,
-                price_target=round(current_price * (1 + current_impact), 2),
-            ))
+            scenarios.append(
+                Scenario(
+                    label=" | ".join(label_parts),
+                    catalyst_outcomes=dict(current_outcomes),
+                    joint_probability=current_prob,
+                    aggregate_impact_pct=current_impact,
+                    price_target=round(current_price * (1 + current_impact), 2),
+                )
+            )
             return
 
         cat = catalysts[idx]
@@ -136,12 +145,20 @@ def evaluate_position(
     # 4. Kelly 仓位计算 (基于 EV 和胜率)
     win_scenarios = [s for s in scenarios if s.aggregate_impact_pct > 0]
     win_prob = sum(s.joint_probability for s in win_scenarios)
-    avg_win = (sum(s.aggregate_impact_pct * s.joint_probability for s in win_scenarios)
-               / win_prob if win_prob > 0 else 0)
+    avg_win = (
+        sum(s.aggregate_impact_pct * s.joint_probability for s in win_scenarios)
+        / win_prob
+        if win_prob > 0
+        else 0
+    )
     loss_scenarios = [s for s in scenarios if s.aggregate_impact_pct <= 0]
     loss_prob = 1 - win_prob
-    avg_loss = (sum(abs(s.aggregate_impact_pct) * s.joint_probability for s in loss_scenarios)
-                / loss_prob if loss_prob > 0 else 0.01)
+    avg_loss = (
+        sum(abs(s.aggregate_impact_pct) * s.joint_probability for s in loss_scenarios)
+        / loss_prob
+        if loss_prob > 0
+        else 0.01
+    )
 
     # Kelly f* = (p_win * avg_win - p_loss * avg_loss) / (avg_win * avg_loss)
     # 对二元事件做 1/4 Kelly 收缩
@@ -173,7 +190,9 @@ def evaluate_position(
     stop_loss = round(worst_scenario.price_target, 2)
     # 止盈: 取上涨情景的加权平均目标价
     if win_scenarios:
-        tp_price = sum(s.price_target * s.joint_probability for s in win_scenarios) / win_prob
+        tp_price = (
+            sum(s.price_target * s.joint_probability for s in win_scenarios) / win_prob
+        )
     else:
         tp_price = ev_price
     take_profit = round(tp_price, 2)
@@ -184,7 +203,10 @@ def evaluate_position(
     rr_ratio = potential_reward / potential_risk if potential_risk > 0 else 999
 
     # 8. 催化时间线
-    timeline = [f"{c.date}: {c.name}" for c in sorted(catalysts, key=lambda c: c.time_to_event_hours)]
+    timeline = [
+        f"{c.date}: {c.name}"
+        for c in sorted(catalysts, key=lambda c: c.time_to_event_hours)
+    ]
 
     # 9. 最大风险
     max_risk_scenario = max(
@@ -208,18 +230,26 @@ def evaluate_position(
     )
 
 
-def print_decision(output: DecisionOutput, ticker: str, current_price: float,
-                   cost_basis: float, shares: int, catalysts: list[Catalyst]):
+def print_decision(
+    output: DecisionOutput,
+    ticker: str,
+    current_price: float,
+    cost_basis: float,
+    shares: int,
+    catalysts: list[Catalyst],
+):
     """格式化打印决策输出"""
     position_value = shares * current_price
     pnl = shares * (current_price - cost_basis)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  {ticker} 短期催化决策模型")
-    print(f"{'='*60}")
-    print(f"  当前价: ${current_price:.2f}  成本: ${cost_basis:.2f}  "
-          f"持仓: {shares}股 (${position_value:,.0f})  "
-          f"浮盈: ${pnl:+,.0f}")
+    print(f"{'=' * 60}")
+    print(
+        f"  当前价: ${current_price:.2f}  成本: ${cost_basis:.2f}  "
+        f"持仓: {shares}股 (${position_value:,.0f})  "
+        f"浮盈: ${pnl:+,.0f}"
+    )
     print()
 
     # 催化时间线
@@ -230,7 +260,7 @@ def print_decision(output: DecisionOutput, ticker: str, current_price: float,
     # 情景矩阵
     print(f"\n  [Matrix] 情景矩阵 ({len(output.scenarios)} 种组合):")
     print(f"  {'情景':<45} {'概率':>6} {'影响':>8} {'目标价':>8}")
-    print(f"  {'-'*67}")
+    print(f"  {'-' * 67}")
     for s in output.scenarios[:8]:  # 最多显示 8 行
         prob_str = f"{s.joint_probability:.0%}"
         impact_str = f"{s.aggregate_impact_pct:+.0%}"
@@ -238,14 +268,16 @@ def print_decision(output: DecisionOutput, ticker: str, current_price: float,
         print(f"  {s.label:<45} {prob_str:>6} {impact_str:>8} {price_str:>8}")
 
     if len(output.scenarios) > 8:
-        print(f"  ... 还有 {len(output.scenarios)-8} 个情景")
+        print(f"  ... 还有 {len(output.scenarios) - 8} 个情景")
 
     # 决策
-    ev_price_display = sum(s.price_target * s.joint_probability for s in output.scenarios)
+    ev_price_display = sum(
+        s.price_target * s.joint_probability for s in output.scenarios
+    )
     print(f"\n  [Decision] 决策: {output.recommended_action}")
-    print(f"  {'-'*42}")
+    print(f"  {'-' * 42}")
     print(f"  EV 价格:        ${ev_price_display:.2f}")
-    print(f"  预期收益:        {(ev_price_display/current_price - 1)*100:+.1f}%")
+    print(f"  预期收益:        {(ev_price_display / current_price - 1) * 100:+.1f}%")
     print(f"  建议仓位:        {output.position_pct:.0%}")
     print(f"  止损:           ${output.stop_loss:.2f}")
     print(f"  止盈(目标):     ${output.take_profit:.2f}")
@@ -254,14 +286,23 @@ def print_decision(output: DecisionOutput, ticker: str, current_price: float,
     print()
 
     # 情景概率汇总
-    print(f"  [Summary] 情景概率汇总:")
-    win_prob = sum(s.joint_probability for s in output.scenarios if s.aggregate_impact_pct > 0)
-    flat_prob = sum(s.joint_probability for s in output.scenarios if abs(s.aggregate_impact_pct) < 0.02)
-    loss_prob = sum(s.joint_probability for s in output.scenarios if s.aggregate_impact_pct <= -0.02)
+    print("  [Summary] 情景概率汇总:")
+    win_prob = sum(
+        s.joint_probability for s in output.scenarios if s.aggregate_impact_pct > 0
+    )
+    flat_prob = sum(
+        s.joint_probability
+        for s in output.scenarios
+        if abs(s.aggregate_impact_pct) < 0.02
+    )
+    loss_prob = sum(
+        s.joint_probability for s in output.scenarios if s.aggregate_impact_pct <= -0.02
+    )
     print(f"    上涨: {win_prob:.0%}  横盘: {flat_prob:.0%}  下跌: {loss_prob:.0%}")
 
 
 # ─── DXYZ 当前催化 ───
+
 
 def dxyz_catalysts() -> list[Catalyst]:
     """DXYZ 当前催化事件 — 2026-05-18"""
@@ -305,10 +346,10 @@ def dxyz_catalysts() -> list[Catalyst]:
 if __name__ == "__main__":
     # DXYZ 当前仓位
     ticker = "DXYZ"
-    current_price = 53.0   # 盘前估算 ~$53
+    current_price = 53.0  # 盘前估算 ~$53
     cost_basis = 47.62
     shares = 588
-    nav = 24.56            # NAV
+    nav = 24.56  # NAV
     nav_premium = (current_price - nav) / nav  # ~116%
 
     catalysts = dxyz_catalysts()
@@ -324,4 +365,4 @@ if __name__ == "__main__":
     )
 
     print_decision(output, ticker, current_price, cost_basis, shares, catalysts)
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")

@@ -12,9 +12,8 @@ from dataclasses import dataclass, field
 @dataclass
 class SiliconFlowConfig:
     """硅基流动 API 配置"""
-    api_key: str = field(default_factory=lambda: os.getenv(
-        "SILICONFLOW_API_KEY", ""
-    ))
+
+    api_key: str = field(default_factory=lambda: os.getenv("SILICONFLOW_API_KEY", ""))
     api_url: str = "https://api.siliconflow.cn/v1/chat/completions"
     model_name: str = os.getenv("GLM_MODEL_NAME", "glm-4")
 
@@ -27,6 +26,7 @@ class SiliconFlowConfig:
 @dataclass
 class NewsConfig:
     """新闻搜索配置"""
+
     search_days: int = 7
     max_per_keyword: int = 3
     max_for_briefing: int = 15

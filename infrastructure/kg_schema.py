@@ -6,8 +6,6 @@ Relationship types: CORRELATES_WITH, HAS_FACTOR, IN_INDUSTRY, MENTIONED_IN,
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
-from typing import Optional
 
 # ── Node labels ──────────────────────────────────────────
 
@@ -21,17 +19,24 @@ NODE_RISK = "RiskAlert"
 
 # ── Relationship types ───────────────────────────────────
 
-REL_CORRELATES = "CORRELATES_WITH"     # (Stock)-[:CORRELATES_WITH {rho, window}]->(Stock)
-REL_HAS_FACTOR = "HAS_FACTOR"          # (Stock)-[:HAS_FACTOR {ic, date}]->(Factor)
-REL_IN_INDUSTRY = "IN_INDUSTRY"         # (Stock)-[:IN_INDUSTRY]->(Industry)
-REL_MENTIONED = "MENTIONED_IN"          # (Stock)-[:MENTIONED_IN {sentiment}]->(Report)
-REL_TRIGGERED = "TRIGGERED_BY"          # (Event)-[:TRIGGERED_BY]->(Report)
-REL_EXECUTED = "EXECUTED_BY"            # (Report)-[:EXECUTED_BY]->(Agent)
-REL_DEPENDS = "DEPENDS_ON"              # (Factor)-[:DEPENDS_ON]->(Factor)
-REL_SUPPLIES = "SUPPLIES_TO"            # (Stock)-[:SUPPLIES_TO {relationship}]->(Industry)
+REL_CORRELATES = "CORRELATES_WITH"  # (Stock)-[:CORRELATES_WITH {rho, window}]->(Stock)
+REL_HAS_FACTOR = "HAS_FACTOR"  # (Stock)-[:HAS_FACTOR {ic, date}]->(Factor)
+REL_IN_INDUSTRY = "IN_INDUSTRY"  # (Stock)-[:IN_INDUSTRY]->(Industry)
+REL_MENTIONED = "MENTIONED_IN"  # (Stock)-[:MENTIONED_IN {sentiment}]->(Report)
+REL_TRIGGERED = "TRIGGERED_BY"  # (Event)-[:TRIGGERED_BY]->(Report)
+REL_EXECUTED = "EXECUTED_BY"  # (Report)-[:EXECUTED_BY]->(Agent)
+REL_DEPENDS = "DEPENDS_ON"  # (Factor)-[:DEPENDS_ON]->(Factor)
+REL_SUPPLIES = "SUPPLIES_TO"  # (Stock)-[:SUPPLIES_TO {relationship}]->(Industry)
 
-ALL_NODE_LABELS = [NODE_STOCK, NODE_FACTOR, NODE_INDUSTRY, NODE_REPORT,
-                   NODE_EVENT, NODE_AGENT, NODE_RISK]
+ALL_NODE_LABELS = [
+    NODE_STOCK,
+    NODE_FACTOR,
+    NODE_INDUSTRY,
+    NODE_REPORT,
+    NODE_EVENT,
+    NODE_AGENT,
+    NODE_RISK,
+]
 
 
 @dataclass
@@ -51,9 +56,9 @@ class StockNode:
 @dataclass
 class FactorNode:
     name: str
-    category: str = ""          # momentum, reversal, volatility, volume, fundamental
+    category: str = ""  # momentum, reversal, volatility, volume, fundamental
     description: str = ""
-    latest_ic: float = 0.0       # latest cross-sectional IC
+    latest_ic: float = 0.0  # latest cross-sectional IC
     ic_stable: bool = True
 
     @property
@@ -76,8 +81,8 @@ class IndustryNode:
 class ReportNode:
     path: str
     title: str = ""
-    report_type: str = ""       # stock_research, daily_trade, pipeline, system_eval
-    generated_at: str = ""      # ISO timestamp
+    report_type: str = ""  # stock_research, daily_trade, pipeline, system_eval
+    generated_at: str = ""  # ISO timestamp
     tickers_covered: list = field(default_factory=list)
 
     @property
@@ -88,10 +93,10 @@ class ReportNode:
 @dataclass
 class EventNode:
     name: str
-    event_type: str = ""        # earnings, launch, macro, regulatory, catalyst
+    event_type: str = ""  # earnings, launch, macro, regulatory, catalyst
     target_tickers: list = field(default_factory=list)
-    date: str = ""              # YYYY-MM-DD
-    impact_score: float = 0.0   # -1.0 to 1.0
+    date: str = ""  # YYYY-MM-DD
+    impact_score: float = 0.0  # -1.0 to 1.0
 
     @property
     def uid(self) -> str:
@@ -113,8 +118,8 @@ class AgentNode:
 @dataclass
 class RiskAlertNode:
     ticker: str
-    alert_type: str = ""        # premium, dilution, overbought, concentration, earnings
-    severity: str = "warning"   # info, warning, critical
+    alert_type: str = ""  # premium, dilution, overbought, concentration, earnings
+    severity: str = "warning"  # info, warning, critical
     message: str = ""
     created_at: str = ""
 
@@ -159,11 +164,20 @@ INDUSTRY_TAXONOMY = {
 }
 
 TICKER_INDUSTRY_MAP = {
-    "DXYZ": "FUND", "NVDA": "AI_CHIPS", "AMD": "AI_CHIPS",
-    "MU": "STORAGE", "WDC": "STORAGE", "SNDK": "STORAGE",
-    "STX": "STORAGE", "SMCI": "AI_CHIPS",
-    "RKLB": "SPACE", "LUNR": "SPACE",
-    "LITE": "OPTICAL", "COHR": "OPTICAL",
-    "BABA": "E_COMMERCE", "JD": "E_COMMERCE",
-    "GE": "AEROSPACE_DEFENSE", "NOK": "TELECOM",
+    "DXYZ": "FUND",
+    "NVDA": "AI_CHIPS",
+    "AMD": "AI_CHIPS",
+    "MU": "STORAGE",
+    "WDC": "STORAGE",
+    "SNDK": "STORAGE",
+    "STX": "STORAGE",
+    "SMCI": "AI_CHIPS",
+    "RKLB": "SPACE",
+    "LUNR": "SPACE",
+    "LITE": "OPTICAL",
+    "COHR": "OPTICAL",
+    "BABA": "E_COMMERCE",
+    "JD": "E_COMMERCE",
+    "GE": "AEROSPACE_DEFENSE",
+    "NOK": "TELECOM",
 }

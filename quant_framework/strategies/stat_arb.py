@@ -19,7 +19,9 @@ import statsmodels.api as sm
 warnings.filterwarnings("ignore")
 
 
-def find_cointegrated_pairs(prices: pd.DataFrame, pvalue_threshold: float = 0.05) -> pd.DataFrame:
+def find_cointegrated_pairs(
+    prices: pd.DataFrame, pvalue_threshold: float = 0.05
+) -> pd.DataFrame:
     """扫描所有股票对，返回通过协整检验的配对。
 
     Args:
@@ -44,12 +46,15 @@ def find_cointegrated_pairs(prices: pd.DataFrame, pvalue_threshold: float = 0.05
                 if pvalue <= pvalue_threshold:
                     hedge = _estimate_hedge_ratio(pair_data[t1], pair_data[t2])
                     hl = _estimate_half_life(pair_data[t1], hedge, pair_data[t2])
-                    results.append({
-                        "ticker1": t1, "ticker2": t2,
-                        "pvalue": round(pvalue, 6),
-                        "hedge_ratio": round(hedge, 4),
-                        "half_life": round(hl, 1),
-                    })
+                    results.append(
+                        {
+                            "ticker1": t1,
+                            "ticker2": t2,
+                            "pvalue": round(pvalue, 6),
+                            "hedge_ratio": round(hedge, 4),
+                            "half_life": round(hl, 1),
+                        }
+                    )
             except Exception:
                 continue
 
@@ -84,8 +89,9 @@ def compute_spread(y: pd.Series, hedge: float, x: pd.Series) -> pd.Series:
     return y - hedge * x
 
 
-def generate_signals(spread: pd.Series, entry_z: float = 2.0,
-                     exit_z: float = 0.5, lookback: int = 60) -> pd.DataFrame:
+def generate_signals(
+    spread: pd.Series, entry_z: float = 2.0, exit_z: float = 0.5, lookback: int = 60
+) -> pd.DataFrame:
     """Z-score 法生成交易信号。
 
     Args:
@@ -109,7 +115,7 @@ def generate_signals(spread: pd.Series, entry_z: float = 2.0,
             if z > entry_z:
                 pos = -1  # short spread (y overvalued vs x)
             elif z < -entry_z:
-                pos = 1   # long spread (y undervalued vs x)
+                pos = 1  # long spread (y undervalued vs x)
         elif pos == 1 and z > -exit_z:
             pos = 0
         elif pos == -1 and z < exit_z:
@@ -128,11 +134,14 @@ def backtest_pair(spread: pd.Series, signal: pd.Series) -> pd.DataFrame:
     spread_ret = spread.diff()
     strat_ret = signal.shift(1).fillna(0) * spread_ret
     strat_equity = (1 + strat_ret).cumprod()
-    return pd.DataFrame({
-        "spread_ret": spread_ret,
-        "strat_ret": strat_ret,
-        "strat_equity": strat_equity,
-    }, index=spread.index)
+    return pd.DataFrame(
+        {
+            "spread_ret": spread_ret,
+            "strat_ret": strat_ret,
+            "strat_equity": strat_equity,
+        },
+        index=spread.index,
+    )
 
 
 def backtest_summary(result: pd.DataFrame, ppy: int = 252) -> dict:
@@ -155,9 +164,15 @@ def backtest_summary(result: pd.DataFrame, ppy: int = 252) -> dict:
     }
 
 
-def run_pair(prices: pd.DataFrame, ticker1: str, ticker2: str,
-             entry_z: float = 2.0, exit_z: float = 0.5,
-             lookback: int = 60, train_ratio: float = 0.5) -> dict:
+def run_pair(
+    prices: pd.DataFrame,
+    ticker1: str,
+    ticker2: str,
+    entry_z: float = 2.0,
+    exit_z: float = 0.5,
+    lookback: int = 60,
+    train_ratio: float = 0.5,
+) -> dict:
     """对单对股票运行完整配对交易流水线。
 
     Args:
@@ -207,19 +222,29 @@ def _make_demo_prices(n: int = 500, seed: int = 42) -> pd.DataFrame:
 
 # ─── CLI ────────────────────────────────────────────────────────
 def main():
-    parser = argparse.ArgumentParser(description="Cointegration Pair Trading (statsmodels)")
+    parser = argparse.ArgumentParser(
+        description="Cointegration Pair Trading (statsmodels)"
+    )
     parser.add_argument("--input", help="Input parquet/csv with close prices")
     parser.add_argument("--ticker1", default="STOCK_A", help="First ticker")
     parser.add_argument("--ticker2", default="STOCK_B", help="Second ticker")
     parser.add_argument("--entry-z", type=float, default=2.0)
     parser.add_argument("--exit-z", type=float, default=0.5)
     parser.add_argument("--lookback", type=int, default=60)
-    parser.add_argument("--scan", action="store_true", help="Scan all pairs for cointegration")
-    parser.add_argument("--pvalue", type=float, default=0.05, help="Max p-value for pair scan")
+    parser.add_argument(
+        "--scan", action="store_true", help="Scan all pairs for cointegration"
+    )
+    parser.add_argument(
+        "--pvalue", type=float, default=0.05, help="Max p-value for pair scan"
+    )
     args = parser.parse_args()
 
     if args.input:
-        df = pd.read_parquet(args.input) if args.input.endswith(".parquet") else pd.read_csv(args.input)
+        df = (
+            pd.read_parquet(args.input)
+            if args.input.endswith(".parquet")
+            else pd.read_csv(args.input)
+        )
     else:
         print("No --input provided; using synthetic cointegrated pair demo\n")
         df = _make_demo_prices()
@@ -234,12 +259,17 @@ def main():
         return
 
     # Single pair
-    result = run_pair(df, args.ticker1, args.ticker2,
-                      entry_z=args.entry_z, exit_z=args.exit_z,
-                      lookback=args.lookback)
-    print(f"\n{'='*56}")
+    result = run_pair(
+        df,
+        args.ticker1,
+        args.ticker2,
+        entry_z=args.entry_z,
+        exit_z=args.exit_z,
+        lookback=args.lookback,
+    )
+    print(f"\n{'=' * 56}")
     print(f"  Pair Trade: {args.ticker1} vs {args.ticker2}")
-    print(f"{'='*56}")
+    print(f"{'=' * 56}")
     for k, v in result.items():
         print(f"  {k:20s}: {v}")
 

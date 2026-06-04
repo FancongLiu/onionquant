@@ -19,6 +19,7 @@
 <style>
   :root {
     --bg: #06060b; --bg-alt: #09090f;
+    --sidebar-bg: #08081a;
     --card: #0e0e18; --card-hover: #111122;
     --border: #1a1a30; --border-hover: #2a2a48;
     --text: #e0e0f0; --sub: #a0a0c0; --muted: #606080;
@@ -27,91 +28,107 @@
     --green: #7ee8a0; --green-dim: rgba(126,232,160,0.1);
     --radius: 12px; --radius-sm: 8px;
     --tr: 0.22s cubic-bezier(0.4,0,0.2,1);
+    --sidebar-w: 270px;
   }
   *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-  html { scroll-behavior: smooth; }
+  html { scroll-behavior: smooth; scroll-padding-top: 24px; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', sans-serif;
     background: var(--bg); color: var(--text); line-height: 1.75; font-size: 15px;
     -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ─── Layout ─── */
+  .app-layout { display:flex; min-height:100vh; }
+
+  /* ─── Sidebar ─── */
+  .sidebar {
+    position:fixed; top:0; left:0; bottom:0; width:var(--sidebar-w); z-index:200;
+    background: var(--sidebar-bg);
+    border-right: 1px solid rgba(124,172,248,0.08);
+    display:flex; flex-direction:column;
+    overflow-y:auto; overflow-x:hidden;
+  }
+  .sidebar-inner { padding: 32px 24px 24px; display:flex; flex-direction:column; height:100%; }
+  .sidebar-profile { margin-bottom: 28px; }
+  .sidebar-profile .avatar {
+    width:56px; height:56px; border-radius:50%;
+    background: linear-gradient(135deg, rgba(124,172,248,0.3), rgba(126,232,160,0.2));
+    display:flex; align-items:center; justify-content:center;
+    font-size:1.5rem; font-weight:700; margin-bottom:12px;
+    border: 2px solid rgba(124,172,248,0.2);
+  }
+  .sidebar-profile .name { font-size:1.2rem; font-weight:700; color:var(--text); }
+  .sidebar-profile .title { font-size:0.8rem; color:var(--accent); margin-top:2px; }
+  .sidebar-profile .loc { font-size:0.73rem; color:var(--muted); margin-top:4px; }
+
+  .side-nav { flex:1; display:flex; flex-direction:column; gap:2px; }
+  .side-nav-label {
+    font-size:0.65rem; font-weight:700; letter-spacing:2px; text-transform:uppercase;
+    color:var(--muted); margin:16px 0 6px; padding-left:12px;
+  }
+  .side-nav-label:first-child { margin-top:0; }
+  .side-nav a {
+    display:flex; align-items:center; gap:10px;
+    padding:9px 12px; border-radius:8px; font-size:0.88rem;
+    color:var(--sub); text-decoration:none;
+    transition: all var(--tr);
+  }
+  .side-nav a:hover { background:rgba(124,172,248,0.06); color:var(--text); }
+  .side-nav a.active {
+    background:var(--accent-dim); color:var(--accent);
+    border-left:3px solid var(--accent); padding-left:9px;
+  }
+  .side-nav .nav-icon { font-size:1rem; width:22px; text-align:center; flex-shrink:0; }
+
+  .side-divider { border:none; border-top:1px solid rgba(255,255,255,0.04); margin:16px 0; }
+
+  .side-bottom { margin-top:auto; display:flex; flex-direction:column; gap:4px; }
+  .side-bottom a {
+    display:flex; align-items:center; gap:10px;
+    padding:8px 12px; border-radius:8px; font-size:0.82rem;
+    color:var(--sub); text-decoration:none;
+    transition: all var(--tr);
+  }
+  .side-bottom a:hover { background:rgba(124,172,248,0.06); color:var(--text); }
+  .side-bottom a.ext { color:var(--accent); font-weight:600; }
+  .side-bottom a .dot {
+    width:7px; height:7px; border-radius:50%; margin-left:auto;
+    background:var(--green); box-shadow:0 0 6px rgba(126,232,160,0.4);
+  }
+
+  .side-login {
+    margin-top:10px; width:100%; padding:9px; border-radius:8px;
+    background:var(--accent-dim); color:var(--accent);
+    border:1px solid rgba(124,172,248,0.25);
+    font-size:0.83rem; cursor:pointer; font-family:inherit; font-weight:600;
+    transition:all var(--tr);
+  }
+  .side-login:hover { background:rgba(124,172,248,0.18); border-color:var(--accent); }
+
+  /* ─── Main Content ─── */
+  .main-content {
+    margin-left:var(--sidebar-w); flex:1; min-width:0;
     background-image:
       radial-gradient(ellipse at 50% 0%, rgba(124,172,248,0.04) 0%, transparent 70%),
       radial-gradient(ellipse at 80% 30%, rgba(126,232,160,0.02) 0%, transparent 50%);
     background-attachment: fixed;
   }
-  .container { max-width: 960px; margin:0 auto; padding:0 28px; }
+  .main-inner { max-width:820px; margin:0 auto; padding:48px 40px 60px; }
 
-  .sys-bar {
-    background: rgba(14,14,24,0.9); border-bottom: 1px solid rgba(124,172,248,0.1);
-    padding: 7px 0; font-size: 0.75rem; color: var(--muted); backdrop-filter: blur(8px);
-  }
-  .sys-bar .container { display:flex; align-items:center; gap:12px; flex-wrap:wrap; justify-content:center; }
-  .sys-dot {
-    width:6px; height:6px; border-radius:50%; background: var(--green);
-    box-shadow: 0 0 6px var(--green), 0 0 12px rgba(126,232,160,0.4);
-    animation: pulse 2.5s ease-in-out infinite;
-  }
-  @keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.5;} }
-  .sys-bar .sep { color:var(--border); }
-
-  .nav {
-    position: sticky; top:0; z-index:100;
-    background: rgba(6,6,11,0.82); backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(255,255,255,0.04); padding: 11px 0;
-  }
-  .nav .container { display:flex; align-items:center; justify-content:space-between; }
-  .nav .logo { font-weight:800; font-size:1rem; color: var(--accent); }
-  .nav-links { display:flex; gap:22px; list-style:none; align-items:center; }
-  .nav-links a {
-    color:var(--sub); font-size:0.85rem; text-decoration:none;
-    padding:4px 0; border-bottom:2px solid transparent; transition:color var(--tr), border-color var(--tr);
-  }
-  .nav-links a:hover { color:var(--text); border-bottom-color:var(--accent); }
-  .nav-login {
-    background:var(--accent-dim); color:var(--accent); border:1px solid rgba(124,172,248,0.3);
-    padding:5px 16px; border-radius:20px; font-size:0.83rem; cursor:pointer;
-    transition:all var(--tr); font-family:inherit;
-  }
-  .nav-login:hover { background:rgba(124,172,248,0.2); border-color:var(--accent); }
-
-  .hero {
-    padding: 96px 0 60px; text-align:center; position:relative; overflow:hidden;
-  }
-  .hero::before {
-    content:''; position:absolute; top:-100px; left:50%; transform:translateX(-50%);
-    width:560px; height:360px;
-    background: radial-gradient(ellipse, rgba(124,172,248,0.07) 0%, transparent 70%);
-    pointer-events:none;
-  }
-  .hero .name {
-    font-size:2.7rem; font-weight:800; letter-spacing:-1px; margin-bottom:4px;
-    background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%);
-    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-  }
-  .hero .tagline { font-size:1.08rem; color:var(--sub); margin-top:10px; }
-  .hero .summary { font-size:0.93rem; color:var(--muted); max-width:560px; margin:18px auto 0; line-height:1.8; }
-  .hero .badges { margin-top:24px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
-  .badge {
-    background:var(--card); border:1px solid var(--border);
-    padding:5px 17px; border-radius:20px; font-size:0.84rem; color:var(--sub);
-    transition: all var(--tr);
-  }
-  .badge:hover { border-color:var(--border-hover); transform:translateY(-1px); }
-
-  section { padding: 58px 0; position:relative; }
-  section:nth-child(even) { background: var(--bg-alt); }
-  .sec-eyebrow { font-size:0.74rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:6px; }
-  h2 { font-size:1.5rem; margin-bottom:14px; font-weight:700; letter-spacing:-0.3px; }
-  h3 { font-size:1.06rem; margin:30px 0 12px; color:var(--accent); font-weight:600; }
+  /* ─── Section Styles ─── */
+  section { padding: 44px 0; }
+  .sec-eyebrow { font-size:0.7rem; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--accent); margin-bottom:4px; }
+  h2 { font-size:1.45rem; margin-bottom:14px; font-weight:700; letter-spacing:-0.3px; }
+  h3 { font-size:1.04rem; margin:28px 0 10px; color:var(--accent); font-weight:600; }
   p, li { color:var(--sub); }
   a { color:var(--accent); text-decoration:none; transition:opacity var(--tr); }
   a:hover { opacity:0.82; }
 
-  .card-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:16px; }
+  .card-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
   .card {
     background:var(--card); border:1px solid var(--border);
-    border-radius:var(--radius); padding:24px;
+    border-radius:var(--radius); padding:22px;
     transition: all var(--tr); position:relative; overflow:hidden;
   }
   .card::after {
@@ -121,81 +138,80 @@
   }
   .card:hover { border-color:var(--border-hover); transform:translateY(-2px); box-shadow:0 8px 30px rgba(0,0,0,0.3); }
   .card:hover::after { opacity:1; }
-  .card h4 { font-size:1rem; margin-bottom:6px; }
-  .card p { font-size:0.89rem; color:var(--muted); line-height:1.65; }
+  .card h4 { font-size:0.98rem; margin-bottom:6px; }
+  .card p { font-size:0.87rem; color:var(--muted); line-height:1.65; }
 
-  .skill-group { margin-bottom:20px; }
-  .skill-group h3 { margin:0 0 10px; font-size:0.93rem; color:var(--sub); }
-  .tags { display:flex; flex-wrap:wrap; gap:8px; }
+  .skill-group { margin-bottom:18px; }
+  .skill-group h3 { margin:0 0 8px; font-size:0.9rem; color:var(--sub); }
+  .tags { display:flex; flex-wrap:wrap; gap:7px; }
   .tag {
     background:var(--card); border:1px solid var(--border);
-    padding:4px 13px; border-radius:6px; font-size:0.83rem; color:var(--text);
+    padding:4px 12px; border-radius:6px; font-size:0.82rem; color:var(--text);
     transition:all var(--tr);
   }
   .tag:hover { border-color:var(--border-hover); }
 
   .arch-box {
     background:#0a0a16; border:1px solid var(--border);
-    border-radius:var(--radius); padding:28px; margin:18px 0;
+    border-radius:var(--radius); padding:24px; margin:14px 0;
   }
   .arch-flow { display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; }
   .arch-node {
     background:var(--card); border:1px solid var(--border);
-    border-radius:var(--radius-sm); padding:12px 18px; text-align:center; min-width:80px;
-    font-size:0.86rem; font-weight:600;
+    border-radius:var(--radius-sm); padding:10px 16px; text-align:center; min-width:76px;
+    font-size:0.84rem; font-weight:600;
   }
   .arch-node.accent { border-color:rgba(124,172,248,0.4); color:var(--accent); }
-  .arch-arrow { color:var(--muted); font-size:1.2rem; }
+  .arch-arrow { color:var(--muted); font-size:1.15rem; }
   .arch-group {
     background:rgba(124,172,248,0.03); border:1px dashed rgba(124,172,248,0.2);
-    border-radius:var(--radius); padding:16px;
+    border-radius:var(--radius); padding:14px;
   }
-  .arch-group .label { font-size:0.73rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:10px; text-align:center; }
-  .arch-group .row { display:flex; gap:8px; flex-wrap:wrap; justify-content:center; }
-  .arch-group .arch-node { font-size:0.8rem; padding:8px 14px; }
+  .arch-group .label { font-size:0.7rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:8px; text-align:center; }
+  .arch-group .row { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; }
+  .arch-group .arch-node { font-size:0.78rem; padding:7px 12px; }
 
-  .feature-list { list-style:none; display:grid; gap:12px; }
+  .feature-list { list-style:none; display:grid; gap:10px; }
   .feature-list li {
-    padding:16px 20px; background:var(--card); border:1px solid var(--border);
-    border-radius:var(--radius-sm); font-size:0.92rem; line-height:1.65;
+    padding:14px 18px; background:var(--card); border:1px solid var(--border);
+    border-radius:var(--radius-sm); font-size:0.9rem; line-height:1.65;
     transition:border-color var(--tr);
   }
   .feature-list li:hover { border-color:var(--border-hover); }
   .feature-list li strong { color:var(--text); }
 
-  .timeline { position:relative; padding-left:28px; border-left:2px solid rgba(124,172,248,0.2); }
-  .timeline-item { margin-bottom:26px; position:relative; }
+  .timeline { position:relative; padding-left:26px; border-left:2px solid rgba(124,172,248,0.2); }
+  .timeline-item { margin-bottom:22px; position:relative; }
   .timeline-item::before {
-    content:''; position:absolute; left:-34px; top:5px;
+    content:''; position:absolute; left:-32px; top:5px;
     width:10px; height:10px; border-radius:50%; background:var(--accent);
-    border:2px solid var(--bg-alt); box-shadow:0 0 8px var(--accent-glow);
+    border:2px solid var(--bg); box-shadow:0 0 8px var(--accent-glow);
   }
   .timeline-item:last-child::before { background:var(--green); box-shadow:0 0 8px rgba(126,232,160,0.4); }
-  .timeline-item .date { font-size:0.8rem; color:var(--accent); margin-bottom:4px; font-weight:600; }
-  .timeline-item h4 { font-size:1rem; margin-bottom:4px; }
-  .timeline-item p { font-size:0.88rem; color:var(--sub); }
+  .timeline-item .date { font-size:0.78rem; color:var(--accent); margin-bottom:3px; font-weight:600; }
+  .timeline-item h4 { font-size:0.98rem; margin-bottom:3px; }
+  .timeline-item p { font-size:0.86rem; color:var(--sub); }
 
-  .contact-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:14px; }
+  .contact-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
   .contact-card {
     background:var(--card); border:1px solid var(--border);
-    border-radius:var(--radius); padding:18px 20px;
-    display:flex; align-items:center; gap:14px; transition:all var(--tr);
+    border-radius:var(--radius); padding:16px 18px;
+    display:flex; align-items:center; gap:12px; transition:all var(--tr);
   }
   .contact-card:hover { border-color:var(--border-hover); }
   .contact-card .icon {
-    width:42px; height:42px; border-radius:var(--radius-sm);
+    width:40px; height:40px; border-radius:var(--radius-sm);
     background:var(--accent-dim); display:flex; align-items:center; justify-content:center;
-    font-size:1.25rem; flex-shrink:0;
+    font-size:1.2rem; flex-shrink:0;
   }
-  .contact-card .label { font-size:0.75rem; color:var(--muted); }
-  .contact-card .value { font-size:0.94rem; font-weight:500; }
+  .contact-card .label { font-size:0.73rem; color:var(--muted); }
+  .contact-card .value { font-size:0.92rem; font-weight:500; }
 
-  .cta-section { text-align:center; padding:52px 0 64px;
-    background:linear-gradient(0deg, rgba(124,172,248,0.04) 0%, transparent 50%); }
+  .cta-section { text-align:center; padding:40px 0 52px; }
   .cta-btn {
     display:inline-flex; align-items:center; gap:6px;
     background:var(--accent); color:#050510;
-    padding:11px 26px; border-radius:var(--radius-sm); font-weight:700; font-size:0.94rem;
+    padding:10px 24px; border-radius:var(--radius-sm); font-weight:700; font-size:0.9rem;
     text-decoration:none; transition:all var(--tr);
     box-shadow:0 4px 16px rgba(124,172,248,0.2);
   }
@@ -205,11 +221,29 @@
     border:1px solid rgba(124,172,248,0.3); box-shadow:none;
   }
   .cta-btn.ghost:hover { border-color:var(--accent); box-shadow:0 4px 16px rgba(124,172,248,0.1); }
-  .cta-note { margin-top:14px; font-size:0.81rem; color:var(--muted); }
+  .cta-note { margin-top:12px; font-size:0.79rem; color:var(--muted); }
 
-  footer { text-align:center; padding:26px 0; border-top:1px solid rgba(255,255,255,0.04); font-size:0.8rem; color:var(--muted); }
+  footer { text-align:center; padding:20px 0; border-top:1px solid rgba(255,255,255,0.04); font-size:0.78rem; color:var(--muted); }
 
-  /* Login Modal */
+  /* ─── Mobile Toggle ─── */
+  .mobile-bar {
+    display:none; position:fixed; top:0; left:0; right:0; z-index:210;
+    background:rgba(8,8,26,0.92); backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    border-bottom:1px solid rgba(124,172,248,0.08);
+    padding:10px 18px; align-items:center; justify-content:space-between;
+  }
+  .mobile-bar .mb-name { font-weight:700; font-size:0.95rem; color:var(--accent); }
+  .menu-btn {
+    background:none; border:none; color:var(--sub); font-size:1.4rem;
+    cursor:pointer; padding:4px; line-height:1;
+  }
+  .sidebar-overlay {
+    display:none; position:fixed; inset:0; z-index:195;
+    background:rgba(0,0,0,0.5); backdrop-filter:blur(2px);
+  }
+
+  /* ─── Login Modal ─── */
   .modal-overlay {
     display:none; position:fixed; inset:0; z-index:999;
     background:rgba(0,0,0,0.7); align-items:center; justify-content:center;
@@ -218,463 +252,526 @@
   .modal-overlay.open { display:flex; }
   .modal-box {
     background:var(--card); border:1px solid var(--border);
-    border-radius:var(--radius); padding:28px; width:90%; max-width:380px;
+    border-radius:var(--radius); padding:26px; width:90%; max-width:370px;
     box-shadow:0 16px 48px rgba(0,0,0,0.5);
   }
-  .modal-box h3 { margin:0 0 16px; font-size:1.1rem; color:var(--text); }
+  .modal-box h3 { margin:0 0 14px; font-size:1.05rem; color:var(--text); }
   .modal-box input {
-    width:100%; padding:10px 14px; margin-bottom:12px;
+    width:100%; padding:9px 13px; margin-bottom:10px;
     background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-sm);
-    color:var(--text); font-size:0.9rem; font-family:inherit; outline:none;
+    color:var(--text); font-size:0.88rem; font-family:inherit; outline:none;
     transition:border-color var(--tr);
   }
   .modal-box input:focus { border-color:var(--accent); }
-  .modal-box .btn-row { display:flex; gap:10px; margin-top:4px; }
+  .modal-box .btn-row { display:flex; gap:8px; margin-top:4px; }
   .modal-box button {
-    flex:1; padding:10px; border-radius:var(--radius-sm); font-weight:600;
-    font-size:0.9rem; font-family:inherit; cursor:pointer; transition:all var(--tr);
+    flex:1; padding:9px; border-radius:var(--radius-sm); font-weight:600;
+    font-size:0.88rem; font-family:inherit; cursor:pointer; transition:all var(--tr);
   }
   .btn-login { background:var(--accent); color:#050510; border:none; }
   .btn-login:hover { opacity:0.9; }
   .btn-cancel { background:transparent; color:var(--muted); border:1px solid var(--border); }
   .btn-cancel:hover { border-color:var(--border-hover); color:var(--text); }
-  .modal-err { color:var(--red); font-size:0.82rem; margin-top:8px; display:none; }
+  .modal-err { color:#f87171; font-size:0.8rem; margin-top:6px; display:none; }
 
   .btt {
-    position:fixed; bottom:24px; right:24px; z-index:200;
-    width:42px; height:42px; border-radius:50%;
+    position:fixed; bottom:20px; right:20px; z-index:190;
+    width:38px; height:38px; border-radius:50%;
     background:rgba(14,14,24,0.9); border:1px solid var(--border);
-    color:var(--accent); font-size:1.2rem; cursor:pointer;
+    color:var(--accent); font-size:1.1rem; cursor:pointer;
     opacity:0; pointer-events:none; transition:all var(--tr);
     box-shadow:0 4px 16px rgba(0,0,0,0.4); backdrop-filter:blur(8px);
   }
-  .btt.visible { opacity:0.9; pointer-events:auto; }
+  .btt.visible { opacity:0.85; pointer-events:auto; }
   .btt:hover { opacity:1; border-color:var(--accent); transform:translateY(-2px); }
 
+  /* ─── Print ─── */
   @media print {
-    .nav,.sys-bar,footer,.cta-section,.btt,.modal-overlay{display:none}
+    .sidebar,.mobile-bar,.sidebar-overlay,footer,.cta-section,.btt,.modal-overlay{display:none}
+    .main-content{margin-left:0}
+    .main-inner{padding:0 20px}
     body{background:#fff;color:#111;font-size:12px;background-image:none}
     .card,.contact-card{background:#f5f5f5;border:1px solid #ddd;box-shadow:none}
-    h2,h3,h4{color:#111;-webkit-text-fill-color:#111}
-    a{color:#0366d6} section{padding:20px 0}
-    .hero{padding:20px 0}.hero .name{-webkit-text-fill-color:#111}
+    h2,h3,h4{color:#111} a{color:#0366d6} section{padding:18px 0}
   }
 
-  @media (max-width:768px) {
-    .card-grid,.contact-grid{grid-template-columns:1fr}
-    .hero{padding:64px 0 40px}
-    .hero .name{font-size:2rem}
-    .nav-links{gap:10px}
-    .nav-links a{font-size:0.76rem}
-    section{padding:42px 0}
-    .container{padding:0 18px}
-    h2{font-size:1.3rem}
-    .card{padding:18px}
-    .arch-box{padding:18px}
-    .arch-flow{flex-direction:column}
-    .arch-arrow{transform:rotate(90deg)}
+  /* ─── Responsive ─── */
+  @media (max-width:900px) {
+    :root { --sidebar-w: 240px; }
+    .main-inner { padding:36px 28px 48px; }
+    .card-grid { grid-template-columns:1fr; }
+    .contact-grid { grid-template-columns:1fr; }
+    .arch-flow { flex-direction:column; }
+    .arch-arrow { transform:rotate(90deg); }
   }
+
+  @media (max-width:700px) {
+    .sidebar {
+      transform:translateX(-100%);
+      transition:transform 0.28s cubic-bezier(0.4,0,0.2,1);
+      box-shadow: 4px 0 24px rgba(0,0,0,0.4);
+    }
+    .sidebar.open { transform:translateX(0); }
+    .sidebar-overlay.show { display:block; }
+    .main-content { margin-left:0; }
+    .main-inner { padding:56px 18px 40px; }
+    .mobile-bar { display:flex; }
+    section { padding:32px 0; }
+    h2 { font-size:1.25rem; }
+    .card { padding:16px; }
+    .arch-box { padding:16px; }
+  }
+
   @media (max-width:480px) {
-    .hero .name{font-size:1.65rem}
-    .hero .summary{font-size:0.84rem}
-    .badge{font-size:0.76rem;padding:4px 12px}
-    .nav .logo{font-size:0.9rem}
-    .sys-bar{font-size:0.7rem}
-    .container{padding:0 14px}
-    .modal-box{padding:20px}
+    .main-inner { padding:52px 14px 32px; }
+    h2 { font-size:1.15rem; }
+    .card-grid { gap:10px; }
+    .badge { font-size:0.74rem; padding:3px 10px; }
+    .modal-box { padding:20px; }
   }
 </style>
 </head>
 <body>
 
-<div class="sys-bar">
-  <div class="container">
-    <span class="sys-dot"></span>
-    <span>Agent 系统运行中</span><span class="sep">·</span>
-    <span>15+ 部门协作</span><span class="sep">·</span>
-    <span>onionoffice.xyz</span>
+<div class="app-layout">
+
+<!-- ═══ Sidebar ═══ -->
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-inner">
+    <div class="sidebar-profile">
+      <div class="avatar">LF</div>
+      <div class="name">刘范聪</div>
+      <div class="title">AI 全栈工程师</div>
+      <div class="loc">武汉 · 中国</div>
+    </div>
+
+    <nav class="side-nav">
+      <div class="side-nav-label">页面导航</div>
+      <a href="#about" class="active" data-nav="about">
+        <span class="nav-icon">📋</span> 关于我
+      </a>
+      <a href="#project" data-nav="project">
+        <span class="nav-icon">🚀</span> 核心项目
+      </a>
+      <a href="#work" data-nav="work">
+        <span class="nav-icon">💼</span> 工作经验
+      </a>
+      <a href="#skills" data-nav="skills">
+        <span class="nav-icon">🛠️</span> 技术能力
+      </a>
+      <a href="#timeline" data-nav="timeline">
+        <span class="nav-icon">📅</span> 项目历程
+      </a>
+      <a href="#contact" data-nav="contact">
+        <span class="nav-icon">📞</span> 联系方式
+      </a>
+
+      <div class="side-nav-label">系统入口</div>
+      <a href="/monitor" class="ext" style="justify-content:flex-start;">
+        <span class="nav-icon">🧅</span> 系统监控台
+        <span class="dot"></span>
+      </a>
+      <a href="/quant" class="ext" style="justify-content:flex-start;">
+        <span class="nav-icon">📊</span> 量化面板
+      </a>
+      <a href="/office" class="ext" style="justify-content:flex-start;">
+        <span class="nav-icon">👑</span> 董事办
+      </a>
+    </nav>
+
+    <hr class="side-divider">
+
+    <div class="side-bottom">
+      <a href="https://github.com/FancongLiu" target="_blank" rel="noopener">
+        <span class="nav-icon">🔗</span> GitHub
+      </a>
+      <a href="mailto:liufancong2002@163.com">
+        <span class="nav-icon">📧</span> liufancong2002@163.com
+      </a>
+    </div>
+
+    <button class="side-login" onclick="showLogin()">登录系统</button>
   </div>
+</aside>
+
+<!-- Sidebar overlay (mobile) -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- Mobile top bar -->
+<div class="mobile-bar">
+  <span class="mb-name">刘范聪 · AI 全栈工程师</span>
+  <button class="menu-btn" onclick="toggleSidebar()" aria-label="菜单">☰</button>
 </div>
 
-<nav class="nav">
-  <div class="container">
-    <a href="#" class="logo">OnionQuant</a>
-    <ul class="nav-links">
-      <li><a href="#about">关于</a></li>
-      <li><a href="#project">项目</a></li>
-      <li><a href="#work">工作</a></li>
-      <li><a href="#skills">技能</a></li>
-      <li><a href="#timeline">历程</a></li>
-      <li><a href="#contact">联系</a></li>
-      <li><button class="nav-login" onclick="showLogin()">登录</button></li>
-    </ul>
-  </div>
-</nav>
+<!-- ═══ Main Content ═══ -->
+<main class="main-content" id="mainContent">
 
-<header class="hero">
-  <div class="container">
-    <h1 class="name">刘范聪</h1>
-    <p class="tagline">AI 全栈工程师 — Multi-Agent 系统架构 · LLM 应用开发 · 自动化数据分析</p>
-    <p class="summary">
-      独立设计并实现 <strong>OnionQuant</strong> — 将 AI Agent 组织为类公司层级结构的自动化数据分析平台。
-      CEO 负责任务分解，15+ 个虚拟部门 Agent 并行协作，覆盖从数据采集到分析报告的完整链路。
-    </p>
-    <div class="badges">
-      <span class="badge">Multi-Agent 系统架构</span>
-      <span class="badge">LangChain / LangGraph</span>
-      <span class="badge">Python · FastAPI</span>
-      <span class="badge">知识图谱</span>
-      <span class="badge">自动化数据管道</span>
-    </div>
-  </div>
-</header>
+<div class="main-inner">
 
+<!-- Hero -->
+<section style="padding-top:12px;">
+  <h1 style="font-size:2.2rem;font-weight:800;letter-spacing:-1px;margin-bottom:6px;
+    background:linear-gradient(135deg,var(--text) 0%,var(--accent) 100%);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+    刘范聪
+  </h1>
+  <p style="font-size:1.05rem;color:var(--sub);margin-bottom:10px;">
+    AI 全栈工程师 — Multi-Agent 系统架构 · LLM 应用开发 · 自动化数据分析
+  </p>
+  <p style="font-size:0.9rem;color:var(--muted);max-width:560px;line-height:1.8;">
+    独立设计并实现 <strong>OnionQuant</strong> — 将 AI Agent 组织为类公司层级结构的自动化数据分析平台。
+    CEO 负责任务分解，15+ 个虚拟部门 Agent 并行协作，覆盖从数据采集到分析报告的完整链路。
+  </p>
+  <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;">
+    <span class="tag">Multi-Agent 系统架构</span>
+    <span class="tag">LangChain / LangGraph</span>
+    <span class="tag">Python · FastAPI</span>
+    <span class="tag">知识图谱</span>
+    <span class="tag">自动化数据管道</span>
+  </div>
+</section>
+
+<!-- ═══ About ═══ -->
 <section id="about">
-  <div class="container">
-    <div class="sec-eyebrow">About</div>
-    <h2>关于我</h2>
-    <p style="max-width:660px;">
-      全栈工程师，专注 <strong>AI Agent 系统设计</strong>与<strong>LLM 应用开发</strong>。
-      从系统架构到代码落地，从部署到运维——独立完成完整闭环。
-      核心信念：AI 工程师的价值不在调用 API，而在于设计让多个 AI 高效协作的系统架构。
-    </p>
+  <div class="sec-eyebrow">About</div>
+  <h2>关于我</h2>
+  <p style="max-width:660px;">
+    全栈工程师，专注 <strong>AI Agent 系统设计</strong>与<strong>LLM 应用开发</strong>。
+    从系统架构到代码落地，从部署到运维——独立完成完整闭环。
+    核心信念：AI 工程师的价值不在调用 API，而在于设计让多个 AI 高效协作的系统架构。
+  </p>
 
-    <div class="card-grid" style="margin-top:22px">
-      <div class="card">
-        <h4>Multi-Agent 层级协作</h4>
-        <p>CEO → 策略研究 · 数据工程 · 回测引擎 · 风控 · 舆情情报 · 学术研究等 <strong>15+ 部门</strong> Agent 并行 Fork 执行。Agent Fork 机制使子任务共享父会话缓存前缀，并行开销仅 1.1-1.5x token。</p>
-      </div>
-      <div class="card">
-        <h4>成本优化</h4>
-        <p>Agent Fork 缓存继承 + Python 零 AI Token 脚本调度，相同任务避免重复计算。实际运行成本约 <strong>¥60/天</strong>（含研究任务），缓存命中率 92%+。</p>
-      </div>
-      <div class="card">
-        <h4>自然语言 → 数据报告</h4>
-        <p>多源数据采集 → 清洗标准化 → 统计建模 → 可视化报告。Agent 根据任务类型自主选择分析工具链，从指令到分析结果全链路自动闭环。</p>
-      </div>
-      <div class="card">
-        <h4>自愈运维</h4>
-        <p>Watchdog 守护进程 30s 心跳检测核心服务 · 异常自动重启 + 微信告警 · Cloudflare Tunnel 双通道冗余 · 开机自启。</p>
-      </div>
+  <div class="card-grid" style="margin-top:18px">
+    <div class="card">
+      <h4>Multi-Agent 层级协作</h4>
+      <p>CEO → 策略研究 · 数据工程 · 回测引擎 · 风控 · 舆情情报 · 学术研究等 <strong>15+ 部门</strong> Agent 并行 Fork 执行。Agent Fork 机制使子任务共享父会话缓存前缀，并行开销仅 1.1-1.5x token。</p>
+    </div>
+    <div class="card">
+      <h4>成本优化</h4>
+      <p>Agent Fork 缓存继承 + Python 零 AI Token 脚本调度，相同任务避免重复计算。实际运行成本约 <strong>¥60/天</strong>（含研究任务），缓存命中率 92%+。</p>
+    </div>
+    <div class="card">
+      <h4>自然语言 → 数据报告</h4>
+      <p>多源数据采集 → 清洗标准化 → 统计建模 → 可视化报告。Agent 根据任务类型自主选择分析工具链，从指令到分析结果全链路自动闭环。</p>
+    </div>
+    <div class="card">
+      <h4>自愈运维</h4>
+      <p>Watchdog 守护进程 30s 心跳检测核心服务 · 异常自动重启 + 微信告警 · Cloudflare Tunnel 双通道冗余 · 开机自启。</p>
     </div>
   </div>
 </section>
 
+<!-- ═══ Project ═══ -->
 <section id="project">
-  <div class="container">
-    <div class="sec-eyebrow">Project</div>
-    <h2>核心项目 · OnionQuant</h2>
-    <p style="max-width:700px;">
-      OnionQuant 是一套<strong>基于 Multi-Agent 层级架构的自动化数据分析与研究平台</strong>。
-      AI Agent 按职能组织为类公司层级结构，CEO 负责任务分解与调度，各部门 Agent 并行执行，
-      从自然语言指令到分析报告的端到端自动化。
-    </p>
+  <div class="sec-eyebrow">Project</div>
+  <h2>核心项目 · OnionQuant</h2>
+  <p style="max-width:700px;">
+    OnionQuant 是一套<strong>基于 Multi-Agent 层级架构的自动化数据分析与研究平台</strong>。
+    AI Agent 按职能组织为类公司层级结构，CEO 负责任务分解与调度，各部门 Agent 并行执行，
+    从自然语言指令到分析报告的端到端自动化。
+  </p>
 
-    <h3>系统协作流程</h3>
-    <div class="arch-box">
-      <div class="arch-flow">
-        <div class="arch-node accent">👤 用户<br><small style="color:var(--muted)">Web · 微信 · API</small></div>
-        <span class="arch-arrow">→</span>
-        <div class="arch-node accent">🧠 CEO Agent<br><small style="color:var(--muted)">任务分解 · 调度</small></div>
-        <span class="arch-arrow">→</span>
-        <div class="arch-group">
-          <div class="label">15+ 部门 Agent 并行 Fork</div>
-          <div class="row">
-            <span class="arch-node">策略研究</span>
-            <span class="arch-node">数据工程</span>
-            <span class="arch-node">回测引擎</span>
-            <span class="arch-node">风险管理</span>
-            <span class="arch-node">舆情情报</span>
-            <span class="arch-node">学术研究</span>
-            <span class="arch-node">交易执行</span>
-            <span class="arch-node">IT 基础</span>
-          </div>
-        </div>
-        <span class="arch-arrow">→</span>
-        <div class="arch-node accent">📊 报告输出<br><small style="color:var(--muted)">可视化 · 推送</small></div>
-      </div>
-    </div>
-
-    <h3>技术栈</h3>
-    <div class="arch-box">
-      <div class="arch-flow">
-        <div class="arch-group">
-          <div class="label">展示层</div>
-          <div class="row">
-            <span class="arch-node">Web Dashboard</span>
-            <span class="arch-node">SSE 实时推送</span>
-            <span class="arch-node">微信消息</span>
-          </div>
-        </div>
-        <span class="arch-arrow">→</span>
-        <div class="arch-group" style="border-color:rgba(124,172,248,0.35);">
-          <div class="label">API 网关</div>
-          <div class="row">
-            <span class="arch-node accent">FastAPI</span>
-            <span class="arch-node">认证中间件</span>
-            <span class="arch-node">20+ REST</span>
-          </div>
-        </div>
-        <span class="arch-arrow">→</span>
-        <div class="arch-group">
-          <div class="label">AI 引擎</div>
-          <div class="row">
-            <span class="arch-node">LangChain</span>
-            <span class="arch-node">Agent Fork</span>
-            <span class="arch-node">Python Cron</span>
-          </div>
-        </div>
-        <span class="arch-arrow">→</span>
-        <div class="arch-group">
-          <div class="label">基础设施</div>
-          <div class="row">
-            <span class="arch-node">Cloudflare Tunnel</span>
-            <span class="arch-node">Watchdog</span>
-            <span class="arch-node">WSL2 tmux</span>
-          </div>
+  <h3>系统协作流程</h3>
+  <div class="arch-box">
+    <div class="arch-flow">
+      <div class="arch-node accent">👤 用户<br><small style="color:var(--muted)">Web · 微信 · API</small></div>
+      <span class="arch-arrow">→</span>
+      <div class="arch-node accent">🧠 CEO Agent<br><small style="color:var(--muted)">任务分解 · 调度</small></div>
+      <span class="arch-arrow">→</span>
+      <div class="arch-group">
+        <div class="label">15+ 部门 Agent 并行 Fork</div>
+        <div class="row">
+          <span class="arch-node">策略研究</span>
+          <span class="arch-node">数据工程</span>
+          <span class="arch-node">回测引擎</span>
+          <span class="arch-node">风险管理</span>
+          <span class="arch-node">舆情情报</span>
+          <span class="arch-node">学术研究</span>
+          <span class="arch-node">交易执行</span>
+          <span class="arch-node">IT 基础</span>
         </div>
       </div>
+      <span class="arch-arrow">→</span>
+      <div class="arch-node accent">📊 报告输出<br><small style="color:var(--muted)">可视化 · 推送</small></div>
     </div>
-
-    <h3>系统能力</h3>
-    <ul class="feature-list">
-      <li>
-        <strong>Multi-Agent 协作引擎</strong><br>
-        CEO Agent 接收自然语言指令 → 意图识别与任务分解 → 调度 15+ 部门 Agent 并行 Fork 执行 → 结果聚合。
-        支持任务优先级调度、死锁检测、超时熔断。
-      </li>
-      <li>
-        <strong>自动化数据分析管道</strong><br>
-        多源数据自动采集（yfinance · 舆情源 · WebSearch）→ Pandas 清洗标准化 →
-        统计分析与因子计算 → 可视化报告生成。Agent 自主选择分析工具链，全链路自动闭环。
-      </li>
-      <li>
-        <strong>LLM Agent 对话 & 工具调用</strong><br>
-        LangChain Prompt 模板 + Tool Use / Function Calling。Agent 根据任务类型自主选择和组合工具。
-        上下文窗口管理 + 对话历史压缩 + 多轮意图追踪。
-      </li>
-      <li>
-        <strong>知识图谱增强</strong><br>
-        基于 NetworkX 构建知识图谱，关联标的 → 催化剂事件 → 供应链 → 宏观指标。
-        支持图遍历查询、影响传导路径分析、关联关系发现。
-      </li>
-      <li>
-        <strong>实时双向通信</strong><br>
-        微信企业 API AES-256-CBC 加密收发 + SSE EventSource 实时推送。
-        高频消息由 Python 脚本处理，复杂消息自动排队交 Agent 批量处理。
-      </li>
-      <li>
-        <strong>自愈运维</strong><br>
-        Watchdog 守护进程 30s 心跳检测 · 核心服务异常自动重启 ·
-        Cloudflare Tunnel 双通道冗余 · 开机自启 · 微信故障告警。
-      </li>
-    </ul>
   </div>
+
+  <h3>技术栈</h3>
+  <div class="arch-box">
+    <div class="arch-flow">
+      <div class="arch-group">
+        <div class="label">展示层</div>
+        <div class="row">
+          <span class="arch-node">Web Dashboard</span>
+          <span class="arch-node">SSE 实时推送</span>
+          <span class="arch-node">微信消息</span>
+        </div>
+      </div>
+      <span class="arch-arrow">→</span>
+      <div class="arch-group" style="border-color:rgba(124,172,248,0.35);">
+        <div class="label">API 网关</div>
+        <div class="row">
+          <span class="arch-node accent">FastAPI</span>
+          <span class="arch-node">认证中间件</span>
+          <span class="arch-node">20+ REST</span>
+        </div>
+      </div>
+      <span class="arch-arrow">→</span>
+      <div class="arch-group">
+        <div class="label">AI 引擎</div>
+        <div class="row">
+          <span class="arch-node">LangChain</span>
+          <span class="arch-node">Agent Fork</span>
+          <span class="arch-node">Python Cron</span>
+        </div>
+      </div>
+      <span class="arch-arrow">→</span>
+      <div class="arch-group">
+        <div class="label">基础设施</div>
+        <div class="row">
+          <span class="arch-node">Cloudflare Tunnel</span>
+          <span class="arch-node">Watchdog</span>
+          <span class="arch-node">WSL2 tmux</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3>系统能力</h3>
+  <ul class="feature-list">
+    <li>
+      <strong>Multi-Agent 协作引擎</strong><br>
+      CEO Agent 接收自然语言指令 → 意图识别与任务分解 → 调度 15+ 部门 Agent 并行 Fork 执行 → 结果聚合。
+      支持任务优先级调度、死锁检测、超时熔断。
+    </li>
+    <li>
+      <strong>自动化数据分析管道</strong><br>
+      多源数据自动采集（yfinance · 舆情源 · WebSearch）→ Pandas 清洗标准化 →
+      统计分析与因子计算 → 可视化报告生成。Agent 自主选择分析工具链，全链路自动闭环。
+    </li>
+    <li>
+      <strong>LLM Agent 对话 & 工具调用</strong><br>
+      LangChain Prompt 模板 + Tool Use / Function Calling。Agent 根据任务类型自主选择和组合工具。
+      上下文窗口管理 + 对话历史压缩 + 多轮意图追踪。
+    </li>
+    <li>
+      <strong>知识图谱增强</strong><br>
+      基于 NetworkX 构建知识图谱，关联标的 → 催化剂事件 → 供应链 → 宏观指标。
+      支持图遍历查询、影响传导路径分析、关联关系发现。
+    </li>
+    <li>
+      <strong>实时双向通信</strong><br>
+      微信企业 API AES-256-CBC 加密收发 + SSE EventSource 实时推送。
+      高频消息由 Python 脚本处理，复杂消息自动排队交 Agent 批量处理。
+    </li>
+    <li>
+      <strong>自愈运维</strong><br>
+      Watchdog 守护进程 30s 心跳检测 · 核心服务异常自动重启 ·
+      Cloudflare Tunnel 双通道冗余 · 开机自启 · 微信故障告警。
+    </li>
+  </ul>
 </section>
 
-<!-- ====== Work Experience ====== -->
+<!-- ═══ Work Experience ═══ -->
 <section id="work">
-  <div class="container">
-    <div class="sec-eyebrow">Work</div>
-    <h2>工作经验</h2>
-    <p style="max-width:680px;margin-bottom:8px;">
-      <strong>特灵科技亚太研发中心</strong> · 数据分析与系统研发工程师<br>
-      <span style="color:var(--muted);font-size:0.88rem;">围绕暖通空调系统智能化，用 AI 和 Python 改造传统数据分析流程。</span>
-    </p>
+  <div class="sec-eyebrow">Work</div>
+  <h2>工作经验</h2>
+  <p style="max-width:680px;margin-bottom:4px;">
+    <strong>特灵科技亚太研发中心</strong> · 数据分析与系统研发工程师<br>
+    <span style="color:var(--muted);font-size:0.86rem;">围绕暖通空调系统智能化，用 AI 和 Python 改造传统数据分析流程。</span>
+  </p>
 
-    <div class="card-grid" style="margin-top:20px">
-      <div class="card">
-        <h4>自动化数据处理管道</h4>
-        <p>从 SharePoint 自动下载源数据 → Python 数据质量检查 → 统计分析 → 自动生成报告文件。
-        替代了原本手动 Excel 操作流程，将重复性数据处理工作自动化。</p>
-      </div>
-      <div class="card">
-        <h4>Tableau 自动化控制</h4>
-        <p>通过 Python 修改 Tableau 工作簿 XML 文件（.twb），实现时间滑块自动调整、数据源刷新等操作。
-        使 Tableau 报表可以跟随数据管道自动更新，无需人工介入。</p>
-      </div>
-      <div class="card">
-        <h4>AI 会议纪要 → 任务提取</h4>
-        <p>将会议录音/脚本输入 LLM，自动提取为结构化的 To-Do List：每条任务含描述、提出人、执行人、
-        上下文摘要。AI 根据历史任务优先级模式自动预判新任务优先级。</p>
-      </div>
-      <div class="card">
-        <h4>语音/聊天 → 结构化工时记录</h4>
-        <p>将非结构化的语音输入或聊天记录，通过 LLM 语义解析转换为结构化的工时表格，
-        自动提取任务描述、耗时、项目归属等字段。</p>
-      </div>
+  <div class="card-grid" style="margin-top:18px">
+    <div class="card">
+      <h4>自动化数据处理管道</h4>
+      <p>从 SharePoint 自动下载源数据 → Python 数据质量检查 → 统计分析 → 自动生成报告文件。
+      替代了原本手动 Excel 操作流程，将重复性数据处理工作自动化。</p>
     </div>
-
-    <h3>AI 驱动的工作辅助系统</h3>
-    <p style="max-width:680px;margin-bottom:12px;">
-      独立开发了一套个人工作辅助系统，集成了上述自动化流程，通过 Web 前端统一管理：
-    </p>
-    <ul class="feature-list">
-      <li>
-        <strong>Task Tracker 任务管理</strong><br>
-        每条任务有状态流转（待开始 → 进行中 → 已完成）和优先级标记。
-        AI 学习历史任务的优先级选择模式，对新录入任务自动推荐优先级。
-      </li>
-      <li>
-        <strong>Deep Research 式的研究分析</strong><br>
-        参考 OpenAI / DeepSeek Deep Research 的多步迭代架构（Plan → Search → Analyze → Synthesize → Reflect 循环），
-        实现了自动化数据研究流程：识别信息缺口 → 选择数据源 → 采集分析 → 综合报告，多轮迭代直至覆盖研究目标。
-      </li>
-    </ul>
+    <div class="card">
+      <h4>Tableau 自动化控制</h4>
+      <p>通过 Python 修改 Tableau 工作簿 XML 文件（.twb），实现时间滑块自动调整、数据源刷新等操作。
+      使 Tableau 报表可以跟随数据管道自动更新，无需人工介入。</p>
+    </div>
+    <div class="card">
+      <h4>AI 会议纪要 → 任务提取</h4>
+      <p>将会议录音/脚本输入 LLM，自动提取为结构化的 To-Do List：每条任务含描述、提出人、执行人、
+      上下文摘要。AI 根据历史任务优先级模式自动预判新任务优先级。</p>
+    </div>
+    <div class="card">
+      <h4>语音/聊天 → 结构化工时记录</h4>
+      <p>将非结构化的语音输入或聊天记录，通过 LLM 语义解析转换为结构化的工时表格，
+      自动提取任务描述、耗时、项目归属等字段。</p>
+    </div>
   </div>
+
+  <h3>AI 驱动的工作辅助系统</h3>
+  <p style="max-width:680px;margin-bottom:10px;">
+    独立开发了一套个人工作辅助系统，集成了上述自动化流程，通过 Web 前端统一管理：
+  </p>
+  <ul class="feature-list">
+    <li>
+      <strong>Task Tracker 任务管理</strong><br>
+      每条任务有状态流转（待开始 → 进行中 → 已完成）和优先级标记。
+      AI 学习历史任务的优先级选择模式，对新录入任务自动推荐优先级。
+    </li>
+    <li>
+      <strong>Deep Research 式的研究分析</strong><br>
+      参考 OpenAI / DeepSeek Deep Research 的多步迭代架构（Plan → Search → Analyze → Synthesize → Reflect 循环），
+      实现了自动化数据研究流程：识别信息缺口 → 选择数据源 → 采集分析 → 综合报告，多轮迭代直至覆盖研究目标。
+    </li>
+  </ul>
 </section>
 
+<!-- ═══ Skills ═══ -->
 <section id="skills">
-  <div class="container">
-    <div class="sec-eyebrow">Skills</div>
-    <h2>技术能力</h2>
+  <div class="sec-eyebrow">Skills</div>
+  <h2>技术能力</h2>
 
-    <div class="skill-group">
-      <h3>AI / LLM / Agent</h3>
-      <div class="tags">
-        <span class="tag">LangChain</span><span class="tag">LangGraph</span>
-        <span class="tag">Multi-Agent 架构</span><span class="tag">RAG 检索增强</span>
-        <span class="tag">Prompt Engineering</span>
-        <span class="tag">Tool Use / Function Calling</span>
-        <span class="tag">DeepSeek API</span>
-        <span class="tag">意图识别 & 语义解析</span>
-        <span class="tag">向量数据库</span>
-        <span class="tag">对话状态管理</span>
-        <span class="tag">LLM Fine-tuning</span>
-      </div>
+  <div class="skill-group">
+    <h3>AI / LLM / Agent</h3>
+    <div class="tags">
+      <span class="tag">LangChain</span><span class="tag">LangGraph</span>
+      <span class="tag">Multi-Agent 架构</span><span class="tag">RAG 检索增强</span>
+      <span class="tag">Prompt Engineering</span>
+      <span class="tag">Tool Use / Function Calling</span>
+      <span class="tag">DeepSeek API</span>
+      <span class="tag">意图识别 & 语义解析</span>
+      <span class="tag">向量数据库</span>
+      <span class="tag">对话状态管理</span>
+      <span class="tag">LLM Fine-tuning</span>
     </div>
+  </div>
 
-    <div class="skill-group">
-      <h3>后端 & 数据</h3>
-      <div class="tags">
-        <span class="tag">Python 3.12</span><span class="tag">FastAPI 异步框架</span>
-        <span class="tag">SQL</span><span class="tag">Pandas</span>
-        <span class="tag">NumPy · statsmodels</span><span class="tag">PostgreSQL</span>
-        <span class="tag">SSE 实时推送</span><span class="tag">RESTful API</span>
-        <span class="tag">JWT · OAuth 2.0</span><span class="tag">ETL 管道</span>
-        <span class="tag">Tableau 自动化</span><span class="tag">SharePoint API</span>
-      </div>
+  <div class="skill-group">
+    <h3>后端 & 数据</h3>
+    <div class="tags">
+      <span class="tag">Python 3.12</span><span class="tag">FastAPI 异步框架</span>
+      <span class="tag">SQL</span><span class="tag">Pandas</span>
+      <span class="tag">NumPy · statsmodels</span><span class="tag">PostgreSQL</span>
+      <span class="tag">SSE 实时推送</span><span class="tag">RESTful API</span>
+      <span class="tag">JWT · OAuth 2.0</span><span class="tag">ETL 管道</span>
+      <span class="tag">Tableau 自动化</span><span class="tag">SharePoint API</span>
     </div>
+  </div>
 
-    <div class="skill-group">
-      <h3>DevOps</h3>
-      <div class="tags">
-        <span class="tag">Cloudflare Tunnel</span><span class="tag">Docker</span>
-        <span class="tag">WSL2 · tmux</span><span class="tag">Nginx</span>
-        <span class="tag">SSL/TLS · HTTPS</span><span class="tag">Git · GitHub Actions</span>
-        <span class="tag">进程守护</span><span class="tag">Windows 服务化</span>
-      </div>
+  <div class="skill-group">
+    <h3>DevOps</h3>
+    <div class="tags">
+      <span class="tag">Cloudflare Tunnel</span><span class="tag">Docker</span>
+      <span class="tag">WSL2 · tmux</span><span class="tag">Nginx</span>
+      <span class="tag">SSL/TLS · HTTPS</span><span class="tag">Git · GitHub Actions</span>
+      <span class="tag">进程守护</span><span class="tag">Windows 服务化</span>
     </div>
+  </div>
 
-    <div class="skill-group">
-      <h3>数据分析 & 量化</h3>
-      <div class="tags">
-        <span class="tag">多因子模型</span><span class="tag">事件驱动回测</span>
-        <span class="tag">风险建模</span><span class="tag">Markov 状态检测</span>
-        <span class="tag">蒙特卡洛模拟</span><span class="tag">NetworkX</span>
-        <span class="tag">时间序列分析</span><span class="tag">统计检验</span>
-      </div>
+  <div class="skill-group">
+    <h3>数据分析 & 量化</h3>
+    <div class="tags">
+      <span class="tag">多因子模型</span><span class="tag">事件驱动回测</span>
+      <span class="tag">风险建模</span><span class="tag">Markov 状态检测</span>
+      <span class="tag">蒙特卡洛模拟</span><span class="tag">NetworkX</span>
+      <span class="tag">时间序列分析</span><span class="tag">统计检验</span>
     </div>
   </div>
 </section>
 
+<!-- ═══ Timeline ═══ -->
 <section id="timeline">
-  <div class="container">
-    <div class="sec-eyebrow">Timeline</div>
-    <h2>项目演进历程</h2>
-    <div class="timeline">
-      <div class="timeline-item">
-        <div class="date">2026-06 · 当前</div>
-        <h4>持续迭代</h4>
-        <p>Agent 自动巡航 · AI 每日市场研究 · SSE 实时通信 · 个人主页上线</p>
-      </div>
-      <div class="timeline-item">
-        <div class="date">2026-05 中旬</div>
-        <h4>成本优化</h4>
-        <p>Agent Fork 缓存前缀继承机制上线，相同任务避免重复计算 · Python 零 AI Token 脚本调度取代 AI cron</p>
-      </div>
-      <div class="timeline-item">
-        <div class="date">2026-05 中旬</div>
-        <h4>自愈系统 + 实时通信</h4>
-        <p>Watchdog 30s 心跳守护 · Cloudflare Tunnel 冗余 · 微信 AES-256-CBC 双向通信 · SSE 推送 · 开机自启</p>
-      </div>
-      <div class="timeline-item">
-        <div class="date">2026-05 上旬</div>
-        <h4>Agent 架构重构</h4>
-        <p>CEO-部门层级架构确立 · 15+ 部门 Agent 并行 Fork · 任务认领协议 · 上下文持久化协议 · 知识图谱构建</p>
-      </div>
-      <div class="timeline-item">
-        <div class="date">2026-04 – 至今</div>
-        <h4>工作项目：数据分析自动化</h4>
-        <p>特灵科技 · Python 数据管道自动化 · Tableau XML 自动控制 · AI 会议纪要解析 · Task Tracker 系统 · Deep Research 架构研究</p>
-      </div>
-      <div class="timeline-item">
-        <div class="date">2026-04 上旬</div>
-        <h4>OnionQuant 项目启动</h4>
-        <p>FastAPI 后端 · 多页面 Dashboard · 数据管道 · 因子计算引擎 · AI 虚拟公司架构确立</p>
-      </div>
+  <div class="sec-eyebrow">Timeline</div>
+  <h2>项目演进历程</h2>
+  <div class="timeline">
+    <div class="timeline-item">
+      <div class="date">2026-06 · 当前</div>
+      <h4>持续迭代</h4>
+      <p>Agent 自动巡航 · AI 每日市场研究 · SSE 实时通信 · 个人主页上线</p>
+    </div>
+    <div class="timeline-item">
+      <div class="date">2026-05 中旬</div>
+      <h4>成本优化</h4>
+      <p>Agent Fork 缓存前缀继承机制上线，相同任务避免重复计算 · Python 零 AI Token 脚本调度取代 AI cron</p>
+    </div>
+    <div class="timeline-item">
+      <div class="date">2026-05 中旬</div>
+      <h4>自愈系统 + 实时通信</h4>
+      <p>Watchdog 30s 心跳守护 · Cloudflare Tunnel 冗余 · 微信 AES-256-CBC 双向通信 · SSE 推送 · 开机自启</p>
+    </div>
+    <div class="timeline-item">
+      <div class="date">2026-05 上旬</div>
+      <h4>Agent 架构重构</h4>
+      <p>CEO-部门层级架构确立 · 15+ 部门 Agent 并行 Fork · 任务认领协议 · 上下文持久化协议 · 知识图谱构建</p>
+    </div>
+    <div class="timeline-item">
+      <div class="date">2026-04 – 至今</div>
+      <h4>工作项目：数据分析自动化</h4>
+      <p>特灵科技 · Python 数据管道自动化 · Tableau XML 自动控制 · AI 会议纪要解析 · Task Tracker 系统 · Deep Research 架构研究</p>
+    </div>
+    <div class="timeline-item">
+      <div class="date">2026-04 上旬</div>
+      <h4>OnionQuant 项目启动</h4>
+      <p>FastAPI 后端 · 多页面 Dashboard · 数据管道 · 因子计算引擎 · AI 虚拟公司架构确立</p>
     </div>
   </div>
 </section>
 
+<!-- ═══ Live Demo ═══ -->
 <section class="cta-section" id="demo">
-  <div class="container">
-    <div class="sec-eyebrow">Live Demo</div>
-    <h2>在线演示</h2>
-    <p style="margin-bottom:22px; max-width:520px; margin-left:auto; margin-right:auto;">
-      本站即为 OnionQuant 系统实时运行实例，Agent 持续运行中。
-    </p>
-    <div style="display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
-      <a href="/monitor" class="cta-btn">查看系统监控</a>
-      <a href="https://github.com/FancongLiu" class="cta-btn ghost" target="_blank" rel="noopener">GitHub</a>
-    </div>
-    <p class="cta-note">完整仪表盘需认证（面试时可提供临时 Token）</p>
+  <div class="sec-eyebrow">Live Demo</div>
+  <h2>在线演示</h2>
+  <p style="margin-bottom:20px;max-width:480px;margin-left:auto;margin-right:auto;">
+    本站即为 OnionQuant 系统实时运行实例，Agent 持续运行中。
+  </p>
+  <div style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;">
+    <a href="/monitor" class="cta-btn">查看系统监控</a>
+    <a href="https://github.com/FancongLiu" class="cta-btn ghost" target="_blank" rel="noopener">GitHub</a>
   </div>
+  <p class="cta-note">完整仪表盘需认证（面试时可提供临时 Token）</p>
 </section>
 
+<!-- ═══ Contact ═══ -->
 <section id="contact">
-  <div class="container">
-    <div class="sec-eyebrow">Contact</div>
-    <h2>联系方式</h2>
-    <div class="contact-grid">
-      <div class="contact-card">
-        <div class="icon">📧</div>
-        <div>
-          <div class="label">邮箱</div>
-          <a class="value" href="mailto:liufancong2002@163.com">liufancong2002@163.com</a>
-        </div>
+  <div class="sec-eyebrow">Contact</div>
+  <h2>联系方式</h2>
+  <div class="contact-grid">
+    <div class="contact-card">
+      <div class="icon">📧</div>
+      <div>
+        <div class="label">邮箱</div>
+        <a class="value" href="mailto:liufancong2002@163.com">liufancong2002@163.com</a>
       </div>
-      <div class="contact-card">
-        <div class="icon">💬</div>
-        <div>
-          <div class="label">微信 / 手机</div>
-          <div class="value">13297373078</div>
-        </div>
+    </div>
+    <div class="contact-card">
+      <div class="icon">💬</div>
+      <div>
+        <div class="label">微信 / 手机</div>
+        <div class="value">13297373078</div>
       </div>
-      <div class="contact-card">
-        <div class="icon">🔗</div>
-        <div>
-          <div class="label">GitHub</div>
-          <a class="value" href="https://github.com/FancongLiu" target="_blank" rel="noopener">github.com/FancongLiu</a>
-        </div>
+    </div>
+    <div class="contact-card">
+      <div class="icon">🔗</div>
+      <div>
+        <div class="label">GitHub</div>
+        <a class="value" href="https://github.com/FancongLiu" target="_blank" rel="noopener">github.com/FancongLiu</a>
       </div>
-      <div class="contact-card">
-        <div class="icon">🌐</div>
-        <div>
-          <div class="label">在线系统</div>
-          <a class="value" href="https://onionoffice.xyz">onionoffice.xyz</a>
-        </div>
+    </div>
+    <div class="contact-card">
+      <div class="icon">🌐</div>
+      <div>
+        <div class="label">在线系统</div>
+        <a class="value" href="https://onionoffice.xyz">onionoffice.xyz</a>
       </div>
     </div>
   </div>
 </section>
 
 <footer>
-  <div class="container">
-    <span>© 2026 OnionQuant · AI Agent 研究系统</span>
-    <span style="color:var(--muted);">Python · FastAPI · LangChain · DeepSeek · Cloudflare</span>
-  </div>
+  <span>© 2026 OnionQuant · AI Agent 研究系统</span>
+  <span style="color:var(--muted);">Python · FastAPI · LangChain · DeepSeek · Cloudflare</span>
 </footer>
+
+</div><!-- /main-inner -->
+</main><!-- /main-content -->
+
+</div><!-- /app-layout -->
 
 <!-- Login Modal -->
 <div class="modal-overlay" id="loginModal">
@@ -693,6 +790,7 @@
 </div>
 
 <script>
+/* ─── Login ─── */
 function showLogin() { document.getElementById('loginModal').classList.add('open'); document.getElementById('loginUser').focus(); }
 function hideLogin() { document.getElementById('loginModal').classList.remove('open'); document.getElementById('loginErr').style.display='none'; }
 
@@ -721,21 +819,61 @@ async function doLogin(e) {
   }
 }
 
-// Check if already logged in
-(function(){
-  var token = sessionStorage.getItem('oq_token');
-  if (token) {
-    var navLogin = document.querySelector('.nav-login');
-    if (navLogin) navLogin.textContent = '已登录';
-  }
-})();
-
-// Close modal on overlay click
 document.getElementById('loginModal').addEventListener('click', function(e) {
   if (e.target === this) hideLogin();
 });
 
-// Back to top
+// Check if already logged in
+(function(){
+  var token = sessionStorage.getItem('oq_token');
+  if (token) {
+    var btn = document.querySelector('.side-login');
+    if (btn) btn.textContent = '已登录 ✓';
+  }
+})();
+
+/* ─── Sidebar ─── */
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+  document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('show');
+}
+
+/* ─── Active nav on scroll ─── */
+(function(){
+  var sections = [];
+  var navLinks = document.querySelectorAll('.side-nav a[data-nav]');
+  navLinks.forEach(function(a){
+    var id = a.getAttribute('data-nav');
+    var el = document.getElementById(id);
+    if (el) sections.push({ id:id, el:el, link:a });
+  });
+
+  function updateActive(){
+    var scrollY = window.scrollY + 120;
+    var active = null;
+    sections.forEach(function(s){
+      if (s.el.offsetTop <= scrollY) active = s;
+    });
+    navLinks.forEach(function(a){ a.classList.remove('active'); });
+    if (active) active.link.classList.add('active');
+  }
+
+  window.addEventListener('scroll', updateActive, {passive:true});
+  updateActive();
+
+  // Close sidebar on nav click (mobile)
+  navLinks.forEach(function(a){
+    a.addEventListener('click', function(){
+      if (window.innerWidth <= 700) closeSidebar();
+    });
+  });
+})();
+
+/* ─── Back to top ─── */
 (function(){
   var btn = document.createElement('button');
   btn.className = 'btt'; btn.innerHTML = '&#8593;';

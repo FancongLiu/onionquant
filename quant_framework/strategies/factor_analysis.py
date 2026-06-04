@@ -28,8 +28,8 @@ def rolling_ic(
         ic_series = pd.Series(np.nan, index=factor_df.index)
 
         for i in range(window, len(factor_df)):
-            f_slice = factor_df[col].iloc[i - window:i]
-            r_slice = forward_returns.iloc[i - window:i]
+            f_slice = factor_df[col].iloc[i - window : i]
+            r_slice = forward_returns.iloc[i - window : i]
             valid = f_slice.notna() & r_slice.notna()
             if valid.sum() < 10:
                 continue
@@ -59,17 +59,19 @@ def ic_summary(ic_df: pd.DataFrame) -> pd.DataFrame:
         # IC decay: autocorrelation-based half-life
         decay = _estimate_decay(ic)
 
-        rows.append({
-            "factor": col,
-            "mean_ic": round(mean_ic, 6),
-            "std_ic": round(std_ic, 6),
-            "ic_ir": round(ic_ir, 4),
-            "hit_rate": round(hit, 4),
-            "max_ic": round(float(ic.max()), 4),
-            "min_ic": round(float(ic.min()), 4),
-            "ic_decay_days": round(decay, 1),
-            "n_obs": len(ic),
-        })
+        rows.append(
+            {
+                "factor": col,
+                "mean_ic": round(mean_ic, 6),
+                "std_ic": round(std_ic, 6),
+                "ic_ir": round(ic_ir, 4),
+                "hit_rate": round(hit, 4),
+                "max_ic": round(float(ic.max()), 4),
+                "min_ic": round(float(ic.min()), 4),
+                "ic_decay_days": round(decay, 1),
+                "n_obs": len(ic),
+            }
+        )
 
     return pd.DataFrame(rows).sort_values("ic_ir", ascending=False)
 
@@ -113,12 +115,14 @@ def turnover_summary(turnover_df: pd.DataFrame) -> pd.DataFrame:
         t = turnover_df[col].dropna()
         if len(t) < 10:
             continue
-        rows.append({
-            "factor": col,
-            "mean_turnover": round(float(t.mean()), 4),
-            "max_turnover": round(float(t.max()), 4),
-            "stability": round(1.0 - float(t.mean()), 4),
-        })
+        rows.append(
+            {
+                "factor": col,
+                "mean_turnover": round(float(t.mean()), 4),
+                "max_turnover": round(float(t.max()), 4),
+                "stability": round(1.0 - float(t.mean()), 4),
+            }
+        )
     return pd.DataFrame(rows).sort_values("mean_turnover")
 
 
@@ -135,12 +139,15 @@ def quantile_returns(
     if factor_col not in factor_df.columns:
         return pd.DataFrame()
 
-    combined = pd.DataFrame({"factor": factor_df[factor_col], "return": returns}).dropna()
+    combined = pd.DataFrame(
+        {"factor": factor_df[factor_col], "return": returns}
+    ).dropna()
     if len(combined) < n_quantiles * 5:
         return pd.DataFrame()
 
-    combined["quantile"] = pd.qcut(combined["factor"], n_quantiles, labels=False,
-                                    duplicates="drop")
+    combined["quantile"] = pd.qcut(
+        combined["factor"], n_quantiles, labels=False, duplicates="drop"
+    )
     if combined["quantile"].nunique() < 2:
         return pd.DataFrame()
 
@@ -168,18 +175,21 @@ def quantile_spread_summary(
         if len(combined) < n_quantiles * 5:
             continue
         try:
-            combined["q"] = pd.qcut(combined["factor"], n_quantiles, labels=False,
-                                     duplicates="drop")
+            combined["q"] = pd.qcut(
+                combined["factor"], n_quantiles, labels=False, duplicates="drop"
+            )
             top = combined[combined["q"] == top_q]["return"]
             bot = combined[combined["q"] == bottom_q]["return"]
             if len(top) > 0 and len(bot) > 0:
                 spread_ret = float((1 + top).prod() - (1 + bot).prod())
-                rows.append({
-                    "factor": col,
-                    "top_quantile_return": round(float((1 + top).prod() - 1), 4),
-                    "bottom_quantile_return": round(float((1 + bot).prod() - 1), 4),
-                    "spread_return": round(spread_ret, 4),
-                })
+                rows.append(
+                    {
+                        "factor": col,
+                        "top_quantile_return": round(float((1 + top).prod() - 1), 4),
+                        "bottom_quantile_return": round(float((1 + bot).prod() - 1), 4),
+                        "spread_return": round(spread_ret, 4),
+                    }
+                )
         except (ValueError, IndexError):
             continue
 
@@ -209,8 +219,21 @@ def full_analysis(
     Returns dict with ic_summary, turnover_summary, quantile_spread, correlation_matrix.
     """
     if factor_cols is None:
-        factor_cols = [c for c in factor_df.columns if c not in
-                       {"date", "ticker", "open", "high", "low", "close", "volume", "industry"}]
+        factor_cols = [
+            c
+            for c in factor_df.columns
+            if c
+            not in {
+                "date",
+                "ticker",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "industry",
+            }
+        ]
 
     # Compute forward returns (next day)
     if isinstance(returns, pd.Series):
@@ -224,7 +247,9 @@ def full_analysis(
     turnover_df = factor_turnover(factor_df, factor_cols, window=ic_window)
     to_sum = turnover_summary(turnover_df)
 
-    q_spread = quantile_spread_summary(factor_df, factor_cols, returns, n_quantiles=n_quantiles)
+    q_spread = quantile_spread_summary(
+        factor_df, factor_cols, returns, n_quantiles=n_quantiles
+    )
     corr_matrix = factor_correlation_heatmap(factor_df, factor_cols)
 
     # Overall assessment
@@ -268,8 +293,12 @@ def report_markdown(analysis: Dict) -> str:
 
     ic = analysis.get("ic_summary")
     if ic is not None and not ic.empty:
-        lines.append("| Factor | Mean IC | IC IR | Hit Rate | Max IC | Min IC | Decay (days) |")
-        lines.append("|--------|---------|-------|----------|--------|--------|-------------|")
+        lines.append(
+            "| Factor | Mean IC | IC IR | Hit Rate | Max IC | Min IC | Decay (days) |"
+        )
+        lines.append(
+            "|--------|---------|-------|----------|--------|--------|-------------|"
+        )
         for _, r in ic.head(15).iterrows():
             lines.append(
                 f"| {r['factor']} | {r['mean_ic']:.4f} | {r['ic_ir']:.2f} | "
@@ -298,15 +327,18 @@ def report_markdown(analysis: Dict) -> str:
         lines.append("| Factor | Mean Turnover | Stability |")
         lines.append("|--------|--------------|-----------|")
         for _, r in to.head(10).iterrows():
-            lines.append(f"| {r['factor']} | {r['mean_turnover']:.4f} | {r['stability']:.4f} |")
+            lines.append(
+                f"| {r['factor']} | {r['mean_turnover']:.4f} | {r['stability']:.4f} |"
+            )
 
     lines.append("")
     lines.append("*Auto-generated by factor_analysis.py*")
     return "\n".join(lines)
 
 
-def _make_demo_data(n: int = 504, n_factors: int = 5, seed: int = 42
-                    ) -> Tuple[pd.DataFrame, pd.Series]:
+def _make_demo_data(
+    n: int = 504, n_factors: int = 5, seed: int = 42
+) -> Tuple[pd.DataFrame, pd.Series]:
     rng = np.random.default_rng(seed)
     factor_data = {}
     for i in range(n_factors):

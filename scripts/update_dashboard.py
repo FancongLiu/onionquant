@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """Apply compact grid, Teams org tree, and zoomable mermaid to chairman_dashboard.html."""
 
-with open('company/chairman_dashboard.html', 'r', encoding='utf-8') as f:
+with open("company/chairman_dashboard.html", "r", encoding="utf-8") as f:
     content = f.read()
 
 changes = 0
 
 # ======= 1. Replace Department HTML section =======
-old_dept = '<!-- Department Accordion -->'
-new_dept = '<!-- Department Compact Grid -->'
+old_dept = "<!-- Department Accordion -->"
+new_dept = "<!-- Department Compact Grid -->"
 if old_dept in content:
     # Find the full section from <!-- Department Accordion --> to the closing </div> before <!-- Sidebar -->
     start = content.find(old_dept)
-    end = content.find('<!-- Sidebar -->', start)
+    end = content.find("<!-- Sidebar -->", start)
     if start >= 0 and end >= 0:
-        new_section = '''<!-- Department Compact Grid -->
+        new_section = """<!-- Department Compact Grid -->
       <div>
         <div class="section-title" style="display:flex;justify-content:space-between;align-items:center;">
           <span>\U0001f3e2 16 部门 · 组织架构 (点击展开查看内部人员)</span>
@@ -27,7 +27,7 @@ if old_dept in content:
         <div id="orgTreePanel"></div>
       </div>
 
-      '''
+      """
         content = content[:start] + new_section + content[end:]
         changes += 1
         print("1. Department HTML replaced")
@@ -35,12 +35,12 @@ else:
     print("1. Department HTML marker not found")
 
 # ======= 2. Replace Architecture Modal HTML =======
-old_arch = '<!-- Architecture Modal -->'
+old_arch = "<!-- Architecture Modal -->"
 if old_arch in content:
     start = content.find(old_arch)
-    end = content.find('<!-- Department Detail Modal -->', start)
+    end = content.find("<!-- Department Detail Modal -->", start)
     if start >= 0 and end >= 0:
-        new_modal = '''<!-- Architecture Modal (Zoomable) -->
+        new_modal = """<!-- Architecture Modal (Zoomable) -->
 <div class="modal-overlay" id="archModal">
   <div class="modal-content" style="max-width:95vw;width:1100px;">
     <button class="modal-close" onclick="closeArchitecture()">✕</button>
@@ -58,7 +58,7 @@ if old_arch in content:
   </div>
 </div>
 
-'''
+"""
         content = content[:start] + new_modal + content[end:]
         changes += 1
         print("2. Architecture modal replaced")
@@ -66,16 +66,16 @@ else:
     print("2. Architecture modal marker not found")
 
 # ======= 3. Replace renderDepts + toggleDept + expandAllDepts =======
-old_func = '// ============ Render Depts (dynamic from API) ============'
+old_func = "// ============ Render Depts (dynamic from API) ============"
 if old_func in content:
     start = content.find(old_func)
     # Find next '// ============ ' marker after the expandAllDepts function
     # search for addLog function
-    end = content.find('\nfunction addLog', start)
+    end = content.find("\nfunction addLog", start)
     if end < 0:
-        end = content.find('\nfunction escHtml', start)
+        end = content.find("\nfunction escHtml", start)
     if start >= 0 and end >= 0:
-        new_funcs = '''// ============ Render Depts (Compact Grid + Teams Org Tree) ============
+        new_funcs = """// ============ Render Depts (Compact Grid + Teams Org Tree) ============
 async function fetchDepts() {
   try {
     const r = await fetch('/api/departments');
@@ -209,7 +209,7 @@ function collapseAllDepts() {
   addMilestone('\U0001f4d6', '\\u5168\\u90e8\\u6298\\u53e0\\u90e8\\u95e8', '');
 }
 
-'''
+"""
         content = content[:start] + new_funcs + content[end:]
         changes += 1
         print("3. renderDepts functions replaced")
@@ -217,15 +217,15 @@ else:
     print("3. renderDepts marker not found")
 
 # ======= 4. Replace showArchitecture =======
-old_show = '// ============ Architecture Modal ============'
+old_show = "// ============ Architecture Modal ============"
 if old_show in content:
     start = content.find(old_show)
     # Find next major section marker
-    end = content.find('\n// ============ Outbox Expand', start)
+    end = content.find("\n// ============ Outbox Expand", start)
     if end < 0:
-        end = content.find('\n// ============ Keyboard', start)
+        end = content.find("\n// ============ Keyboard", start)
     if start >= 0 and end >= 0:
-        new_show = '''// ============ Architecture Modal (Zoomable Mermaid) ============
+        new_show = """// ============ Architecture Modal (Zoomable Mermaid) ============
 let mermaidZoom = 1.0;
 
 function showArchitecture() {
@@ -305,7 +305,7 @@ function closeArchitecture() {
   mermaidZoom = 1.0;
 }
 
-'''
+"""
         content = content[:start] + new_show + content[end:]
         changes += 1
         print("4. showArchitecture replaced")
@@ -313,15 +313,15 @@ else:
     print("4. showArchitecture marker not found")
 
 # ======= 5. Replace showDeptDetail =======
-old_detail = '// ============ Department Detail Modal ============'
+old_detail = "// ============ Department Detail Modal ============"
 if old_detail in content:
     start = content.find(old_detail)
     # Find next section
-    end = content.find('\n// Close modals', start)
+    end = content.find("\n// Close modals", start)
     if end < 0:
-        end = content.find('\ndocument.getElementById', start + 200)
+        end = content.find("\ndocument.getElementById", start + 200)
     if start >= 0 and end >= 0:
-        new_detail = '''// ============ Department Detail Modal (Hierarchical) ============
+        new_detail = """// ============ Department Detail Modal (Hierarchical) ============
 function showDeptDetail(deptId, deptName, status, color) {
   const deptData = DEPT_AGENTS[deptId];
   const dept = departments.find(d => d.id === deptId) || {};
@@ -393,7 +393,7 @@ function showDeptDetail(deptId, deptName, status, color) {
   document.getElementById('deptModal').classList.add('active');
 }
 
-'''
+"""
         content = content[:start] + new_detail + content[end:]
         changes += 1
         print("5. showDeptDetail replaced")
@@ -413,13 +413,15 @@ else:
     # Try to find just the right piece
     start = content.find("archModal').addEventListener('click'")
     if start >= 0:
-        line_end = content.find('\n', start)
+        line_end = content.find("\n", start)
         # Find the closing of that statement
-        line = content[start:line_end+50]
+        line = content[start : line_end + 50]
         print(f"   Found: {repr(line[:120])}")
 
 # ======= 7. Update init log message =======
-old_init = "addLog('\U0001f3e6 Chairman Dashboard 初始化完成 (双向通信 v3.0 · 自动批准ON)');"
+old_init = (
+    "addLog('\U0001f3e6 Chairman Dashboard 初始化完成 (双向通信 v3.0 · 自动批准ON)');"
+)
 new_init = "addLog('\U0001f3e6 Chairman Dashboard v4.0 初始化完成 (Teams组织架构 · 可缩放架构图 · 自动批准ON)');"
 if old_init in content:
     content = content.replace(old_init, new_init)
@@ -429,7 +431,9 @@ else:
     print("7. Init log NOT FOUND")
 
 # ======= 8. Update milestone seed =======
-old_milestone = "addMilestone('\U0001f680','Dashboard v3.0 启动 ','自动批准 · 部门架构 · 里程碑');"
+old_milestone = (
+    "addMilestone('\U0001f680','Dashboard v3.0 启动 ','自动批准 · 部门架构 · 里程碑');"
+)
 new_milestone = "addMilestone('\U0001f680','Dashboard v4.0 启动 ','Teams组织架构 · 紧凑网格 · 可缩放架构图');"
 if old_milestone in content:
     content = content.replace(old_milestone, new_milestone)
@@ -438,7 +442,7 @@ if old_milestone in content:
 else:
     print("8. Milestone NOT FOUND")
 
-with open('company/chairman_dashboard.html', 'w', encoding='utf-8') as f:
+with open("company/chairman_dashboard.html", "w", encoding="utf-8") as f:
     f.write(content)
 
 print(f"\n=== Done: {changes} changes applied ===")

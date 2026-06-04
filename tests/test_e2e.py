@@ -16,6 +16,7 @@ import pandas as pd
 
 # ── Helpers ─────────────────────────────────────────────────
 
+
 def _make_demo_ohlcv(n_tickers=5, n_dates=252, seed=42):
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2024-01-01", periods=n_dates, freq="B")
@@ -25,20 +26,32 @@ def _make_demo_ohlcv(n_tickers=5, n_dates=252, seed=42):
         open_ = close * 0.995
         high = close * 1.01
         low = close * 0.99
-        dfs.append(pd.DataFrame({
-            "date": dates, "ticker": f"TICKER{i}",
-            "open": open_, "high": high, "low": low, "close": close,
-            "volume": rng.integers(1_000_000, 10_000_000, n_dates).astype(float),
-        }))
+        dfs.append(
+            pd.DataFrame(
+                {
+                    "date": dates,
+                    "ticker": f"TICKER{i}",
+                    "open": open_,
+                    "high": high,
+                    "low": low,
+                    "close": close,
+                    "volume": rng.integers(1_000_000, 10_000_000, n_dates).astype(
+                        float
+                    ),
+                }
+            )
+        )
     return pd.concat(dfs, ignore_index=True)
 
 
 # ── E2E Pipeline Tests ─────────────────────────────────────
 
+
 def test_pipeline_data_to_factor():
     """Step 1→2: OHLCV data → factor computation."""
     from quant_framework.strategies.qlib_factor_engine import (
-        compute_all_factors, neutralize_and_standardize,
+        compute_all_factors,
+        neutralize_and_standardize,
     )
 
     df = _make_demo_ohlcv(n_tickers=5, n_dates=200, seed=1)
@@ -58,13 +71,16 @@ def test_pipeline_data_to_factor():
 def test_pipeline_factor_to_signal():
     """Step 2→3: Factors → alpha combination → signals."""
     from quant_framework.strategies.qlib_factor_engine import (
-        compute_all_factors, neutralize_and_standardize,
+        compute_all_factors,
+        neutralize_and_standardize,
     )
     from quant_framework.strategies.factor_combiner import (
-        equal_weighted_combine, generate_signals,
+        equal_weighted_combine,
+        generate_signals,
     )
     from quant_framework.strategies.alpha_combiner import (
-        combine_alphas, CombineConfig,
+        combine_alphas,
+        CombineConfig,
     )
 
     df = _make_demo_ohlcv(n_tickers=5, n_dates=200, seed=2)
@@ -94,10 +110,12 @@ def test_pipeline_factor_to_signal():
 def test_pipeline_signal_to_backtest():
     """Step 3→4: Signals → backtest execution."""
     from quant_framework.strategies.qlib_factor_engine import (
-        compute_all_factors, neutralize_and_standardize,
+        compute_all_factors,
+        neutralize_and_standardize,
     )
     from quant_framework.strategies.factor_combiner import (
-        equal_weighted_combine, generate_signals,
+        equal_weighted_combine,
+        generate_signals,
     )
     from quant_framework.execution.order_simulator import simulate_orders
     from quant_framework.execution.position_sizer import size_positions
@@ -121,7 +139,9 @@ def test_pipeline_signal_to_backtest():
     latest_date = df["date"].max()
     latest_signals = signals[signals["date"] == latest_date]
     if not latest_signals.empty:
-        sizes = size_positions(latest_signals, df, capital=100_000, method="equal_weight")
+        sizes = size_positions(
+            latest_signals, df, capital=100_000, method="equal_weight"
+        )
         assert sizes.get("total_allocated", 0) >= 0  # 0 if no buy signals
 
 
@@ -145,9 +165,9 @@ def test_pipeline_backtest_to_risk():
 
     # Stress test with simulated portfolio returns
     rng = np.random.default_rng(5)
-    stress_returns = pd.DataFrame({
-        f"A{i}": rng.normal(0.0005, 0.015, 200) for i in range(4)
-    })
+    stress_returns = pd.DataFrame(
+        {f"A{i}": rng.normal(0.0005, 0.015, 200) for i in range(4)}
+    )
     weights = np.array([0.3, 0.25, 0.25, 0.2])
     stress_result = portfolio_stress_test(stress_returns, weights)
     assert stress_result["n_scenarios"] == 8
@@ -157,13 +177,17 @@ def test_pipeline_backtest_to_risk():
 def test_pipeline_risk_to_report():
     """Step 5→6: Risk/performance → report generation."""
     from quant_framework.risk.performance_attribution import (
-        factor_regression, report_markdown, _make_demo_data,
+        factor_regression,
+        report_markdown,
+        _make_demo_data,
     )
     from quant_framework.risk.covariance import (
-        estimate_covariance, compare_estimators,
+        estimate_covariance,
+        compare_estimators,
     )
     from quant_framework.strategies.factor_analysis import (
-        full_analysis, _make_demo_data as _fa_demo,
+        full_analysis,
+        _make_demo_data as _fa_demo,
     )
 
     # Performance attribution report
@@ -176,9 +200,9 @@ def test_pipeline_risk_to_report():
 
     # Covariance estimation
     rng = np.random.default_rng(8)
-    cov_returns = pd.DataFrame({
-        f"A{i}": rng.normal(0.0005, 0.015, 200) for i in range(6)
-    })
+    cov_returns = pd.DataFrame(
+        {f"A{i}": rng.normal(0.0005, 0.015, 200) for i in range(6)}
+    )
     cov = estimate_covariance(cov_returns, method="ledoit_wolf")
     assert cov.shape == (6, 6)
     comparison = compare_estimators(cov_returns)
@@ -194,10 +218,12 @@ def test_pipeline_risk_to_report():
 def test_full_e2e_workflow():
     """Complete end-to-end: data → factors → alpha → signals → backtest → risk → report."""
     from quant_framework.strategies.qlib_factor_engine import (
-        compute_all_factors, neutralize_and_standardize,
+        compute_all_factors,
+        neutralize_and_standardize,
     )
     from quant_framework.strategies.factor_combiner import (
-        equal_weighted_combine, generate_signals,
+        equal_weighted_combine,
+        generate_signals,
     )
     from quant_framework.execution.position_sizer import size_positions
     from quant_framework.execution.order_simulator import simulate_orders

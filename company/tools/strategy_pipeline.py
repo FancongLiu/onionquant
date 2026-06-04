@@ -23,34 +23,97 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from company.tools.social_scanner import scan as social_scan
-from company.tools.expert_filter import get_expert_signal, filter_hot_stocks, EXPERT_DATABASE, INFLUENCER_LIST
+from company.tools.expert_filter import (
+    get_expert_signal,
+    filter_hot_stocks,
+    EXPERT_DATABASE,
+)
 
 # ─── AI Supply Chain Position Map ─────────────────────────
 # 来源: TrendForce 2026, Morgan Stanley 2026/05, JPMorgan
 
 AI_SUPPLY_CHAIN = {
     # 上游核心器件 — 卡位最核心, 替代难度最高
-    "LITE": {"tier": "上游/激光器", "position": "CPO激光器全球龙头", "moat": "极高", "score": 9.5},
-    "COHR": {"tier": "上游/全方案", "position": "SiPh/VCSEL/InP全覆盖", "moat": "极高", "score": 9.0},
-    "SIVEF": {"tier": "上游/激光器", "position": "CPO外置激光源(ELSFP)", "moat": "中(认证周期长,但市值小)", "score": 6.0},
-    "AVGO": {"tier": "上游/芯片", "position": "光DSP全球龙头", "moat": "极高", "score": 9.0},
-    "MRVL": {"tier": "上游/芯片", "position": "高速DSP+定制ASIC", "moat": "高", "score": 8.0},
+    "LITE": {
+        "tier": "上游/激光器",
+        "position": "CPO激光器全球龙头",
+        "moat": "极高",
+        "score": 9.5,
+    },
+    "COHR": {
+        "tier": "上游/全方案",
+        "position": "SiPh/VCSEL/InP全覆盖",
+        "moat": "极高",
+        "score": 9.0,
+    },
+    "SIVEF": {
+        "tier": "上游/激光器",
+        "position": "CPO外置激光源(ELSFP)",
+        "moat": "中(认证周期长,但市值小)",
+        "score": 6.0,
+    },
+    "AVGO": {
+        "tier": "上游/芯片",
+        "position": "光DSP全球龙头",
+        "moat": "极高",
+        "score": 9.0,
+    },
+    "MRVL": {
+        "tier": "上游/芯片",
+        "position": "高速DSP+定制ASIC",
+        "moat": "高",
+        "score": 8.0,
+    },
     # 中游封装/制造
-    "INTC": {"tier": "中游/封装", "position": "EMIB 2.5D先进封装", "moat": "中高(TSMC替代)", "score": 7.5},
-    "TSM": {"tier": "中游/封装", "position": "CoWoS绝对标准", "moat": "极高", "score": 10.0},
-    "FN": {"tier": "中游/封装", "position": "全球最大光器件OSAT", "moat": "中", "score": 6.0},
+    "INTC": {
+        "tier": "中游/封装",
+        "position": "EMIB 2.5D先进封装",
+        "moat": "中高(TSMC替代)",
+        "score": 7.5,
+    },
+    "TSM": {
+        "tier": "中游/封装",
+        "position": "CoWoS绝对标准",
+        "moat": "极高",
+        "score": 10.0,
+    },
+    "FN": {
+        "tier": "中游/封装",
+        "position": "全球最大光器件OSAT",
+        "moat": "中",
+        "score": 6.0,
+    },
     # 下游应用
-    "NVDA": {"tier": "下游/系统", "position": "CPO交换机定义者", "moat": "极高", "score": 10.0},
-    "ANET": {"tier": "下游/系统", "position": "数据中心交换机", "moat": "高", "score": 7.0},
+    "NVDA": {
+        "tier": "下游/系统",
+        "position": "CPO交换机定义者",
+        "moat": "极高",
+        "score": 10.0,
+    },
+    "ANET": {
+        "tier": "下游/系统",
+        "position": "数据中心交换机",
+        "moat": "高",
+        "score": 7.0,
+    },
     # 航天
-    "RKLB": {"tier": "航天/发射", "position": "小卫星发射+Neutron", "moat": "中高", "score": 7.0},
-    "ASTS": {"tier": "航天/通信", "position": "卫星直连手机", "moat": "高(频谱优势)", "score": 7.5},
+    "RKLB": {
+        "tier": "航天/发射",
+        "position": "小卫星发射+Neutron",
+        "moat": "中高",
+        "score": 7.0,
+    },
+    "ASTS": {
+        "tier": "航天/通信",
+        "position": "卫星直连手机",
+        "moat": "高(频谱优势)",
+        "score": 7.5,
+    },
 }
 
 # ─── Known Catalysts Timeline ──────────────────────────────
@@ -58,15 +121,55 @@ AI_SUPPLY_CHAIN = {
 
 CATALYST_TIMELINE = [
     {"date": "2026-05-27", "ticker": "MRVL", "event": "财报", "importance": "HIGH"},
-    {"date": "2026-05-27", "ticker": "Samsung", "event": "罢工投票截止", "importance": "CRITICAL"},
-    {"date": "2026-06-03", "ticker": "AVGO", "event": "财报 ($2.46EPS/$22.87B est)", "importance": "HIGH"},
-    {"date": "2026-06-04", "ticker": "SPCX", "event": "SpaceX IPO路演开始", "importance": "CRITICAL"},
-    {"date": "2026-06-11", "ticker": "SPCX", "event": "SpaceX IPO定价", "importance": "CRITICAL"},
-    {"date": "2026-06-12", "ticker": "SPCX", "event": "SpaceX Nasdaq首挂", "importance": "CRITICAL"},
-    {"date": "2026-06-15", "ticker": "SIVEF", "event": "股东大会(含股票期权投票)", "importance": "MEDIUM"},
+    {
+        "date": "2026-05-27",
+        "ticker": "Samsung",
+        "event": "罢工投票截止",
+        "importance": "CRITICAL",
+    },
+    {
+        "date": "2026-06-03",
+        "ticker": "AVGO",
+        "event": "财报 ($2.46EPS/$22.87B est)",
+        "importance": "HIGH",
+    },
+    {
+        "date": "2026-06-04",
+        "ticker": "SPCX",
+        "event": "SpaceX IPO路演开始",
+        "importance": "CRITICAL",
+    },
+    {
+        "date": "2026-06-11",
+        "ticker": "SPCX",
+        "event": "SpaceX IPO定价",
+        "importance": "CRITICAL",
+    },
+    {
+        "date": "2026-06-12",
+        "ticker": "SPCX",
+        "event": "SpaceX Nasdaq首挂",
+        "importance": "CRITICAL",
+    },
+    {
+        "date": "2026-06-15",
+        "ticker": "SIVEF",
+        "event": "股东大会(含股票期权投票)",
+        "importance": "MEDIUM",
+    },
     {"date": "2026-06-24", "ticker": "MU", "event": "财报", "importance": "HIGH"},
-    {"date": "2026-07", "ticker": "SPCX", "event": "Starship IFT-13 (NET July)", "importance": "MEDIUM"},
-    {"date": "2026-Q4", "ticker": "RKLB", "event": "Neutron火箭首飞", "importance": "HIGH"},
+    {
+        "date": "2026-07",
+        "ticker": "SPCX",
+        "event": "Starship IFT-13 (NET July)",
+        "importance": "MEDIUM",
+    },
+    {
+        "date": "2026-Q4",
+        "ticker": "RKLB",
+        "event": "Neutron火箭首飞",
+        "importance": "HIGH",
+    },
 ]
 
 # ─── Macro Sentiment ──────────────────────────────────────
@@ -94,7 +197,9 @@ def analyze_single_ticker(ticker: str) -> dict:
     expert = get_expert_signal(ticker)
 
     # Step 4: AI supply chain position
-    chain = AI_SUPPLY_CHAIN.get(ticker, {"tier": "未分类", "position": "未知", "moat": "未知", "score": 3.0})
+    chain = AI_SUPPLY_CHAIN.get(
+        ticker, {"tier": "未分类", "position": "未知", "moat": "未知", "score": 3.0}
+    )
 
     # Step 5: Fundamental check (从已有记忆和搜索中获取)
     fundamental = _fundamental_check(ticker)
@@ -137,27 +242,64 @@ def _fundamental_check(ticker: str) -> dict:
     """Quick fundamental check from known data. NOT fabricated — sourced from previous research."""
     # 数据来源: 2026-05-25 搜索 (Benzinga, Yahoo Finance, Seeking Alpha)
     DB = {
-        "INTC": {"pe": "N/A(亏损)", "revenue_q1": "$13.6B", "loss_q1": "$3.7B", "score": 4.0,
-                 "note": "代工每季亏$24亿，2027前不盈利。来源: Q1 2026财报"},
-        "SIVEF": {"pe": "N/A(亏损)", "revenue_2025": "~360M SEK est", "ps": "59.7x", "score": 3.0,
-                  "note": "亏损扩大，DCF公允价值~1.75 SEK vs 市价~55 SEK。来源: MarketScreener"},
-        "MRVL": {"pe": "64x fwd", "revenue_fy2026": "$8.5B+", "score": 6.5,
-                 "note": "光DSP 50% CAGR，AWS+MSFT定制ASIC。来源: Benzinga May 2026"},
-        "LITE": {"pe": "N/A", "order_backlog": "2028前售罄", "score": 7.0,
-                 "note": "OCS积压$400M, CY27加速至年化$1B+。来源: JPMorgan"},
-        "COHR": {"pe": "N/A", "nvidia_deal": "$2B入股+供应协议", "score": 7.5,
-                 "note": "InP产能年底翻倍，加入S&P500。来源: Yahoo Finance"},
-        "AVGO": {"pe": "~35x", "earnings_date": "6/3", "score": 8.0,
-                 "note": "Goldman $450, VMware稳定现金引擎。来源: Goldman Sachs"},
-        "RKLB": {"pe": "N/A", "backlog": "$2.2B", "score": 6.0,
-                 "note": "Neutron Q4 2026, +398% 1年涨幅。来源: Benzinga"},
-        "ASTS": {"pe": "N/A", "cash": "$3.5B", "short": "30%", "score": 5.5,
-                 "note": "BlueBird 6月中旬Falcon 9发射。来源: Fierce Network"},
+        "INTC": {
+            "pe": "N/A(亏损)",
+            "revenue_q1": "$13.6B",
+            "loss_q1": "$3.7B",
+            "score": 4.0,
+            "note": "代工每季亏$24亿，2027前不盈利。来源: Q1 2026财报",
+        },
+        "SIVEF": {
+            "pe": "N/A(亏损)",
+            "revenue_2025": "~360M SEK est",
+            "ps": "59.7x",
+            "score": 3.0,
+            "note": "亏损扩大，DCF公允价值~1.75 SEK vs 市价~55 SEK。来源: MarketScreener",
+        },
+        "MRVL": {
+            "pe": "64x fwd",
+            "revenue_fy2026": "$8.5B+",
+            "score": 6.5,
+            "note": "光DSP 50% CAGR，AWS+MSFT定制ASIC。来源: Benzinga May 2026",
+        },
+        "LITE": {
+            "pe": "N/A",
+            "order_backlog": "2028前售罄",
+            "score": 7.0,
+            "note": "OCS积压$400M, CY27加速至年化$1B+。来源: JPMorgan",
+        },
+        "COHR": {
+            "pe": "N/A",
+            "nvidia_deal": "$2B入股+供应协议",
+            "score": 7.5,
+            "note": "InP产能年底翻倍，加入S&P500。来源: Yahoo Finance",
+        },
+        "AVGO": {
+            "pe": "~35x",
+            "earnings_date": "6/3",
+            "score": 8.0,
+            "note": "Goldman $450, VMware稳定现金引擎。来源: Goldman Sachs",
+        },
+        "RKLB": {
+            "pe": "N/A",
+            "backlog": "$2.2B",
+            "score": 6.0,
+            "note": "Neutron Q4 2026, +398% 1年涨幅。来源: Benzinga",
+        },
+        "ASTS": {
+            "pe": "N/A",
+            "cash": "$3.5B",
+            "short": "30%",
+            "score": 5.5,
+            "note": "BlueBird 6月中旬Falcon 9发射。来源: Fierce Network",
+        },
     }
     return DB.get(ticker, {"pe": "未覆盖", "score": 4.0, "note": "需要进一步研究"})
 
 
-def _generate_recommendation(composite: float, expert: dict, chain: dict, ticker: str) -> str:
+def _generate_recommendation(
+    composite: float, expert: dict, chain: dict, ticker: str
+) -> str:
     parts = []
     if composite >= 8.0:
         parts.append("STRONG — AI产业链核心+专家背书+催化剂密集")
@@ -181,7 +323,7 @@ def run_full_pipeline() -> dict:
     """Run complete 6-step pipeline and return report."""
     print("=" * 70)
     print("  OnionQuant Strategy Pipeline v2.0")
-    print(f"  权重: AI链25% | 舆论25% | 宏观20% | 催化20% | 估值10%")
+    print("  权重: AI链25% | 舆论25% | 宏观20% | 催化20% | 估值10%")
     print(f"  {datetime.now():%Y-%m-%d %H:%M}")
     print("=" * 70)
 
@@ -200,13 +342,15 @@ def run_full_pipeline() -> dict:
         analysis = analyze_single_ticker(item["ticker"])
         analyses.append(analysis)
         s = analysis["scores"]
-        print(f"  {analysis['ticker']:<8} "
-              f"AI链:{s['ai_supply_chain']:.1f} "
-              f"专家:{s['expert_bull']:.1f} "
-              f"宏观:{s['macro_sentiment']:.1f} "
-              f"催化:{s['catalyst_count']} "
-              f"基本面:{s['fundamental']:.1f} "
-              f"→ 综合:{s['composite']:.1f}/10")
+        print(
+            f"  {analysis['ticker']:<8} "
+            f"AI链:{s['ai_supply_chain']:.1f} "
+            f"专家:{s['expert_bull']:.1f} "
+            f"宏观:{s['macro_sentiment']:.1f} "
+            f"催化:{s['catalyst_count']} "
+            f"基本面:{s['fundamental']:.1f} "
+            f"→ 综合:{s['composite']:.1f}/10"
+        )
 
     # Save report
     report = {
@@ -219,9 +363,16 @@ def run_full_pipeline() -> dict:
         "catalyst_timeline": CATALYST_TIMELINE,
     }
 
-    out_path = PROJECT_ROOT / "company" / "reports" / f"strategy_pipeline_{datetime.now():%Y%m%d_%H%M}.json"
+    out_path = (
+        PROJECT_ROOT
+        / "company"
+        / "reports"
+        / f"strategy_pipeline_{datetime.now():%Y%m%d_%H%M}.json"
+    )
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(report, indent=2, ensure_ascii=False, default=str), "utf-8")
+    out_path.write_text(
+        json.dumps(report, indent=2, ensure_ascii=False, default=str), "utf-8"
+    )
 
     print(f"\n→ Report saved: {out_path}")
     return report
@@ -229,9 +380,12 @@ def run_full_pipeline() -> dict:
 
 if __name__ == "__main__":
     import argparse
+
     p = argparse.ArgumentParser()
     p.add_argument("--ticker", type=str, help="Single ticker analysis")
-    p.add_argument("--scan-only", action="store_true", help="Only scan, no deep analysis")
+    p.add_argument(
+        "--scan-only", action="store_true", help="Only scan, no deep analysis"
+    )
     args = p.parse_args()
 
     if args.ticker:

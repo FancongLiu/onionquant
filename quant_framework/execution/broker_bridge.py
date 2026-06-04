@@ -18,7 +18,9 @@ from datetime import datetime
 
 from dotenv import load_dotenv
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+PROJECT_ROOT = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+)
 load_dotenv(os.path.join(PROJECT_ROOT, ".env"))
 
 logger = logging.getLogger("quant_framework.execution.broker_bridge")
@@ -119,40 +121,63 @@ class BrokerBridge:
 
         try:
             from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest
-            from alpaca.trading.enums import OrderSide as AlpacaSide, TimeInForce as AlpacaTIF
+            from alpaca.trading.enums import (
+                OrderSide as AlpacaSide,
+                TimeInForce as AlpacaTIF,
+            )
 
             side_enum = AlpacaSide.BUY if side == "buy" else AlpacaSide.SELL
 
             if order_type == "market":
                 req = MarketOrderRequest(
-                    symbol=symbol.upper(), qty=qty, side=side_enum,
+                    symbol=symbol.upper(),
+                    qty=qty,
+                    side=side_enum,
                     time_in_force=AlpacaTIF.DAY,
                 )
             elif order_type == "limit" and limit_price is not None:
                 req = LimitOrderRequest(
-                    symbol=symbol.upper(), qty=qty, side=side_enum,
-                    limit_price=limit_price, time_in_force=AlpacaTIF.DAY,
+                    symbol=symbol.upper(),
+                    qty=qty,
+                    side=side_enum,
+                    limit_price=limit_price,
+                    time_in_force=AlpacaTIF.DAY,
                 )
             else:
                 return OrderResult(
-                    order_id="", symbol=symbol, side=side, qty=qty,
-                    order_type=order_type, status="rejected",
+                    order_id="",
+                    symbol=symbol,
+                    side=side,
+                    qty=qty,
+                    order_type=order_type,
+                    status="rejected",
                     error=f"Unsupported order type or missing price: {order_type}",
                 )
 
             resp = self._client.submit_order(req)
             logger.info(f"Order placed: {resp.id} {side} {qty} {symbol} @ {order_type}")
             return OrderResult(
-                order_id=str(resp.id), symbol=symbol, side=side, qty=qty,
-                order_type=order_type, status=resp.status,
+                order_id=str(resp.id),
+                symbol=symbol,
+                side=side,
+                qty=qty,
+                order_type=order_type,
+                status=resp.status,
                 filled_qty=float(resp.filled_qty or 0),
-                filled_avg_price=float(resp.filled_avg_price) if resp.filled_avg_price else None,
+                filled_avg_price=float(resp.filled_avg_price)
+                if resp.filled_avg_price
+                else None,
             )
         except Exception as e:
             logger.error(f"Order failed: {e}")
             return OrderResult(
-                order_id="", symbol=symbol, side=side, qty=qty,
-                order_type=order_type, status="error", error=str(e),
+                order_id="",
+                symbol=symbol,
+                side=side,
+                qty=qty,
+                order_type=order_type,
+                status="error",
+                error=str(e),
             )
 
     def get_positions(self) -> List[Position]:
@@ -164,9 +189,12 @@ class BrokerBridge:
             positions = self._client.get_all_positions()
             return [
                 Position(
-                    symbol=p.symbol, qty=float(p.qty),
+                    symbol=p.symbol,
+                    qty=float(p.qty),
                     market_value=float(p.market_value) if p.market_value else None,
-                    avg_entry_price=float(p.avg_entry_price) if p.avg_entry_price else None,
+                    avg_entry_price=float(p.avg_entry_price)
+                    if p.avg_entry_price
+                    else None,
                     unrealized_pl=float(p.unrealized_pl) if p.unrealized_pl else None,
                 )
                 for p in positions
@@ -189,12 +217,18 @@ class BrokerBridge:
                 "closed": QueryOrderStatus.CLOSED,
                 "all": QueryOrderStatus.ALL,
             }
-            req = GetOrdersRequest(status=status_map.get(status, QueryOrderStatus.OPEN), limit=limit)
+            req = GetOrdersRequest(
+                status=status_map.get(status, QueryOrderStatus.OPEN), limit=limit
+            )
             orders = self._client.get_orders(req)
             return [
                 OrderResult(
-                    order_id=str(o.id), symbol=o.symbol, side=o.side.value,
-                    qty=float(o.qty), order_type=o.type.value, status=o.status,
+                    order_id=str(o.id),
+                    symbol=o.symbol,
+                    side=o.side.value,
+                    qty=float(o.qty),
+                    order_type=o.type.value,
+                    status=o.status,
                 )
                 for o in orders
             ]
@@ -234,20 +268,31 @@ class BrokerBridge:
         except Exception as e:
             return {"connected": False, "error": str(e)}
 
-    def _record_order(self, symbol: str, qty: float, side: str, order_type: str) -> OrderResult:
+    def _record_order(
+        self, symbol: str, qty: float, side: str, order_type: str
+    ) -> OrderResult:
         """Fallback: record order locally without execution."""
         import uuid
+
         oid = str(uuid.uuid4())[:8]
         entry = {
-            "order_id": oid, "symbol": symbol, "side": side,
-            "qty": qty, "order_type": order_type, "status": "recorded",
+            "order_id": oid,
+            "symbol": symbol,
+            "side": side,
+            "qty": qty,
+            "order_type": order_type,
+            "status": "recorded",
             "time": datetime.now().isoformat(),
         }
         self._order_log.append(entry)
         logger.info(f"Order recorded (no broker): {oid} {side} {qty} {symbol}")
         return OrderResult(
-            order_id=oid, symbol=symbol, side=side, qty=qty,
-            order_type=order_type, status="recorded",
+            order_id=oid,
+            symbol=symbol,
+            side=side,
+            qty=qty,
+            order_type=order_type,
+            status="recorded",
         )
 
 

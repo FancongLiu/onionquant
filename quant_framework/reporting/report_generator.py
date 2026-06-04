@@ -28,6 +28,7 @@ class ReportConfig:
 
 # ── Daily Briefing ─────────────────────────────────────────
 
+
 def generate_daily_briefing(
     signals: Optional[pd.DataFrame] = None,
     positions: Optional[pd.DataFrame] = None,
@@ -100,7 +101,9 @@ def generate_daily_briefing(
         ]
 
         if "score" in signals.columns or "combined_score" in signals.columns:
-            score_col = "combined_score" if "combined_score" in signals.columns else "score"
+            score_col = (
+                "combined_score" if "combined_score" in signals.columns else "score"
+            )
             top_5 = signals.nlargest(5, score_col)
             lines += [
                 "### Top 5 Longs",
@@ -126,7 +129,9 @@ def generate_daily_briefing(
 
     # Positions
     if positions is not None and not positions.empty:
-        total_value = positions.get("value", 0).sum() if "value" in positions.columns else 0
+        total_value = (
+            positions.get("value", 0).sum() if "value" in positions.columns else 0
+        )
         lines += [
             "## Current Positions",
             "",
@@ -140,6 +145,7 @@ def generate_daily_briefing(
 
 
 # ── Weekly Report ──────────────────────────────────────────
+
 
 def generate_weekly_report(
     equity_curve: Optional[pd.Series] = None,
@@ -170,7 +176,9 @@ def generate_weekly_report(
         total_ret = float((1 + weekly_ret).prod() - 1)
         vol = float(weekly_ret.std() * np.sqrt(252))
         sharpe = float(weekly_ret.mean() / max(weekly_ret.std(), 1e-10) * np.sqrt(252))
-        max_dd = float(((1 + weekly_ret).cumprod() / (1 + weekly_ret).cumprod().cummax() - 1).min())
+        max_dd = float(
+            ((1 + weekly_ret).cumprod() / (1 + weekly_ret).cumprod().cummax() - 1).min()
+        )
 
         lines += [
             "## Performance Summary",
@@ -204,8 +212,8 @@ def generate_weekly_report(
     if factor_performance and config.include_factor_analysis:
         lines += ["## Factor Performance", ""]
         ic_data = factor_performance.get("ic_summary")
-        if ic_data is not None and not (hasattr(ic_data, 'empty') and ic_data.empty):
-            if hasattr(ic_data, 'to_markdown'):
+        if ic_data is not None and not (hasattr(ic_data, "empty") and ic_data.empty):
+            if hasattr(ic_data, "to_markdown"):
                 lines.append(ic_data.head(10).to_markdown(index=False))
             lines.append("")
 
@@ -236,6 +244,7 @@ def generate_weekly_report(
 
 # ── Monthly Report ─────────────────────────────────────────
 
+
 def generate_monthly_report(
     returns: Optional[pd.Series] = None,
     equity_curve: Optional[pd.Series] = None,
@@ -265,8 +274,21 @@ def generate_monthly_report(
         monthly_ret = returns.tail(21)
         total_ret = float((1 + monthly_ret).prod() - 1)
         vol = float(monthly_ret.std() * np.sqrt(252))
-        sharpe = float(monthly_ret.mean() / max(monthly_ret.std(), 1e-10) * np.sqrt(252))
-        calmar = total_ret / max(abs(float(((1 + monthly_ret).cumprod() / (1 + monthly_ret).cumprod().cummax() - 1).min())), 1e-10)
+        sharpe = float(
+            monthly_ret.mean() / max(monthly_ret.std(), 1e-10) * np.sqrt(252)
+        )
+        calmar = total_ret / max(
+            abs(
+                float(
+                    (
+                        (1 + monthly_ret).cumprod()
+                        / (1 + monthly_ret).cumprod().cummax()
+                        - 1
+                    ).min()
+                )
+            ),
+            1e-10,
+        )
 
         lines += [
             "## Monthly Performance",
@@ -329,7 +351,7 @@ def generate_monthly_report(
     if factor_analysis and config.include_factor_analysis:
         lines += ["## Factor Analysis", ""]
         ic_sum = factor_analysis.get("ic_summary")
-        if ic_sum is not None and not (hasattr(ic_sum, 'empty') and ic_sum.empty):
+        if ic_sum is not None and not (hasattr(ic_sum, "empty") and ic_sum.empty):
             lines.append("### IC Summary (Top 5)")
             lines.append("")
             lines.append("| Factor | Mean IC | IC IR | Hit Rate | Decay (days) |")
@@ -367,6 +389,7 @@ def generate_monthly_report(
 
 # ── Full report pipeline ───────────────────────────────────
 
+
 def generate_full_report(
     report_type: str,
     **kwargs,
@@ -403,6 +426,7 @@ def generate_full_report(
 
 # ── Demo ────────────────────────────────────────────────────
 
+
 def _make_demo_data() -> Dict:
     """Create demo data covering all report inputs."""
     rng = np.random.default_rng(42)
@@ -413,54 +437,88 @@ def _make_demo_data() -> Dict:
     returns = pd.Series(rng.normal(0.001, 0.018, n), index=dates)
     equity = (1 + returns).cumprod() * 1_000_000
 
-    signals = pd.DataFrame({
-        "ticker": np.tile(tickers, 5),
-        "signal": rng.choice([-1, 0, 1], len(tickers) * 5, p=[0.2, 0.4, 0.4]),
-        "combined_score": rng.normal(0, 1, len(tickers) * 5),
-    })
+    signals = pd.DataFrame(
+        {
+            "ticker": np.tile(tickers, 5),
+            "signal": rng.choice([-1, 0, 1], len(tickers) * 5, p=[0.2, 0.4, 0.4]),
+            "combined_score": rng.normal(0, 1, len(tickers) * 5),
+        }
+    )
 
-    positions = pd.DataFrame({
-        "ticker": tickers[:5],
-        "shares": rng.integers(100, 5000, 5),
-        "weight": [0.30, 0.25, 0.20, 0.15, 0.10],
-        "value": rng.integers(10000, 500000, 5),
-    })
+    positions = pd.DataFrame(
+        {
+            "ticker": tickers[:5],
+            "shares": rng.integers(100, 5000, 5),
+            "weight": [0.30, 0.25, 0.20, 0.15, 0.10],
+            "value": rng.integers(10000, 500000, 5),
+        }
+    )
 
-    factor_ic = pd.DataFrame({
-        "factor": [f"factor_{i}" for i in range(8)],
-        "mean_ic": rng.normal(0.02, 0.03, 8),
-        "ic_ir": np.abs(rng.normal(0.5, 0.3, 8)),
-        "hit_rate": rng.uniform(0.5, 0.7, 8),
-        "ic_decay_days": rng.uniform(3, 30, 8),
-    }).sort_values("mean_ic", ascending=False)
+    factor_ic = pd.DataFrame(
+        {
+            "factor": [f"factor_{i}" for i in range(8)],
+            "mean_ic": rng.normal(0.02, 0.03, 8),
+            "ic_ir": np.abs(rng.normal(0.5, 0.3, 8)),
+            "hit_rate": rng.uniform(0.5, 0.7, 8),
+            "ic_decay_days": rng.uniform(3, 30, 8),
+        }
+    ).sort_values("mean_ic", ascending=False)
 
     risk_summary = {
-        "Sharpe": 1.35, "Sortino": 1.82, "Calmar": 0.95,
-        "MaxDD": -0.15, "VaR_95": -0.022, "CVaR_95": -0.031,
+        "Sharpe": 1.35,
+        "Sortino": 1.82,
+        "Calmar": 0.95,
+        "MaxDD": -0.15,
+        "VaR_95": -0.022,
+        "CVaR_95": -0.031,
     }
 
     attribution = {
-        "r_squared": 0.88, "alpha_annual": 0.045,
+        "r_squared": 0.88,
+        "alpha_annual": 0.045,
         "exposures": {"MKT": 1.02, "SMB": 0.28, "HML": -0.15, "MOM": 0.12},
         "t_statistics": {"MKT": 45.3, "SMB": 8.7, "HML": -5.2, "MOM": 4.1},
-        "factor_contributions": {"MKT": 0.0005, "SMB": 0.0002, "HML": -0.0001, "MOM": 0.0001},
+        "factor_contributions": {
+            "MKT": 0.0005,
+            "SMB": 0.0002,
+            "HML": -0.0001,
+            "MOM": 0.0001,
+        },
     }
 
     stress = {
-        "stress_score": -0.18, "worst_scenario": "2008 GFC",
+        "stress_score": -0.18,
+        "worst_scenario": "2008 GFC",
         "scenarios": [
-            {"scenario": "2020 COVID Crash", "total_return": -0.25, "max_drawdown": -0.34, "var_95": -0.06},
-            {"scenario": "2008 GFC", "total_return": -0.32, "max_drawdown": -0.50, "var_95": -0.08},
+            {
+                "scenario": "2020 COVID Crash",
+                "total_return": -0.25,
+                "max_drawdown": -0.34,
+                "var_95": -0.06,
+            },
+            {
+                "scenario": "2008 GFC",
+                "total_return": -0.32,
+                "max_drawdown": -0.50,
+                "var_95": -0.08,
+            },
         ],
     }
 
     tca = {"avg_is_bp": 3.2, "avg_vwap_slippage_bp": -1.5, "n_trades": 42}
 
     return {
-        "signals": signals, "positions": positions, "pnl": returns * 50000,
-        "factor_ic": factor_ic, "returns": returns, "equity_curve": equity,
-        "risk_summary": risk_summary, "attribution": attribution,
-        "stress_result": stress, "tca_summary": tca, "factor_analysis": {"ic_summary": factor_ic},
+        "signals": signals,
+        "positions": positions,
+        "pnl": returns * 50000,
+        "factor_ic": factor_ic,
+        "returns": returns,
+        "equity_curve": equity,
+        "risk_summary": risk_summary,
+        "attribution": attribution,
+        "stress_result": stress,
+        "tca_summary": tca,
+        "factor_analysis": {"ic_summary": factor_ic},
     }
 
 
@@ -469,30 +527,40 @@ def main():
     config = ReportConfig(output_dir="company/reports")
 
     daily = generate_daily_briefing(
-        signals=data["signals"], positions=data["positions"],
-        pnl=data["pnl"], factor_ic=data["factor_ic"], config=config,
+        signals=data["signals"],
+        positions=data["positions"],
+        pnl=data["pnl"],
+        factor_ic=data["factor_ic"],
+        config=config,
     )
     print(daily[:800])
     print("\n...\n")
 
     monthly = generate_monthly_report(
-        returns=data["returns"], equity_curve=data["equity_curve"],
-        attribution=data["attribution"], stress_result=data["stress_result"],
-        tca_summary=data["tca_summary"], factor_analysis=data["factor_analysis"],
+        returns=data["returns"],
+        equity_curve=data["equity_curve"],
+        attribution=data["attribution"],
+        stress_result=data["stress_result"],
+        tca_summary=data["tca_summary"],
+        factor_analysis=data["factor_analysis"],
         config=config,
     )
     print(monthly[:800])
 
     # Save reports
-    _, dp = generate_full_report("daily", signals=data["signals"],
-                                  positions=data["positions"], pnl=data["pnl"])
-    _, mp = generate_full_report("monthly", returns=data["returns"],
-                                  attribution=data["attribution"])
+    _, dp = generate_full_report(
+        "daily", signals=data["signals"], positions=data["positions"], pnl=data["pnl"]
+    )
+    _, mp = generate_full_report(
+        "monthly", returns=data["returns"], attribution=data["attribution"]
+    )
     print(f"\nSaved: {dp}")
     print(f"Saved: {mp}")
 
 
-def export_pdf(markdown_content: str, output_path: str, title: str = "Quant Report") -> str:
+def export_pdf(
+    markdown_content: str, output_path: str, title: str = "Quant Report"
+) -> str:
     """Export a markdown report to PDF using weasyprint (T877).
 
     Converts markdown → HTML → PDF with basic styling.
@@ -562,14 +630,22 @@ def _markdown_to_html(md: str) -> str:
         # Table rows
         if line.startswith("|") and line.endswith("|"):
             cells = [c.strip() for c in line[1:-1].split("|")]
-            is_sep = all(c.replace("-", "").replace(":", "").strip() == "" for c in cells)
+            is_sep = all(
+                c.replace("-", "").replace(":", "").strip() == "" for c in cells
+            )
             if not in_table:
                 html_lines.append("<table>")
                 in_table = True
             if is_sep:
                 continue  # skip separator row
-            tag = "th" if in_table and not any("<td>" in line for line in html_lines[-3:]) else "td"
-            html_lines.append("<tr>" + "".join(f"<{tag}>{c}</{tag}>" for c in cells) + "</tr>")
+            tag = (
+                "th"
+                if in_table and not any("<td>" in line for line in html_lines[-3:])
+                else "td"
+            )
+            html_lines.append(
+                "<tr>" + "".join(f"<{tag}>{c}</{tag}>" for c in cells) + "</tr>"
+            )
             continue
         elif in_table:
             html_lines.append("</table>")
@@ -577,6 +653,7 @@ def _markdown_to_html(md: str) -> str:
 
         # Bold
         import re
+
         line = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", line)
         # Italic
         line = re.sub(r"\*(.+?)\*", r"<em>\1</em>", line)

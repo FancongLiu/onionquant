@@ -28,11 +28,10 @@ def mean_variance_optimize(returns, max_weight=1.0):
     r = np.asarray(returns, dtype=float)
     df = pd.DataFrame(r)
     port = rp.Portfolio(returns=df, upperlng=max_weight, lowerlng=0.0)
-    port.assets_stats(method_mu='hist', method_cov='hist')
-    w_df = port.optimization(model='Classic', rm='MV', obj='Sharpe', rf=0, l=0)
-    w = w_df['weights'].values
-    pret, prisk = _port_ret_risk(w, port.mu.values.flatten(),
-                                  port.cov.values)
+    port.assets_stats(method_mu="hist", method_cov="hist")
+    w_df = port.optimization(model="Classic", rm="MV", obj="Sharpe", rf=0, l=0)
+    w = w_df["weights"].values
+    pret, prisk = _port_ret_risk(w, port.mu.values.flatten(), port.cov.values)
     return {"weights": w, "expected_return": pret, "expected_risk": prisk}
 
 
@@ -41,11 +40,10 @@ def risk_parity(returns, max_weight=1.0):
     r = np.asarray(returns, dtype=float)
     df = pd.DataFrame(r)
     port = rp.Portfolio(returns=df, upperlng=max_weight, lowerlng=0.0)
-    port.assets_stats(method_mu='hist', method_cov='hist')
-    w_df = port.rp_optimization(model='Classic', rm='MV')
-    w = w_df['weights'].values
-    pret, prisk = _port_ret_risk(w, port.mu.values.flatten(),
-                                  port.cov.values)
+    port.assets_stats(method_mu="hist", method_cov="hist")
+    w_df = port.rp_optimization(model="Classic", rm="MV")
+    w = w_df["weights"].values
+    pret, prisk = _port_ret_risk(w, port.mu.values.flatten(), port.cov.values)
     return {"weights": w, "expected_return": pret, "expected_risk": prisk}
 
 
@@ -65,8 +63,7 @@ def hierarchical_risk_parity(returns, max_weight=1.0):
 
 
 # ---- 4. Black-Litterman ----
-def black_litterman(returns, views=None, confidences=None,
-                    tau=0.05, max_weight=1.0):
+def black_litterman(returns, views=None, confidences=None, tau=0.05, max_weight=1.0):
     r = np.asarray(returns, dtype=float)
     T, N = r.shape
     tickers = [f"A{i}" for i in range(N)]
@@ -93,14 +90,19 @@ def black_litterman(returns, views=None, confidences=None,
 
     # Omega: 以 view 收益率的方差缩放
     c_annual = cd * 252
-    omega_arr = np.diag([
-        (1 - vc) / vc * (P_arr[i] @ c_annual @ P_arr[i])
-        for i, vc in enumerate(view_conf)
-    ])
+    omega_arr = np.diag(
+        [
+            (1 - vc) / vc * (P_arr[i] @ c_annual @ P_arr[i])
+            for i, vc in enumerate(view_conf)
+        ]
+    )
     P_df = pd.DataFrame(P_arr, columns=tickers)
     Q_s = pd.Series(Q_arr, index=[f"v{i}" for i in range(K)])
-    omega_df = pd.DataFrame(omega_arr, index=[f"v{i}" for i in range(K)],
-                            columns=[f"v{i}" for i in range(K)])
+    omega_df = pd.DataFrame(
+        omega_arr,
+        index=[f"v{i}" for i in range(K)],
+        columns=[f"v{i}" for i in range(K)],
+    )
     bl = BlackLittermanModel(S, pi=pi, P=P_df, Q=Q_s, omega=omega_df, tau=tau)
     w_dict = bl.bl_weights()
     w = np.array([w_dict[t] for t in tickers])
@@ -111,8 +113,15 @@ def black_litterman(returns, views=None, confidences=None,
 
 
 # ---- 4b. Black-Litterman (riskfolio-lib) ----
-def black_litterman_rp(returns, views=None, view_confidences=None,
-                       tau=0.05, delta=1.0, rf=0.0, max_weight=1.0):
+def black_litterman_rp(
+    returns,
+    views=None,
+    view_confidences=None,
+    tau=0.05,
+    delta=1.0,
+    rf=0.0,
+    max_weight=1.0,
+):
     """Black-Litterman via riskfolio-lib — asset-level views using market-implied equilibrium.
 
     Args:
@@ -149,7 +158,9 @@ def black_litterman_rp(returns, views=None, view_confidences=None,
         w = w_eq.copy()
         pret, prisk = _port_ret_risk(w, mu_hist, cov_matrix / 252)
         return {
-            "weights": w, "expected_return": pret, "expected_risk": prisk,
+            "weights": w,
+            "expected_return": pret,
+            "expected_risk": prisk,
             "implied_equilibrium": dict(zip(tickers, pi_implied)),
         }
 
@@ -166,21 +177,32 @@ def black_litterman_rp(returns, views=None, view_confidences=None,
     # riskfolio-lib black_litterman
     try:
         bl_result = rp.black_litterman(
-            X=df, w=w_eq, P=P_df, Q=Q_s,
-            delta=delta, rf=rf, eq=True,
-            method_mu='hist', method_cov='hist',
+            X=df,
+            w=w_eq,
+            P=P_df,
+            Q=Q_s,
+            delta=delta,
+            rf=rf,
+            eq=True,
+            method_mu="hist",
+            method_cov="hist",
         )
         # bl_result is typically a dict with 'mu' (posterior) and 'cov'
         if isinstance(bl_result, dict):
-            mu_post = bl_result.get('mu', pi_implied)
-            cov_post = bl_result.get('cov', cov_matrix)
+            mu_post = bl_result.get("mu", pi_implied)
+            cov_post = bl_result.get("cov", cov_matrix)
         else:
             mu_post = bl_result
             cov_post = cov_matrix
     except Exception:
         # Fallback: PyPortfolioOpt BL (already working)
-        return black_litterman(returns, views=views, confidences=view_confidences,
-                               tau=tau, max_weight=max_weight)
+        return black_litterman(
+            returns,
+            views=views,
+            confidences=view_confidences,
+            tau=tau,
+            max_weight=max_weight,
+        )
 
     # Optimize using Riskfolio-Lib (not hand-rolled pinv)
     mu_d = np.asarray(mu_post) / 252
@@ -190,11 +212,13 @@ def black_litterman_rp(returns, views=None, view_confidences=None,
     cov_d = cov_d[:N_valid, :N_valid]
     tickers_valid = tickers[:N_valid]
     try:
-        port_post = rp.Portfolio(returns=df.iloc[:, :N_valid], upperlng=max_weight, lowerlng=0.0)
+        port_post = rp.Portfolio(
+            returns=df.iloc[:, :N_valid], upperlng=max_weight, lowerlng=0.0
+        )
         port_post.mu = pd.DataFrame(mu_d[:, None], index=tickers_valid)
         port_post.cov = pd.DataFrame(cov_d, index=tickers_valid, columns=tickers_valid)
-        w_df = port_post.optimization(model='Classic', rm='MV', obj='Sharpe', rf=0, l=0)
-        w = w_df['weights'].values
+        w_df = port_post.optimization(model="Classic", rm="MV", obj="Sharpe", rf=0, l=0)
+        w = w_df["weights"].values
     except Exception:
         # Fallback: closed-form MV if optimization fails
         try:
@@ -208,15 +232,24 @@ def black_litterman_rp(returns, views=None, view_confidences=None,
 
     pret, prisk = _port_ret_risk(w, mu_d, cov_d)
     return {
-        "weights": w, "expected_return": pret, "expected_risk": prisk,
+        "weights": w,
+        "expected_return": pret,
+        "expected_risk": prisk,
         "implied_equilibrium": dict(zip(tickers[:N_valid], pi_implied[:N_valid])),
         "posterior_mu": dict(zip(tickers[:N_valid], mu_d * 252)),
     }
 
 
-def black_litterman_bayesian(returns, factor_exposures, factor_returns,
-                              factor_views=None, factor_view_confidences=None,
-                              delta=1.0, rf=0.0, max_weight=1.0):
+def black_litterman_bayesian(
+    returns,
+    factor_exposures,
+    factor_returns,
+    factor_views=None,
+    factor_view_confidences=None,
+    delta=1.0,
+    rf=0.0,
+    max_weight=1.0,
+):
     """Bayesian Black-Litterman (BLB) via riskfolio-lib — factor-level views.
 
     Args:
@@ -265,24 +298,33 @@ def black_litterman_bayesian(returns, factor_exposures, factor_returns,
 
         # BLB: use factor model to derive prior, then apply factor views
         blb = port.blfactors_stats(
-            flavor='BLB', B=B, P_f=P_f_df, Q_f=Q_f_s,
-            rf=rf, delta=delta, eq=True,
-            method_mu='hist', method_cov='hist',
+            flavor="BLB",
+            B=B,
+            P_f=P_f_df,
+            Q_f=Q_f_s,
+            rf=rf,
+            delta=delta,
+            eq=True,
+            method_mu="hist",
+            method_cov="hist",
         )
 
         # Optimize using Riskfolio-Lib (port already has posterior from blfactors_stats)
-        w_df = port.optimization(model='Classic', rm='MV', obj='Sharpe', rf=0, l=0)
-        w = w_df['weights'].values
+        w_df = port.optimization(model="Classic", rm="MV", obj="Sharpe", rf=0, l=0)
+        w = w_df["weights"].values
 
         # Compute return/risk from posterior stats
-        mu_post = blb.get('mu', df_assets.mean().values)
-        cov_post = blb.get('cov', df_assets.cov().values)
+        mu_post = blb.get("mu", df_assets.mean().values)
+        cov_post = blb.get("cov", df_assets.cov().values)
         mu_d = np.asarray(mu_post) / 252
         cov_d = np.asarray(cov_post) / 252
         pret, prisk = _port_ret_risk(w, mu_d, cov_d)
         return {
-            "weights": w, "expected_return": pret, "expected_risk": prisk,
-            "factor_model": "BLB", "n_factors": K,
+            "weights": w,
+            "expected_return": pret,
+            "expected_risk": prisk,
+            "factor_model": "BLB",
+            "n_factors": K,
         }
     except Exception:
         # Fallback to asset-level BL
@@ -290,8 +332,7 @@ def black_litterman_bayesian(returns, factor_exposures, factor_returns,
 
 
 # ---- 4c. Unified BL entry point ----
-def bl_optimize(returns, views=None, factor_data=None,
-                method='auto', **kwargs):
+def bl_optimize(returns, views=None, factor_data=None, method="auto", **kwargs):
     """Unified Black-Litterman optimization — auto-selects best variant.
 
     Args:
@@ -304,27 +345,27 @@ def bl_optimize(returns, views=None, factor_data=None,
     Returns:
         dict with weights, expected_return, expected_risk, and method_used.
     """
-    if method == 'auto':
-        if factor_data and 'exposures' in factor_data and 'returns' in factor_data:
-            method = 'bayesian'
+    if method == "auto":
+        if factor_data and "exposures" in factor_data and "returns" in factor_data:
+            method = "bayesian"
         else:
-            method = 'riskfolio'
+            method = "riskfolio"
 
-    if method == 'bayesian':
-        fv = factor_data.get('views') if factor_data else None
+    if method == "bayesian":
+        fv = factor_data.get("views") if factor_data else None
         result = black_litterman_bayesian(
             returns,
-            factor_exposures=factor_data['exposures'],
-            factor_returns=factor_data['returns'],
+            factor_exposures=factor_data["exposures"],
+            factor_returns=factor_data["returns"],
             factor_views=fv,
             **kwargs,
         )
-    elif method == 'riskfolio':
+    elif method == "riskfolio":
         result = black_litterman_rp(returns, views=views, **kwargs)
     else:
         result = black_litterman(returns, views=views, **kwargs)
 
-    result['method_used'] = method
+    result["method_used"] = method
     return result
 
 
@@ -335,12 +376,12 @@ def kelly_criterion(returns, max_weight=1.0, risk_aversion=2.0):
     r = np.asarray(returns, dtype=float)
     df = pd.DataFrame(r)
     port = rp.Portfolio(returns=df, upperlng=max_weight, lowerlng=0.0)
-    port.assets_stats(method_mu='hist', method_cov='hist')
-    w_df = port.optimization(model='Classic', rm='MV', obj='Utility',
-                              kelly='approx', rf=0, l=risk_aversion)
-    w = w_df['weights'].values
-    pret, prisk = _port_ret_risk(w, port.mu.values.flatten(),
-                                  port.cov.values)
+    port.assets_stats(method_mu="hist", method_cov="hist")
+    w_df = port.optimization(
+        model="Classic", rm="MV", obj="Utility", kelly="approx", rf=0, l=risk_aversion
+    )
+    w = w_df["weights"].values
+    pret, prisk = _port_ret_risk(w, port.mu.values.flatten(), port.cov.values)
     return {"weights": w, "expected_return": pret, "expected_risk": prisk}
 
 
@@ -354,7 +395,7 @@ if __name__ == "__main__":
     corr[0, 2] = corr[2, 0] = 0.3
     corr[1, 2] = corr[2, 1] = 0.4
     cs = np.outer(vols, vols) * corr
-    np.fill_diagonal(cs, vols ** 2)
+    np.fill_diagonal(cs, vols**2)
     sr = np.random.multivariate_normal(means, cs, n_p)
     methods = [
         ("Mean-Variance", mean_variance_optimize(sr)),
@@ -368,5 +409,7 @@ if __name__ == "__main__":
     print("-" * 72)
     for n_, r_ in methods:
         ws = ", ".join([f"{x:.2f}" for x in r_["weights"]])
-        print(f"{n_:20s}{r_['expected_return']:>10.4f}"
-              f"{r_['expected_risk']:>10.4f}  [{ws}]")
+        print(
+            f"{n_:20s}{r_['expected_return']:>10.4f}"
+            f"{r_['expected_risk']:>10.4f}  [{ws}]"
+        )

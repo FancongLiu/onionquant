@@ -63,7 +63,9 @@ def oas(returns: pd.DataFrame) -> pd.DataFrame:
         return sample_cov(returns)
 
     oas_est = OAS().fit(clean.values)
-    return pd.DataFrame(oas_est.covariance_, index=returns.columns, columns=returns.columns)
+    return pd.DataFrame(
+        oas_est.covariance_, index=returns.columns, columns=returns.columns
+    )
 
 
 def exponentially_weighted(
@@ -84,7 +86,7 @@ def exponentially_weighted(
     else:
         ewm = clean.ewm(span=span)
 
-    cov = ewm.cov().iloc[-returns.shape[1]:].values
+    cov = ewm.cov().iloc[-returns.shape[1] :].values
     return pd.DataFrame(cov, index=returns.columns, columns=returns.columns)
 
 
@@ -121,6 +123,7 @@ def factor_model_cov(
     else:
         # PCA factor extraction
         from sklearn.decomposition import PCA
+
         R = clean.values
         pca = PCA(n_components=min(n_factors, N, T))
         F = pca.fit_transform(R)
@@ -156,8 +159,7 @@ def factor_model_cov(
         "n_assets": N,
         "n_obs": T,
         "factor_loadings": pd.DataFrame(
-            B, index=returns.columns,
-            columns=[f"factor_{i}" for i in range(n_factors)]
+            B, index=returns.columns, columns=[f"factor_{i}" for i in range(n_factors)]
         ),
         "factor_covariance": pd.DataFrame(
             sigma_f,
@@ -167,7 +169,9 @@ def factor_model_cov(
         "idiosyncratic_var": pd.Series(D_diag, index=returns.columns),
     }
 
-    return pd.DataFrame(cov_total, index=returns.columns, columns=returns.columns), decomposition
+    return pd.DataFrame(
+        cov_total, index=returns.columns, columns=returns.columns
+    ), decomposition
 
 
 def robust_mcd(returns: pd.DataFrame, support_fraction: float = 0.8) -> pd.DataFrame:
@@ -184,7 +188,9 @@ def robust_mcd(returns: pd.DataFrame, support_fraction: float = 0.8) -> pd.DataF
     if len(clean) < 20 or clean.shape[1] < 2:
         return sample_cov(returns)
 
-    mcd = MinCovDet(support_fraction=support_fraction, random_state=42).fit(clean.values)
+    mcd = MinCovDet(support_fraction=support_fraction, random_state=42).fit(
+        clean.values
+    )
     return pd.DataFrame(mcd.covariance_, index=returns.columns, columns=returns.columns)
 
 
@@ -245,7 +251,7 @@ def rolling_covariance(
     dates = returns.index
     for i in range(window, len(dates) + 1, step):
         date = dates[i - 1]
-        window_returns = returns.iloc[i - window:i].dropna(axis=1)
+        window_returns = returns.iloc[i - window : i].dropna(axis=1)
         if window_returns.shape[1] < 2:
             continue
         try:
@@ -283,16 +289,25 @@ def compare_estimators(
             cond = float(max(vals) / max(min(vals), 1e-10))
             frob = float(np.linalg.norm(cov.values, "fro"))
             trace = float(np.trace(cov.values))
-            rows.append({
-                "method": method,
-                "condition_number": round(cond, 1),
-                "frobenius_norm": round(frob, 4),
-                "trace": round(trace, 6),
-                "mean_corr": round(float(cov_to_corr(cov).values.mean()), 4),
-            })
+            rows.append(
+                {
+                    "method": method,
+                    "condition_number": round(cond, 1),
+                    "frobenius_norm": round(frob, 4),
+                    "trace": round(trace, 6),
+                    "mean_corr": round(float(cov_to_corr(cov).values.mean()), 4),
+                }
+            )
         except Exception:
-            rows.append({"method": method, "condition_number": None,
-                          "frobenius_norm": None, "trace": None, "mean_corr": None})
+            rows.append(
+                {
+                    "method": method,
+                    "condition_number": None,
+                    "frobenius_norm": None,
+                    "trace": None,
+                    "mean_corr": None,
+                }
+            )
 
     return pd.DataFrame(rows)
 

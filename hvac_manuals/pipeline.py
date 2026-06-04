@@ -10,14 +10,12 @@ Complete workflow:
 
 Verification is script-based (pdfplumber), not AI. Only edge cases get flagged.
 """
+
 import sys
 import io
 import re
 import json
-import hashlib
 import subprocess
-import time
-import urllib.parse
 from pathlib import Path
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -109,11 +107,13 @@ BRAND_CONFIG = {
 
 # Request session with retry
 session = requests.Session()
-session.headers.update({
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.5",
-})
+session.headers.update(
+    {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+    }
+)
 
 
 def _ts():
@@ -123,6 +123,7 @@ def _ts():
 # ═══════════════════════════════════════════════════════════════
 # PHASE 1: Load & Group
 # ═══════════════════════════════════════════════════════════════
+
 
 def load_excel():
     """Load Excel, return (rows, headers, workbook, worksheet)."""
@@ -239,18 +240,35 @@ def build_manifest(rows):
 # PHASE 2: Search & Download
 # ═══════════════════════════════════════════════════════════════
 
+
 def download_pdf(url: str, output_path: Path, timeout: int = 120) -> bool:
     """Download a PDF from URL. Returns True if valid PDF downloaded."""
     try:
         result = subprocess.run(
-            ["curl", "-s", "-L", "-o", str(output_path), "-w", "%{http_code}",
-             "--max-time", str(timeout),
-             "-H", "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-             url],
-            capture_output=True, text=True, timeout=timeout + 10,
+            [
+                "curl",
+                "-s",
+                "-L",
+                "-o",
+                str(output_path),
+                "-w",
+                "%{http_code}",
+                "--max-time",
+                str(timeout),
+                "-H",
+                "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+                url,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=timeout + 10,
         )
         http_code = result.stdout.strip()
-        if http_code == "200" and output_path.exists() and output_path.stat().st_size > 1000:
+        if (
+            http_code == "200"
+            and output_path.exists()
+            and output_path.stat().st_size > 1000
+        ):
             with open(output_path, "rb") as f:
                 header = f.read(5)
             if header.startswith(b"%PDF"):
@@ -290,7 +308,8 @@ def extract_pdf_links_from_html(html: str, brand: str) -> list[dict]:
     # Pattern 2: documentType + DocumentURL pairs
     doc_type_matches = re.findall(
         r'"documentType"\s*:\s*"([^"]+)"[^}]+"DocumentURL"\s*:\s*"(https?://[^"]+\.pdf)"',
-        html, re.DOTALL,
+        html,
+        re.DOTALL,
     )
     for dtype, url in doc_type_matches:
         results.append({"url": url, "source": f"DocumentURL_{dtype}"})
@@ -330,7 +349,9 @@ def find_sitemap_urls(brand: str) -> list[str]:
     return urls
 
 
-def match_sitemap_to_models(sitemap_xml: str, models: list[str], brand: str) -> list[dict]:
+def match_sitemap_to_models(
+    sitemap_xml: str, models: list[str], brand: str
+) -> list[dict]:
     """Match sitemap product URLs to model tokens."""
     matches = []
     tokens = [model_token(m) for m in models if model_token(m) != "UNKNOWN"]
@@ -381,9 +402,17 @@ def search_cdn_by_model(brand: str, model: str) -> list[str]:
     # We can't list CDN directories, but we can try direct guesses
     for pattern in patterns:
         # Try common HVAC manual naming patterns
-        for suffix in ["product_data.pdf", "technical_guide.pdf", "spec_sheet.pdf",
-                       "ProductData.pdf", "TechnicalGuide.pdf", "SpecSheet.pdf",
-                       "pd.pdf", "tg.pdf", "ss.pdf"]:
+        for suffix in [
+            "product_data.pdf",
+            "technical_guide.pdf",
+            "spec_sheet.pdf",
+            "ProductData.pdf",
+            "TechnicalGuide.pdf",
+            "SpecSheet.pdf",
+            "pd.pdf",
+            "tg.pdf",
+            "ss.pdf",
+        ]:
             results.append(f"{cdn_base}{pattern}{suffix}")
 
     return results
@@ -393,10 +422,12 @@ def search_cdn_by_model(brand: str, model: str) -> list[str]:
 # PHASE 3: PDF Verification (pdfplumber)
 # ═══════════════════════════════════════════════════════════════
 
+
 def extract_pdf_text(pdf_path: Path, max_pages: int = 60) -> str:
     """Extract full text from a PDF, limited to first N pages."""
     try:
         import pdfplumber
+
         texts = []
         with pdfplumber.open(str(pdf_path)) as pdf:
             for page in pdf.pages[:max_pages]:
@@ -569,7 +600,9 @@ def verify_pdf(pdf_path: Path, rows: list[dict]) -> dict:
 
     # Aggregate: best score across covered rows
     best = max(row_results, key=lambda r: r["score"]) if row_results else {"score": 0}
-    avg_score = sum(r["score"] for r in row_results) / len(row_results) if row_results else 0
+    avg_score = (
+        sum(r["score"] for r in row_results) / len(row_results) if row_results else 0
+    )
 
     return {
         "verdict": best["verdict"],
@@ -583,6 +616,7 @@ def verify_pdf(pdf_path: Path, rows: list[dict]) -> dict:
 # ═══════════════════════════════════════════════════════════════
 # PHASE 4: Results Output
 # ═══════════════════════════════════════════════════════════════
+
 
 def write_results_to_excel(manifest, row_to_manual):
     """Write pdf_filename, pdf_link, Comments, and Match_Status back to Excel."""
@@ -630,9 +664,19 @@ def write_csv_results(manifest):
     import csv
 
     fieldnames = [
-        "ReferenceId", "Brand", "Series", "ModelNumberUle",
-        "ExpectedCapacity", "ExpectedEER", "ExpectedIEER", "ExpectedRefrigerant",
-        "Verdict", "Score", "Evidence", "PDF_URL", "LocalPath",
+        "ReferenceId",
+        "Brand",
+        "Series",
+        "ModelNumberUle",
+        "ExpectedCapacity",
+        "ExpectedEER",
+        "ExpectedIEER",
+        "ExpectedRefrigerant",
+        "Verdict",
+        "Score",
+        "Evidence",
+        "PDF_URL",
+        "LocalPath",
     ]
 
     with open(RESULTS_CSV, "w", newline="", encoding="utf-8-sig") as f:
@@ -641,21 +685,29 @@ def write_csv_results(manifest):
 
         for mid, entry in sorted(manifest.items()):
             for i, rid in enumerate(entry.get("reference_ids", [entry["series"]])):
-                writer.writerow({
-                    "ReferenceId": rid,
-                    "Brand": entry["brand"],
-                    "Series": entry["series"],
-                    "ModelNumberUle": entry["models"][i] if i < len(entry["models"]) else "",
-                    "ExpectedCapacity": entry["capacities"][i] if i < len(entry["capacities"]) else "",
-                    "ExpectedEER": "",
-                    "ExpectedIEER": "",
-                    "ExpectedRefrigerant": entry["refrigerants"][i] if i < len(entry["refrigerants"]) else "",
-                    "Verdict": entry.get("verdict", ""),
-                    "Score": entry.get("score", ""),
-                    "Evidence": entry.get("evidence", ""),
-                    "PDF_URL": entry.get("pdf_url", ""),
-                    "LocalPath": entry.get("pdf_filename", ""),
-                })
+                writer.writerow(
+                    {
+                        "ReferenceId": rid,
+                        "Brand": entry["brand"],
+                        "Series": entry["series"],
+                        "ModelNumberUle": entry["models"][i]
+                        if i < len(entry["models"])
+                        else "",
+                        "ExpectedCapacity": entry["capacities"][i]
+                        if i < len(entry["capacities"])
+                        else "",
+                        "ExpectedEER": "",
+                        "ExpectedIEER": "",
+                        "ExpectedRefrigerant": entry["refrigerants"][i]
+                        if i < len(entry["refrigerants"])
+                        else "",
+                        "Verdict": entry.get("verdict", ""),
+                        "Score": entry.get("score", ""),
+                        "Evidence": entry.get("evidence", ""),
+                        "PDF_URL": entry.get("pdf_url", ""),
+                        "LocalPath": entry.get("pdf_filename", ""),
+                    }
+                )
 
     print(f"CSV results written to: {RESULTS_CSV}")
 
@@ -679,10 +731,19 @@ def print_summary(manifest):
     print("=" * 60)
     print(f"  Unique manuals: {total}")
     print(f"  Total rows:     {total_rows}")
-    print(f"  PDFs found:     {sum(1 for m in manifest.values() if m.get('pdf_filename'))}")
-    print(f"  Rows covered:   {covered_rows}/{total_rows} ({covered_rows/max(1,total_rows)*100:.0f}%)")
+    print(
+        f"  PDFs found:     {sum(1 for m in manifest.values() if m.get('pdf_filename'))}"
+    )
+    print(
+        f"  Rows covered:   {covered_rows}/{total_rows} ({covered_rows / max(1, total_rows) * 100:.0f}%)"
+    )
     print()
-    for v in ["High confidence", "Needs human confirmation", "Low confidence", "Not found"]:
+    for v in [
+        "High confidence",
+        "Needs human confirmation",
+        "Low confidence",
+        "Not found",
+    ]:
         if verdicts[v]:
             print(f"  {v}: {verdicts[v]}")
 

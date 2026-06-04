@@ -4,6 +4,7 @@
 Uses existing quant_framework/ modules — no hand-rolled calculations.
 Output: company/chairman_outbox/quant_research_20260518.md
 """
+
 import sys
 import warnings
 import logging
@@ -14,7 +15,9 @@ import numpy as np
 import pandas as pd
 
 warnings.filterwarnings("ignore")
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 PROJECT = Path(__file__).resolve().parent.parent
@@ -22,21 +25,37 @@ sys.path.insert(0, str(PROJECT))
 
 # ── Import existing framework modules ──
 from quant_framework.strategies.qlib_factor_engine import (
-    compute_all_factors, neutralize_and_standardize, FACTOR_REGISTRY, FACTOR_GROUPS,
-)
-from quant_framework.strategies.factor_analysis import (
-    full_analysis as factor_full_analysis, ic_summary as factor_ic_summary,
-    rolling_ic, quantile_spread_summary,
+    compute_all_factors,
+    neutralize_and_standardize,
+    FACTOR_GROUPS,
 )
 from quant_framework.risk.portfolio_optimizer import (
-    mean_variance_optimize, risk_parity, hierarchical_risk_parity,
+    risk_parity,
+    hierarchical_risk_parity,
 )
 
 TICKERS = [
-    "DXYZ", "MU", "000660.KS", "WDC", "SNDK", "STX",
-    "ANET", "NVDA", "RKLB", "ASTS", "LUNR", "LITE",
-    "COHR", "RDW", "AVGO", "MRVL", "AMD", "INTC",
-    "BABA", "JD", "TSEM",
+    "DXYZ",
+    "MU",
+    "000660.KS",
+    "WDC",
+    "SNDK",
+    "STX",
+    "ANET",
+    "NVDA",
+    "RKLB",
+    "ASTS",
+    "LUNR",
+    "LITE",
+    "COHR",
+    "RDW",
+    "AVGO",
+    "MRVL",
+    "AMD",
+    "INTC",
+    "BABA",
+    "JD",
+    "TSEM",
 ]
 
 START = "2025-03-15"  # ~300 calendar days → ~200 trading days
@@ -109,22 +128,40 @@ def compute_rolling_factors_and_ic(all_data):
         fdf = compute_all_factors(df)
         fdf["ticker"] = t
         fdf["date"] = pd.to_datetime(df.index)
-        combined_rows.append(fdf[np.isfinite(fdf.select_dtypes(include=[np.number]).values).any(axis=1)])
+        combined_rows.append(
+            fdf[np.isfinite(fdf.select_dtypes(include=[np.number]).values).any(axis=1)]
+        )
 
     combined = pd.concat(combined_rows, ignore_index=True)
 
     # Get factor columns (price-derived only)
     factors_from_price = [
-        "mom_1d", "mom_5d", "mom_10d", "mom_21d", "mom_63d", "mom_126d", "mom_252d",
-        "rev_5d", "rev_10d", "rev_21d",
-        "vol_5d", "vol_21d", "vol_63d",
-        "turn_5d", "turn_21d", "size_log",
-        "std_5d", "std_21d", "corr_vp_21d",
+        "mom_1d",
+        "mom_5d",
+        "mom_10d",
+        "mom_21d",
+        "mom_63d",
+        "mom_126d",
+        "mom_252d",
+        "rev_5d",
+        "rev_10d",
+        "rev_21d",
+        "vol_5d",
+        "vol_21d",
+        "vol_63d",
+        "turn_5d",
+        "turn_21d",
+        "size_log",
+        "std_5d",
+        "std_21d",
+        "corr_vp_21d",
     ]
     available_factors = [c for c in factors_from_price if c in combined.columns]
 
     # Compute daily returns for each ticker
-    combined["daily_ret"] = combined.groupby("ticker")["close"].transform(lambda x: x.pct_change().shift(-1))
+    combined["daily_ret"] = combined.groupby("ticker")["close"].transform(
+        lambda x: x.pct_change().shift(-1)
+    )
 
     # Standardize factors within each date cross-section
     combined = neutralize_and_standardize(combined)
@@ -143,13 +180,19 @@ def compute_rolling_factors_and_ic(all_data):
 
     ic_df = pd.DataFrame(ic_results)
     if not ic_df.empty:
-        ic_summary = ic_df.groupby("factor").agg(
-            mean_ic=("ic", "mean"),
-            std_ic=("ic", "std"),
-            hit_rate=("ic", lambda x: (x > 0).mean()),
-            n_obs=("ic", "count"),
-        ).reset_index()
-        ic_summary["ic_ir"] = ic_summary["mean_ic"] / ic_summary["std_ic"].clip(lower=1e-10)
+        ic_summary = (
+            ic_df.groupby("factor")
+            .agg(
+                mean_ic=("ic", "mean"),
+                std_ic=("ic", "std"),
+                hit_rate=("ic", lambda x: (x > 0).mean()),
+                n_obs=("ic", "count"),
+            )
+            .reset_index()
+        )
+        ic_summary["ic_ir"] = ic_summary["mean_ic"] / ic_summary["std_ic"].clip(
+            lower=1e-10
+        )
         ic_summary = ic_summary.sort_values("ic_ir", ascending=False)
     else:
         ic_summary = pd.DataFrame()
@@ -176,7 +219,9 @@ def composite_factor_scores(factor_scores, ic_summary):
         weights = ic_summary.set_index("factor")["ic_ir"].abs()
         weights = weights / weights.sum()
     else:
-        weights = pd.Series(1.0 / len(factor_scores.columns), index=factor_scores.columns)
+        weights = pd.Series(
+            1.0 / len(factor_scores.columns), index=factor_scores.columns
+        )
 
     common_factors = [f for f in factor_scores.columns if f in weights.index]
     if not common_factors:
@@ -267,11 +312,20 @@ def portfolio_comparison(ret_df):
 
 
 def generate_report(
-    all_data, missing, close_df, ret_df,
-    factor_scores, latest_date, ic_summary, available_factors,
-    composite_scores, weights,
-    corr_matrix, cluster_map,
-    port_results, valid_tickers,
+    all_data,
+    missing,
+    close_df,
+    ret_df,
+    factor_scores,
+    latest_date,
+    ic_summary,
+    available_factors,
+    composite_scores,
+    weights,
+    corr_matrix,
+    cluster_map,
+    port_results,
+    valid_tickers,
 ) -> str:
     """Assemble the comprehensive research report."""
     today = date.today().strftime("%Y-%m-%d")
@@ -322,7 +376,7 @@ def generate_report(
         lines.append("|------|--------|---------|--------|-------|----------|-------|")
         for i, (_, row) in enumerate(ic_summary.head(10).iterrows()):
             lines.append(
-                f"| {i+1} | {row['factor']} | {row['mean_ic']:.4f} | {row['std_ic']:.4f} | "
+                f"| {i + 1} | {row['factor']} | {row['mean_ic']:.4f} | {row['std_ic']:.4f} | "
                 f"{row['ic_ir']:.2f} | {row['hit_rate']:.1%} | {int(row['n_obs'])} |"
             )
         lines.append("")
@@ -334,7 +388,7 @@ def generate_report(
         rank = len(ic_summary) - 9
         for i, (_, row) in enumerate(bottom.iterrows()):
             lines.append(
-                f"| {rank+i} | {row['factor']} | {row['mean_ic']:.4f} | {row['std_ic']:.4f} | "
+                f"| {rank + i} | {row['factor']} | {row['mean_ic']:.4f} | {row['std_ic']:.4f} | "
                 f"{row['ic_ir']:.2f} | {row['hit_rate']:.1%} | {int(row['n_obs'])} |"
             )
         lines.append("")
@@ -422,9 +476,9 @@ def generate_report(
     for i, (ticker, score) in enumerate(composite_scores.head(5).items()):
         if ticker in factor_scores.index:
             top_factor = factor_scores.loc[ticker].abs().idxmax()
-            lines.append(f"| {i+1} | {ticker} | {score:.4f} | {top_factor} |")
+            lines.append(f"| {i + 1} | {ticker} | {score:.4f} | {top_factor} |")
         else:
-            lines.append(f"| {i+1} | {ticker} | {score:.4f} | N/A |")
+            lines.append(f"| {i + 1} | {ticker} | {score:.4f} | N/A |")
     lines.append("")
 
     # Full rankings
@@ -435,7 +489,7 @@ def generate_report(
         "|------|--------|-------|",
     ]
     for i, (ticker, score) in enumerate(composite_scores.items()):
-        lines.append(f"| {i+1} | {ticker} | {score:.4f} |")
+        lines.append(f"| {i + 1} | {ticker} | {score:.4f} |")
     lines.append("")
 
     # ── Risk Metrics per Ticker ──
@@ -456,13 +510,24 @@ def generate_report(
         cum = (1 + r).cumprod()
         maxdd = float((cum / cum.cummax() - 1).min())
         sharpe = float(r.mean() / max(r.std(), 1e-10) * np.sqrt(252))
-        mom21 = float(close_df[t].pct_change(21).iloc[-1]) if len(close_df[t]) > 21 else float("nan")
-        mom63 = float(close_df[t].pct_change(63).iloc[-1]) if len(close_df[t]) > 63 else float("nan")
+        mom21 = (
+            float(close_df[t].pct_change(21).iloc[-1])
+            if len(close_df[t]) > 21
+            else float("nan")
+        )
+        mom63 = (
+            float(close_df[t].pct_change(63).iloc[-1])
+            if len(close_df[t]) > 63
+            else float("nan")
+        )
         # Beta vs NVDA
         if len(nvda_ret) > 30:
             common_idx = r.index.intersection(nvda_ret.dropna().index)
             if len(common_idx) > 30:
-                beta = float(r.loc[common_idx].cov(nvda_ret.loc[common_idx]) / nvda_ret.loc[common_idx].var())
+                beta = float(
+                    r.loc[common_idx].cov(nvda_ret.loc[common_idx])
+                    / nvda_ret.loc[common_idx].var()
+                )
             else:
                 beta = float("nan")
         else:
@@ -495,7 +560,11 @@ def generate_report(
         gain = delta.clip(lower=0).rolling(14).mean()
         loss = (-delta.clip(upper=0)).rolling(14).mean()
         rs = gain / loss.replace(0, np.nan)
-        rsi = 100 - (100 / (1 + rs.iloc[-1])) if not pd.isna(rs.iloc[-1]) else float("nan")
+        rsi = (
+            100 - (100 / (1 + rs.iloc[-1]))
+            if not pd.isna(rs.iloc[-1])
+            else float("nan")
+        )
         lines.append(
             f"| {t} | ${price:.2f} | {chg5:.1%} | {chg21:.1%} | {chg63:.1%} | {rsi:.0f} |"
         )
@@ -535,16 +604,26 @@ def main():
     logger.info("IC summary: %d factors", len(ic_summary))
 
     # Compute latest factor scores
-    factor_scores, latest_date = compute_factors_per_date_cross_section(combined, available_factors)
-    logger.info("Factor scores: %d tickers x %d factors", len(factor_scores), len(available_factors))
+    factor_scores, latest_date = compute_factors_per_date_cross_section(
+        combined, available_factors
+    )
+    logger.info(
+        "Factor scores: %d tickers x %d factors",
+        len(factor_scores),
+        len(available_factors),
+    )
 
     # Step 3+6: Composite scores
     composite_scores, weights = composite_factor_scores(factor_scores, ic_summary)
     logger.info("Composite scores: %d tickers", len(composite_scores))
 
     # Step 4: Correlation matrix
-    corr_matrix, cluster_map, linkage_matrix = build_correlation_matrix(close_df, ret_df)
-    logger.info("Correlation matrix: %d x %d", corr_matrix.shape[0], corr_matrix.shape[1])
+    corr_matrix, cluster_map, linkage_matrix = build_correlation_matrix(
+        close_df, ret_df
+    )
+    logger.info(
+        "Correlation matrix: %d x %d", corr_matrix.shape[0], corr_matrix.shape[1]
+    )
 
     # Step 5: Portfolio comparison
     port_results, valid_tickers = portfolio_comparison(ret_df)
@@ -552,11 +631,20 @@ def main():
 
     # Generate report
     report = generate_report(
-        all_data, missing, close_df, ret_df,
-        factor_scores, latest_date, ic_summary, available_factors,
-        composite_scores, weights,
-        corr_matrix, cluster_map,
-        port_results, valid_tickers,
+        all_data,
+        missing,
+        close_df,
+        ret_df,
+        factor_scores,
+        latest_date,
+        ic_summary,
+        available_factors,
+        composite_scores,
+        weights,
+        corr_matrix,
+        cluster_map,
+        port_results,
+        valid_tickers,
     )
 
     # Save
@@ -573,9 +661,13 @@ def main():
     print(f"Missing: {missing if missing else 'None'}")
     print(f"Factors analyzed: {len(available_factors)}")
     if not ic_summary.empty:
-        print(f"Top IC factor: {ic_summary.iloc[0]['factor']} (IC IR={ic_summary.iloc[0]['ic_ir']:.2f})")
+        print(
+            f"Top IC factor: {ic_summary.iloc[0]['factor']} (IC IR={ic_summary.iloc[0]['ic_ir']:.2f})"
+        )
     if not composite_scores.empty:
-        print(f"Top pick: {composite_scores.index[0]} (score={composite_scores.iloc[0]:.4f})")
+        print(
+            f"Top pick: {composite_scores.index[0]} (score={composite_scores.iloc[0]:.4f})"
+        )
     print(f"Report: {OUTPUT}")
     print("=" * 60)
 

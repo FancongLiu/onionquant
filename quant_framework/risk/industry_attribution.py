@@ -15,6 +15,7 @@ from typing import Dict, Optional, Tuple
 
 # ── 1. Industry Exposure Check ─────────────────────────────
 
+
 def check_industry_exposure(
     portfolio_weights: pd.Series,
     industry_map: Optional[Dict[str, str]] = None,
@@ -41,11 +42,18 @@ def check_industry_exposure(
 
     if industry_map is None:
         # Create synthetic industry map from ticker names
-        industry_map = {t: f"Ind_{i // max(len(tickers) // 4, 1)}" for i, t in enumerate(tickers)}
+        industry_map = {
+            t: f"Ind_{i // max(len(tickers) // 4, 1)}" for i, t in enumerate(tickers)
+        }
 
     mapped = {t: industry_map.get(t, "Unknown") for t in tickers}
-    pw_mapped = pd.DataFrame({"ticker": tickers, "weight": pw.values,
-                               "industry": [mapped[t] for t in tickers]})
+    pw_mapped = pd.DataFrame(
+        {
+            "ticker": tickers,
+            "weight": pw.values,
+            "industry": [mapped[t] for t in tickers],
+        }
+    )
 
     # Portfolio industry weights
     ind_w = pw_mapped.groupby("industry")["weight"].sum().sort_values(ascending=False)
@@ -53,11 +61,13 @@ def check_industry_exposure(
     # Benchmark industry weights
     if benchmark_weights is not None:
         bw = benchmark_weights.dropna()
-        bw_mapped = pd.DataFrame({
-            "ticker": bw.index.tolist(),
-            "weight": bw.values,
-            "industry": [industry_map.get(t, "Unknown") for t in bw.index],
-        })
+        bw_mapped = pd.DataFrame(
+            {
+                "ticker": bw.index.tolist(),
+                "weight": bw.values,
+                "industry": [industry_map.get(t, "Unknown") for t in bw.index],
+            }
+        )
         bm_w = bw_mapped.groupby("industry")["weight"].sum()
     else:
         # Equal weight across industries
@@ -65,13 +75,14 @@ def check_industry_exposure(
         bm_w = pd.Series(1.0 / n_industries, index=ind_w.index)
 
     # Active weight
-    aligned = pd.concat([ind_w.rename("portfolio"), bm_w.rename("benchmark")],
-                        axis=1).fillna(0)
+    aligned = pd.concat(
+        [ind_w.rename("portfolio"), bm_w.rename("benchmark")], axis=1
+    ).fillna(0)
     aligned["active"] = aligned["portfolio"] - aligned["benchmark"]
     aligned = aligned.sort_values("active", key=abs, ascending=False)
 
     # Concentration metrics
-    hhi = float((ind_w ** 2).sum())  # Herfindahl-Hirschman Index
+    hhi = float((ind_w**2).sum())  # Herfindahl-Hirschman Index
     top3 = float(ind_w.head(3).sum())
     n_industries = len(ind_w)
     max_overweight = aligned["active"].max() if len(aligned) > 0 else 0
@@ -82,15 +93,20 @@ def check_industry_exposure(
         "hhi": round(hhi, 6),
         "top3_concentration": round(top3, 4),
         "n_industries": n_industries,
-        "max_overweight_industry": aligned["active"].idxmax() if max_overweight > 0 else None,
+        "max_overweight_industry": aligned["active"].idxmax()
+        if max_overweight > 0
+        else None,
         "max_overweight": round(float(max_overweight), 4),
-        "max_underweight_industry": aligned["active"].idxmin() if max_underweight < 0 else None,
+        "max_underweight_industry": aligned["active"].idxmin()
+        if max_underweight < 0
+        else None,
         "max_underweight": round(float(max_underweight), 4),
         "diversification_ratio": round(float(1.0 / (hhi if hhi > 0 else 1)), 2),
     }
 
 
 # ── 2. Barra Risk Attribution ─────────────────────────────
+
 
 def barra_risk_attribution(
     asset_returns: pd.DataFrame,
@@ -172,7 +188,7 @@ def barra_risk_attribution(
     residual_var = total_var - (factor_var + specific_var)
 
     # Factor-level contribution
-    factor_risk_pct = factor_vol ** 2 / max(total_var, 1e-10)
+    factor_risk_pct = factor_vol**2 / max(total_var, 1e-10)
 
     return {
         "total_risk": round(total_vol * np.sqrt(252), 6),
@@ -184,9 +200,11 @@ def barra_risk_attribution(
         "residual_var": round(float(residual_var), 10),
         "systematic_ratio": round(float(factor_risk_pct), 4),
         "factor_exposure_matrix": pd.DataFrame(
-            B, index=common_tickers, columns=factor_names),
+            B, index=common_tickers, columns=factor_names
+        ),
         "factor_covariance": pd.DataFrame(
-            sigma_f, index=factor_names, columns=factor_names),
+            sigma_f, index=factor_names, columns=factor_names
+        ),
         "specific_variances": pd.Series(specific_vars, index=common_tickers),
         "n_assets": N,
         "n_factors": K,
@@ -195,6 +213,7 @@ def barra_risk_attribution(
 
 
 # ── 3. Risk Budget Decomposition ──────────────────────────
+
 
 def risk_budget_decomposition(
     weights: pd.Series,
@@ -225,19 +244,22 @@ def risk_budget_decomposition(
     # Implied risk √CRC_i² helps check diversification
     names = weights.index.tolist()
 
-    result = pd.DataFrame({
-        "weight": w,
-        "marginal_risk": mrc,
-        "component_risk": crc,
-        "pct_risk": pct_contrib,
-    }, index=names)
+    result = pd.DataFrame(
+        {
+            "weight": w,
+            "marginal_risk": mrc,
+            "component_risk": crc,
+            "pct_risk": pct_contrib,
+        },
+        index=names,
+    )
 
     result = result.sort_values("component_risk", ascending=False)
 
     # Concentration: effective number of risk sources
     pct = result["pct_risk"].values
     pct_clean = pct[pct > 0]
-    effective_n_risk = float(1.0 / (pct_clean ** 2).sum()) if len(pct_clean) > 0 else 0
+    effective_n_risk = float(1.0 / (pct_clean**2).sum()) if len(pct_clean) > 0 else 0
 
     return {
         "decomposition": result,
@@ -250,6 +272,7 @@ def risk_budget_decomposition(
 
 
 # ── 4. Unified Pipeline ───────────────────────────────────
+
 
 def analyze_risk_attribution(
     asset_returns: pd.DataFrame,
@@ -267,11 +290,13 @@ def analyze_risk_attribution(
 
     # Industry exposure
     result["industry_check"] = check_industry_exposure(
-        weights, industry_map, benchmark_weights)
+        weights, industry_map, benchmark_weights
+    )
 
     # Barra risk attribution
     result["barra"] = barra_risk_attribution(
-        asset_returns, factor_returns, weights, covariance)
+        asset_returns, factor_returns, weights, covariance
+    )
 
     # Risk budget
     cov = covariance
@@ -281,7 +306,8 @@ def analyze_risk_attribution(
 
     if cov is not None:
         result["risk_budget"] = risk_budget_decomposition(
-            weights.loc[weights.index.intersection(cov.columns)], cov)
+            weights.loc[weights.index.intersection(cov.columns)], cov
+        )
     else:
         result["risk_budget"] = {"error": "No covariance available"}
 
@@ -289,6 +315,7 @@ def analyze_risk_attribution(
 
 
 # ── Markdown Report ───────────────────────────────────────
+
 
 def report_markdown(attribution: Dict) -> str:
     """Generate markdown risk attribution report."""
@@ -371,8 +398,10 @@ def report_markdown(attribution: Dict) -> str:
 
 # ── Demo ────────────────────────────────────────────────────
 
-def _make_demo_data(n: int = 252, n_assets: int = 10, n_factors: int = 4, seed: int = 42
-                    ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, Dict[str, str]]:
+
+def _make_demo_data(
+    n: int = 252, n_assets: int = 10, n_factors: int = 4, seed: int = 42
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, Dict[str, str]]:
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2024-01-01", periods=n, freq="B")
     tickers = [f"STK{i}" for i in range(n_assets)]
@@ -380,9 +409,9 @@ def _make_demo_data(n: int = 252, n_assets: int = 10, n_factors: int = 4, seed: 
     # Factor returns
     factor_names = ["MKT", "SMB", "HML", "MOM"]
     factor_betas = np.array([1.0, 0.3, -0.2, 0.15])
-    factor_ret = pd.DataFrame({
-        fn: rng.normal(0.0005, 0.015, n) for fn in factor_names
-    }, index=dates)
+    factor_ret = pd.DataFrame(
+        {fn: rng.normal(0.0005, 0.015, n) for fn in factor_names}, index=dates
+    )
 
     # Asset returns: factor exposure + noise
     asset_data = {}
@@ -398,8 +427,18 @@ def _make_demo_data(n: int = 252, n_assets: int = 10, n_factors: int = 4, seed: 
     weights = pd.Series(1.0 / n_assets, index=tickers)
 
     # Industry map
-    sectors = ["Tech", "Tech", "Finance", "Finance", "Health",
-               "Health", "Energy", "Energy", "Consumer", "Consumer"]
+    sectors = [
+        "Tech",
+        "Tech",
+        "Finance",
+        "Finance",
+        "Health",
+        "Health",
+        "Energy",
+        "Energy",
+        "Consumer",
+        "Consumer",
+    ]
     ind_map = dict(zip(tickers, sectors))
 
     return rets, factor_ret, weights, ind_map
@@ -408,8 +447,7 @@ def _make_demo_data(n: int = 252, n_assets: int = 10, n_factors: int = 4, seed: 
 def main():
     rets, factor_ret, weights, ind_map = _make_demo_data(252, 10, 4, seed=7)
 
-    result = analyze_risk_attribution(
-        rets, factor_ret, weights, industry_map=ind_map)
+    result = analyze_risk_attribution(rets, factor_ret, weights, industry_map=ind_map)
 
     print(report_markdown(result))
 
@@ -417,9 +455,13 @@ def main():
     ba = result["barra"]
     rb = result["risk_budget"]
     print("\nKey Insights:")
-    print(f"  Systematic / Specific: {ba['systematic_ratio']:.2%} / {1 - ba['systematic_ratio']:.2%}")
+    print(
+        f"  Systematic / Specific: {ba['systematic_ratio']:.2%} / {1 - ba['systematic_ratio']:.2%}"
+    )
     if "error" not in rb:
-        print(f"  Top Risk Source: {rb['top_risk_contributor']} ({rb['top_risk_pct']:.1f}%)")
+        print(
+            f"  Top Risk Source: {rb['top_risk_contributor']} ({rb['top_risk_pct']:.1f}%)"
+        )
         print(f"  Effective N (risk): {rb['effective_n_risk_sources']:.1f}")
 
 

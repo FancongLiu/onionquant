@@ -6,6 +6,7 @@ inbox_scanner.py — 原子化收件箱扫描器
 cron 时间线已保证不重叠，无需锁机制。
 流程: 扫描 → 原子移动 → 读取 → 交给 Claude CLI 处理
 """
+
 import json
 import sys
 from datetime import datetime, timedelta
@@ -58,11 +59,13 @@ def scan_inbox():
         dest = PROCESSED_DIR / f.name
         f.rename(dest)
 
-        messages.append({
-            "name": f.name,
-            "path": str(dest),
-            "preview": dest.read_text(encoding="utf-8")[:200],
-        })
+        messages.append(
+            {
+                "name": f.name,
+                "path": str(dest),
+                "preview": dest.read_text(encoding="utf-8")[:200],
+            }
+        )
 
     return messages
 

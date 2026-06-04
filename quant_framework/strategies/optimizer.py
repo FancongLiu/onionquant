@@ -17,6 +17,7 @@ try:
     from skopt import gp_minimize
     from skopt.space import Real, Integer, Categorical
     from skopt.utils import use_named_args
+
     HAS_SKOPT = True
 except ImportError:
     HAS_SKOPT = False
@@ -50,8 +51,9 @@ def _params_to_dict(params: List[ParamSpec], values: List[Any]) -> Dict[str, Any
     return {p.name: v for p, v in zip(params, values)}
 
 
-def walk_forward_splits(dates: pd.DatetimeIndex, n_splits: int = 5,
-                        train_frac: float = 0.6) -> List[Tuple[pd.DatetimeIndex, pd.DatetimeIndex]]:
+def walk_forward_splits(
+    dates: pd.DatetimeIndex, n_splits: int = 5, train_frac: float = 0.6
+) -> List[Tuple[pd.DatetimeIndex, pd.DatetimeIndex]]:
     """Generate walk-forward train/test splits (expanding window)."""
     n = len(dates)
     test_size = int(n * (1 - train_frac) / n_splits)
@@ -60,7 +62,7 @@ def walk_forward_splits(dates: pd.DatetimeIndex, n_splits: int = 5,
         split_idx = n - test_size * (n_splits - i)
         test_start = min(split_idx, n - test_size)
         train_dates = dates[:test_start]
-        test_dates = dates[test_start:test_start + test_size]
+        test_dates = dates[test_start : test_start + test_size]
         if len(test_dates) > 0:
             splits.append((train_dates, test_dates))
     return splits
@@ -104,15 +106,23 @@ def optimize(
         score = objective_fn(kwargs)
         trace.append((dict(kwargs), score))
         if verbose and len(trace) % 10 == 0:
-            best = max(trace, key=lambda x: x[1]) if maximize else min(trace, key=lambda x: x[1])
+            best = (
+                max(trace, key=lambda x: x[1])
+                if maximize
+                else min(trace, key=lambda x: x[1])
+            )
             logger.info("Bayesian opt: %d/%d best=%.4f", len(trace), n_calls, best[1])
         return sign * score
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         result = gp_minimize(
-            _objective, space, n_calls=n_calls, n_random_starts=n_random_starts,
-            random_state=random_state, verbose=False,
+            _objective,
+            space,
+            n_calls=n_calls,
+            n_random_starts=n_random_starts,
+            random_state=random_state,
+            verbose=False,
         )
 
     best_score = -result.fun if maximize else result.fun
@@ -229,10 +239,22 @@ def optimize_walk_forward(
             return objective_fn(test_signals, test_data)
 
         if verbose:
-            logger.info("Walk-forward split %d/%d: train=%d test=%d", split_i + 1, len(splits), len(train_dates), len(test_dates))
+            logger.info(
+                "Walk-forward split %d/%d: train=%d test=%d",
+                split_i + 1,
+                len(splits),
+                len(train_dates),
+                len(test_dates),
+            )
 
-        result = optimize(_obj, params, n_calls=n_calls, maximize=maximize,
-                         random_state=random_state + split_i, verbose=verbose)
+        result = optimize(
+            _obj,
+            params,
+            n_calls=n_calls,
+            maximize=maximize,
+            random_state=random_state + split_i,
+            verbose=verbose,
+        )
         result["split"] = split_i
         result["test_dates"] = (test_dates[0], test_dates[-1])
         all_results.append(result)
@@ -268,12 +290,17 @@ def _make_demo_data(n: int = 504, seed: int = 42) -> pd.DataFrame:
     records = []
     for i, d in enumerate(dates):
         close = 100 + np.cumsum(rng.normal(0.05, 1.5, n))[i]
-        records.append({
-            "date": d, "ticker": "DEMO",
-            "open": close * 0.998, "high": close * 1.012,
-            "low": close * 0.988, "close": close,
-            "volume": float(rng.integers(1_000_000, 10_000_000)),
-        })
+        records.append(
+            {
+                "date": d,
+                "ticker": "DEMO",
+                "open": close * 0.998,
+                "high": close * 1.012,
+                "low": close * 0.988,
+                "close": close,
+                "volume": float(rng.integers(1_000_000, 10_000_000)),
+            }
+        )
     return pd.DataFrame(records)
 
 
@@ -281,19 +308,26 @@ def main():
     """Demo: optimize a simple momentum strategy."""
     from quant_framework.strategies.qlib_factor_engine import compute_all_factors
     from quant_framework.strategies.factor_combiner import (
-        equal_weighted_combine, generate_signals,
+        equal_weighted_combine,
+        generate_signals,
     )
 
     data = _make_demo_data(252, seed=7)
 
     def strategy_fn(df, params):
         factors = compute_all_factors(df)
-        factor_cols = [c for c in factors.columns if c not in
-                       {"date", "ticker", "open", "high", "low", "close", "volume"}]
+        factor_cols = [
+            c
+            for c in factors.columns
+            if c not in {"date", "ticker", "open", "high", "low", "close", "volume"}
+        ]
         combined = equal_weighted_combine(factors, factor_cols)
-        signals = generate_signals(combined, "combined_score",
-                                   top_k=params.get("top_k", 10),
-                                   method=params.get("method", "long_only"))
+        signals = generate_signals(
+            combined,
+            "combined_score",
+            top_k=params.get("top_k", 10),
+            method=params.get("method", "long_only"),
+        )
         return signals
 
     def objective_fn(signals, prices):
@@ -306,8 +340,13 @@ def main():
     ]
 
     result = optimize_walk_forward(
-        strategy_fn, objective_fn, data, params,
-        n_splits=3, n_calls=20, verbose=True,
+        strategy_fn,
+        objective_fn,
+        data,
+        params,
+        n_splits=3,
+        n_calls=20,
+        verbose=True,
     )
 
     print(f"\nBest params: {result['best_params']}")

@@ -40,10 +40,15 @@ def benchmark_single(
         latency = time.perf_counter() - t0
 
         if df is None or df.empty:
-            return SourceResult(source=source, latency_s=round(latency, 4),
-                               rows=0, expected_rows=expected,
-                               tickers_fetched=0, tickers_requested=1,
-                               error="No data returned")
+            return SourceResult(
+                source=source,
+                latency_s=round(latency, 4),
+                rows=0,
+                expected_rows=expected,
+                tickers_fetched=0,
+                tickers_requested=1,
+                error="No data returned",
+            )
 
         rows = len(df)
         dates = set(pd.to_datetime(df["date"]).dt.date)
@@ -60,30 +65,39 @@ def benchmark_single(
             outlier_pct = 0.0
 
         return SourceResult(
-            source=source, latency_s=round(latency, 4),
-            rows=rows, expected_rows=expected,
-            tickers_fetched=1, tickers_requested=1,
-            missing_dates=missing, duplicate_rows=dups,
-            null_pct=null_pct, price_outlier_pct=outlier_pct,
+            source=source,
+            latency_s=round(latency, 4),
+            rows=rows,
+            expected_rows=expected,
+            tickers_fetched=1,
+            tickers_requested=1,
+            missing_dates=missing,
+            duplicate_rows=dups,
+            null_pct=null_pct,
+            price_outlier_pct=outlier_pct,
         )
 
     except Exception as e:
         latency = time.perf_counter() - t0
-        return SourceResult(source=source, latency_s=round(latency, 4),
-                           rows=0, expected_rows=expected,
-                           tickers_fetched=0, tickers_requested=1,
-                           error=str(e)[:120])
+        return SourceResult(
+            source=source,
+            latency_s=round(latency, 4),
+            rows=0,
+            expected_rows=expected,
+            tickers_fetched=0,
+            tickers_requested=1,
+            error=str(e)[:120],
+        )
 
 
-def benchmark_multi(
-    tickers: List[str], start: str, end: str
-) -> pd.DataFrame:
+def benchmark_multi(tickers: List[str], start: str, end: str) -> pd.DataFrame:
     """Benchmark multiple tickers across available sources."""
     results = []
     sources = ["yfinance"]
 
     # Try alpha_vantage if key available
     import os
+
     if os.environ.get("ALPHA_VANTAGE_KEY"):
         sources.append("alpha_vantage")
 
@@ -94,26 +108,26 @@ def benchmark_multi(
 
     rows = []
     for r in results:
-        rows.append({
-            "ticker": ticker if "ticker" in dir() else "?",
-            "source": r.source,
-            "latency_s": r.latency_s,
-            "rows": r.rows,
-            "expected": r.expected_rows,
-            "completeness_pct": round(r.rows / max(r.expected_rows, 1) * 100, 1),
-            "missing_dates": r.missing_dates,
-            "duplicates": r.duplicate_rows,
-            "null_pct": r.null_pct,
-            "outlier_pct": r.price_outlier_pct,
-            "error": r.error or "",
-        })
+        rows.append(
+            {
+                "ticker": ticker if "ticker" in dir() else "?",
+                "source": r.source,
+                "latency_s": r.latency_s,
+                "rows": r.rows,
+                "expected": r.expected_rows,
+                "completeness_pct": round(r.rows / max(r.expected_rows, 1) * 100, 1),
+                "missing_dates": r.missing_dates,
+                "duplicates": r.duplicate_rows,
+                "null_pct": r.null_pct,
+                "outlier_pct": r.price_outlier_pct,
+                "error": r.error or "",
+            }
+        )
 
     return pd.DataFrame(rows)
 
 
-def benchmark_cross_source(
-    tickers: List[str], start: str, end: str
-) -> Dict:
+def benchmark_cross_source(tickers: List[str], start: str, end: str) -> Dict:
     """Cross-source accuracy comparison — compare prices from different sources.
 
     Returns per-ticker price difference statistics between sources.
@@ -127,6 +141,7 @@ def benchmark_cross_source(
     # Try alpha vantage
     av_data = None
     import os
+
     if os.environ.get("ALPHA_VANTAGE_KEY"):
         try:
             av_data = fetch_batch(tickers, start, end, source="alpha_vantage")
@@ -148,7 +163,12 @@ def benchmark_cross_source(
                     "n_common_dates": len(common),
                     "mean_diff": round(float(diff.mean()), 4),
                     "max_abs_diff": round(float(diff.abs().max()), 4),
-                    "correlation": round(float(yf_t.loc[common, "close"].corr(av_t.loc[common, "close"])), 6),
+                    "correlation": round(
+                        float(
+                            yf_t.loc[common, "close"].corr(av_t.loc[common, "close"])
+                        ),
+                        6,
+                    ),
                 }
 
     return {
@@ -225,20 +245,25 @@ def main():
     for src in sorted(df["source"].unique()):
         sub = df[df["source"] == src]
         errs = (sub["error"] != "").sum()
-        print(f"  {src}: latency={sub['latency_s'].mean():.2f}s, "
-              f"completeness={sub['completeness_pct'].mean():.0f}%, "
-              f"errors={errs}/{len(sub)}")
+        print(
+            f"  {src}: latency={sub['latency_s'].mean():.2f}s, "
+            f"completeness={sub['completeness_pct'].mean():.0f}%, "
+            f"errors={errs}/{len(sub)}"
+        )
 
     # Cross-source comparison
     comp = benchmark_cross_source(tickers, start, end)
     if "error" not in comp:
         print(f"\nCross-source comparison: {comp['n_tickers_compared']} tickers")
         for t, info in comp.get("per_ticker", {}).items():
-            print(f"  {t}: mean_diff={info['mean_diff']:.4f}, corr={info['correlation']:.6f}")
+            print(
+                f"  {t}: mean_diff={info['mean_diff']:.4f}, corr={info['correlation']:.6f}"
+            )
 
     # Save report
     report = summary_report(df)
     from pathlib import Path
+
     out = Path("company/reports/benchmark_report.md")
     out.write_text(report, encoding="utf-8")
     print(f"\nReport saved to {out}")

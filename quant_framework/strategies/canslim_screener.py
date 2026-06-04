@@ -53,12 +53,14 @@ def load_config(path: str) -> dict:
 # ──────────────────────────────────────────────
 # Level 1: Quantitative Screening
 # ──────────────────────────────────────────────
-def level1_quantitative(df: pd.DataFrame,
-                        min_eps_growth_q: float = 25.0,
-                        min_eps_growth_a: float = 25.0,
-                        min_rs: float = 80.0,
-                        min_volume: float = 1e7,
-                        require_inst_own_growth: bool = False) -> pd.DataFrame:
+def level1_quantitative(
+    df: pd.DataFrame,
+    min_eps_growth_q: float = 25.0,
+    min_eps_growth_a: float = 25.0,
+    min_rs: float = 80.0,
+    min_volume: float = 1e7,
+    require_inst_own_growth: bool = False,
+) -> pd.DataFrame:
     """Apply CAN SLIM Level 1 quantitative filters."""
     mask = pd.Series(True, index=df.index)
 
@@ -76,12 +78,14 @@ def level1_quantitative(df: pd.DataFrame,
 # ──────────────────────────────────────────────
 # Level 2: Quality + Growth
 # ──────────────────────────────────────────────
-def level2_quality_growth(df: pd.DataFrame,
-                          min_roe: float = 15.0,
-                          min_gross_margin: float = 40.0,
-                          min_rev_growth: float = 20.0,
-                          debt_to_equity_mode: str = "industry",
-                          max_debt_to_equity: float = 2.0) -> pd.DataFrame:
+def level2_quality_growth(
+    df: pd.DataFrame,
+    min_roe: float = 15.0,
+    min_gross_margin: float = 40.0,
+    min_rev_growth: float = 20.0,
+    debt_to_equity_mode: str = "industry",
+    max_debt_to_equity: float = 2.0,
+) -> pd.DataFrame:
     """Apply CAN SLIM Level 2 quality and growth filters."""
     mask = pd.Series(True, index=df.index)
 
@@ -90,7 +94,11 @@ def level2_quality_growth(df: pd.DataFrame,
     mask &= df.get("revenue_growth", 0) > min_rev_growth
 
     # Debt-to-equity filtering by mode
-    if debt_to_equity_mode == "industry" and "debt_to_equity" in df and "industry" in df:
+    if (
+        debt_to_equity_mode == "industry"
+        and "debt_to_equity" in df
+        and "industry" in df
+    ):
         ind_means = df.groupby("industry")["debt_to_equity"].transform("mean")
         mask &= df["debt_to_equity"] < ind_means
     elif debt_to_equity_mode == "median" and "debt_to_equity" in df:
@@ -111,11 +119,13 @@ def level2_quality_growth(df: pd.DataFrame,
 # ──────────────────────────────────────────────
 # Level 3: Momentum + Technical
 # ──────────────────────────────────────────────
-def level3_momentum_technical(df: pd.DataFrame,
-                              sp500_return: float = 0.0,
-                              max_dist_52w_high: float = 15.0,
-                              check_absolute_momentum: bool = True,
-                              check_relative_momentum: bool = True) -> pd.DataFrame:
+def level3_momentum_technical(
+    df: pd.DataFrame,
+    sp500_return: float = 0.0,
+    max_dist_52w_high: float = 15.0,
+    check_absolute_momentum: bool = True,
+    check_relative_momentum: bool = True,
+) -> pd.DataFrame:
     """Apply CAN SLIM Level 3 momentum and technical filters."""
     mask = pd.Series(True, index=df.index)
 
@@ -164,10 +174,12 @@ def compute_score(row: pd.Series, weights: Dict[str, float] = None) -> float:
     return score
 
 
-def run_screener(df: pd.DataFrame,
-                 sp500_return: float = 0.0,
-                 verbose: bool = True,
-                 config: dict = None) -> Tuple[pd.DataFrame, Dict[str, int]]:
+def run_screener(
+    df: pd.DataFrame,
+    sp500_return: float = 0.0,
+    verbose: bool = True,
+    config: dict = None,
+) -> Tuple[pd.DataFrame, Dict[str, int]]:
     """Run the full 3-level CAN SLIM screener with optional YAML config.
 
     Parameters
@@ -205,7 +217,9 @@ def run_screener(df: pd.DataFrame,
         l1 = level1_quantitative(df, **l1_cfg)
         counts["level1"] = len(l1)
         if verbose:
-            logger.info("Level 1: %d / %d passed quantitative screen", counts['level1'], total)
+            logger.info(
+                "Level 1: %d / %d passed quantitative screen", counts["level1"], total
+            )
     else:
         l1 = df.copy()
         counts["level1"] = total
@@ -218,7 +232,11 @@ def run_screener(df: pd.DataFrame,
         l2 = level2_quality_growth(l1, **l2_cfg)
         counts["level2"] = len(l2)
         if verbose:
-            logger.info("Level 2: %d / %d passed quality+growth screen", counts['level2'], counts['level1'])
+            logger.info(
+                "Level 2: %d / %d passed quality+growth screen",
+                counts["level2"],
+                counts["level1"],
+            )
     else:
         l2 = l1.copy()
         counts["level2"] = counts["level1"]
@@ -231,7 +249,11 @@ def run_screener(df: pd.DataFrame,
         l3 = level3_momentum_technical(l2, sp500_return=sp500_return, **l3_cfg)
         counts["level3"] = len(l3)
         if verbose:
-            logger.info("Level 3: %d / %d passed momentum+technical screen", counts['level3'], counts['level2'])
+            logger.info(
+                "Level 3: %d / %d passed momentum+technical screen",
+                counts["level3"],
+                counts["level2"],
+            )
     else:
         l3 = l2.copy()
         counts["level3"] = counts["level2"]
@@ -301,14 +323,27 @@ def _make_demo_data(n: int = 500) -> pd.DataFrame:
 # ──────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser(description="CAN SLIM 三级筛选器")
-    parser.add_argument("--input", type=str, default=None,
-                        help="输入 parquet 文件路径 (省略则使用合成数据演示)")
-    parser.add_argument("--output", type=str, default="screened.csv",
-                        help="输出 CSV 路径 (默认 screened.csv)")
-    parser.add_argument("--sp500-return", type=float, default=5.0,
-                        help="S&P500 近6月收益率 (%)")
-    parser.add_argument("--config", type=str, default=None,
-                        help="YAML 配置文件路径 (省略则使用硬编码默认值)")
+    parser.add_argument(
+        "--input",
+        type=str,
+        default=None,
+        help="输入 parquet 文件路径 (省略则使用合成数据演示)",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="screened.csv",
+        help="输出 CSV 路径 (默认 screened.csv)",
+    )
+    parser.add_argument(
+        "--sp500-return", type=float, default=5.0, help="S&P500 近6月收益率 (%)"
+    )
+    parser.add_argument(
+        "--config",
+        type=str,
+        default=None,
+        help="YAML 配置文件路径 (省略则使用硬编码默认值)",
+    )
     args = parser.parse_args()
 
     # Load config
@@ -324,17 +359,24 @@ def main():
     result, counts = run_screener(df, sp500_return=args.sp500_return, config=cfg)
 
     # Save
-    out_cols = ["ticker", "industry", "canslim_score",
-                "eps_growth_quarterly", "rs_rating", "roe",
-                "return_12m", "return_6m"]
+    out_cols = [
+        "ticker",
+        "industry",
+        "canslim_score",
+        "eps_growth_quarterly",
+        "rs_rating",
+        "roe",
+        "return_12m",
+        "return_6m",
+    ]
     out_cols = [c for c in out_cols if c in result.columns]
     result[out_cols].to_csv(args.output, index=False)
     print(f"\nSaved {len(result)} screened stocks to {args.output}")
 
     # Summary
-    print(f"\n{'='*40}")
+    print(f"\n{'=' * 40}")
     print("CAN SLIM Screening Summary")
-    print(f"{'='*40}")
+    print(f"{'=' * 40}")
     for k, v in counts.items():
         print(f"  {k}: {v}")
 

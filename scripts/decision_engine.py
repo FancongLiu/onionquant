@@ -5,15 +5,15 @@ decision_engine.py — OnionQuant 交易决策引擎
 基于多因子评分 + 催化事件加权 + 风险预算 → 生成交易建议。
 参照: FinRL-X weight-centric 架构 + Risk-Threshold-Engine 因子模型
 """
+
 import io
 import json
-import os
 import sys
 from datetime import datetime
 from pathlib import Path
 
-if sys.platform == 'win32':
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+if sys.platform == "win32":
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -89,7 +89,7 @@ def score_ticker(ticker_data: dict) -> dict:
         details["value"] = f"高溢价: NAV+{nav_premium}%"
     else:
         scores["value"] = 0
-        details["value"] = f"估值中性"
+        details["value"] = "估值中性"
 
     # 3. Catalyst
     cat_count = len(ticker_data.get("catalysts", []))
@@ -146,11 +146,15 @@ def score_ticker(ticker_data: dict) -> dict:
         macro_score -= 3
 
     scores["macro_risk"] = macro_score
-    details["macro_risk"] = f"VIX={vix} 10Y={us10y}% 油=${oil} 战争={'是' if war else '否'}"
+    details["macro_risk"] = (
+        f"VIX={vix} 10Y={us10y}% 油=${oil} 战争={'是' if war else '否'}"
+    )
 
     # Composite
     weighted = sum(scores[k] * FACTORS[k]["weight"] for k in FACTORS)
-    max_possible = sum(max(3, FACTORS[k].get("_max", 3)) * FACTORS[k]["weight"] for k in FACTORS)
+    max_possible = sum(
+        max(3, FACTORS[k].get("_max", 3)) * FACTORS[k]["weight"] for k in FACTORS
+    )
 
     return {
         "ticker": ticker_data.get("ticker", "???"),
@@ -200,6 +204,7 @@ def generate_decision(results: list) -> dict:
 
 
 # ─── 预置标的评分数据 ──────────────────────────────
+
 
 def get_current_scores():
     """基于当前已知数据预填充标的评分"""
@@ -279,8 +284,16 @@ def main():
     print("|------|------|--------|------|------|------|------|------|------|")
     for i, d in enumerate(decision["decisions"]):
         s = d["scores"]
-        action_icon = {"STRONG_BUY": "🟢", "BUY": "🟢", "HOLD": "🟡", "REDUCE": "🟠", "SELL": "🔴"}[d["action"]]
-        print(f"| {i+1} | {d['ticker']} | {d['composite']:.2f} | {s['momentum']} | {s['value']} | {s['catalyst']} | {s['sentiment']} | {s['macro_risk']} | {action_icon} {d['action']} |")
+        action_icon = {
+            "STRONG_BUY": "🟢",
+            "BUY": "🟢",
+            "HOLD": "🟡",
+            "REDUCE": "🟠",
+            "SELL": "🔴",
+        }[d["action"]]
+        print(
+            f"| {i + 1} | {d['ticker']} | {d['composite']:.2f} | {s['momentum']} | {s['value']} | {s['catalyst']} | {s['sentiment']} | {s['macro_risk']} | {action_icon} {d['action']} |"
+        )
 
     print()
     print("## 建议仓位分配")
@@ -289,7 +302,9 @@ def main():
     for d in decision["decisions"]:
         if d["composite"] > 0:
             alloc = d["composite"] / total_weight * 100 if total_weight > 0 else 0
-            print(f"- **{d['ticker']}** ({d['action']}): {alloc:.0f}% — {d['details']['catalyst']}")
+            print(
+                f"- **{d['ticker']}** ({d['action']}): {alloc:.0f}% — {d['details']['catalyst']}"
+            )
     print()
     print("## ⚠️ 当前宏观压制")
     print("- 美伊战争风险 (油价$110)")

@@ -4,6 +4,7 @@
 替代 wechat_bot.py (aiohttp在Windows上不稳定)。
 由 cron 每 5 分钟调用一次。
 """
+
 import json
 import os
 import sys
@@ -18,7 +19,9 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
 
 BEIJING_TZ = timezone(timedelta(hours=8))
-CTX_STATE = PROJECT_ROOT / "company" / "departments" / "execution" / "context_state.json"
+CTX_STATE = (
+    PROJECT_ROOT / "company" / "departments" / "execution" / "context_state.json"
+)
 
 
 def _ts() -> str:
@@ -33,6 +36,7 @@ def _dashboard_url() -> str:
         return data.get("key_context", {}).get("tunnel_url", "")
     except Exception:
         return ""
+
 
 CORP_ID = os.getenv("WECHAT_CORP_ID", "")
 AGENT_ID = int(os.getenv("WECHAT_AGENT_ID", "0"))
@@ -61,20 +65,32 @@ def get_token():
 
 def send_text(user_id: str, content: str):
     token = get_token()
-    body = {"touser": user_id, "msgtype": "text", "agentid": AGENT_ID, "text": {"content": content}}
+    body = {
+        "touser": user_id,
+        "msgtype": "text",
+        "agentid": AGENT_ID,
+        "text": {"content": content},
+    }
     r = requests.post(
         f"https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={token}",
-        json=body, timeout=10,
+        json=body,
+        timeout=10,
     )
     return r.json()
 
 
 def send_markdown(user_id: str, content: str):
     token = get_token()
-    body = {"touser": user_id, "msgtype": "markdown", "agentid": AGENT_ID, "markdown": {"content": content}}
+    body = {
+        "touser": user_id,
+        "msgtype": "markdown",
+        "agentid": AGENT_ID,
+        "markdown": {"content": content},
+    }
     r = requests.post(
         f"https://qyapi.weixin.qq.com/cgi-bin/message/send?access_token={token}",
-        json=body, timeout=10,
+        json=body,
+        timeout=10,
     )
     return r.json()
 
@@ -92,6 +108,7 @@ def save_seen(seen):
 # Only push replies, alerts, and status to WeChat — NOT research briefs/sentinels/reports.
 # White papers and market analysis stay on the dashboard, not pushed to mobile.
 WECHAT_WHITELIST = ("RESP_", "ALERT_")
+
 
 def push_outbox():
     LOCK_DIR.mkdir(parents=True, exist_ok=True)

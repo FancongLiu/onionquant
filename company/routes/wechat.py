@@ -5,14 +5,13 @@ POST /api/wechat/callback — message receiving (encrypted XML → inbox)
 
 Encryption: AES-256-CBC per 企业微信 technical docs.
 """
+
 import base64
 import hashlib
 import json
 import logging
 import os
-import re
 import struct
-import time
 from datetime import datetime
 from pathlib import Path
 from xml.etree import ElementTree as ET
@@ -20,7 +19,7 @@ from xml.etree import ElementTree as ET
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import unpad
 from fastapi import APIRouter, Query, Request, Response
-from fastapi.responses import PlainTextResponse, JSONResponse
+from fastapi.responses import PlainTextResponse
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +33,9 @@ WECOM_CALLBACK_TOKEN = os.getenv("WECHAT_CALLBACK_TOKEN", "")
 WECOM_CALLBACK_AES_KEY = os.getenv("WECHAT_CALLBACK_AES_KEY", "")
 
 
-def _verify_signature(token: str, timestamp: str, nonce: str, encrypt: str, sig: str) -> bool:
+def _verify_signature(
+    token: str, timestamp: str, nonce: str, encrypt: str, sig: str
+) -> bool:
     """SHA1(sort([token, ts, nonce, encrypt])) == msg_signature."""
     parts = sorted([token, timestamp, nonce, encrypt])
     raw = "".join(parts)
@@ -65,7 +66,9 @@ def _decrypt_msg(encrypt: str) -> bytes:
     receive_id = raw[20 + msg_len :].decode("utf-8")
 
     if receive_id != WECOM_CORP_ID:
-        logger.warning(f"WeChat callback: receiveid mismatch, expected {WECOM_CORP_ID}, got {receive_id}")
+        logger.warning(
+            f"WeChat callback: receiveid mismatch, expected {WECOM_CORP_ID}, got {receive_id}"
+        )
 
     return msg
 
@@ -103,8 +106,10 @@ async def wechat_verify(
         logger.error("WeChat callback not configured (missing TOKEN/AES_KEY)")
         return Response("not configured", status_code=500)
 
-    if not _verify_signature(WECOM_CALLBACK_TOKEN, timestamp, nonce, echostr, msg_signature):
-        logger.warning(f"WeChat callback: signature verification failed")
+    if not _verify_signature(
+        WECOM_CALLBACK_TOKEN, timestamp, nonce, echostr, msg_signature
+    ):
+        logger.warning("WeChat callback: signature verification failed")
         return Response("signature failed", status_code=403)
 
     try:
@@ -138,7 +143,9 @@ async def wechat_receive(
 
     encrypt = encrypt_elem.text
 
-    if not _verify_signature(WECOM_CALLBACK_TOKEN, timestamp, nonce, encrypt, msg_signature):
+    if not _verify_signature(
+        WECOM_CALLBACK_TOKEN, timestamp, nonce, encrypt, msg_signature
+    ):
         return Response("signature failed", status_code=403)
 
     try:
@@ -163,8 +170,10 @@ async def wechat_receive(
         msg_type = msg.get("msg_type", "?")
         event = msg.get("event", "")
 
-        md_content = f"# 董事长微信消息\n\n"
-        md_content += f"**时间**：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} 北京时间\n"
+        md_content = "# 董事长微信消息\n\n"
+        md_content += (
+            f"**时间**：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')} 北京时间\n"
+        )
         md_content += f"**来源**：企业微信 (from={from_user})\n"
         md_content += f"**类型**：{msg_type}"
         if event:
@@ -184,6 +193,7 @@ async def wechat_receive(
 
 
 # ─── Alias routes for /wecom/callback (chairman-configured URL) ───
+
 
 @router.get("/wecom/callback")
 async def wecom_verify(

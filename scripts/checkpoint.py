@@ -12,11 +12,16 @@ Usage:
 
 import argparse
 import json
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-STATE_FILE = Path(__file__).resolve().parent.parent / "company" / "departments" / "execution" / "context_state.json"
+STATE_FILE = (
+    Path(__file__).resolve().parent.parent
+    / "company"
+    / "departments"
+    / "execution"
+    / "context_state.json"
+)
 
 
 def load():
@@ -40,7 +45,9 @@ def _default_state():
 def save(state):
     state["last_updated"] = datetime.now(timezone.utc).isoformat()
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    STATE_FILE.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
+    STATE_FILE.write_text(
+        json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
     print(f"[checkpoint] Saved. {len(state['pending_actions'])} pending actions.")
 
 
@@ -96,7 +103,9 @@ def main():
     sub.add_parser("show", help="Print current state")
 
     p_save = sub.add_parser("save", help="Save context snapshot")
-    p_save.add_argument("--context", nargs="*", help="key=value pairs to update key_context")
+    p_save.add_argument(
+        "--context", nargs="*", help="key=value pairs to update key_context"
+    )
     p_save.add_argument("--action", help="Action to add to pending_actions")
 
     sub.add_parser("restore", help="Restore and print pending actions")

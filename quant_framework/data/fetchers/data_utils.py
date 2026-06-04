@@ -9,29 +9,56 @@ from pandera.errors import SchemaErrors
 
 logger = logging.getLogger(__name__)
 
-_OHLCV_SCHEMA = pa.DataFrameSchema(columns={
-    "open": pa.Column(float, pa.Check.ge(0), nullable=True),
-    "high": pa.Column(float, pa.Check.ge(0), nullable=True),
-    "low": pa.Column(float, pa.Check.ge(0), nullable=True),
-    "close": pa.Column(float, pa.Check.ge(0), nullable=True),
-    "volume": pa.Column(float, pa.Check.ge(0), nullable=True),
-}, checks=[
-    pa.Check(lambda d: d["high"] >= d[["open", "close"]].max(axis=1),
-             name="high_ge_open_close", ignore_na=True),
-    pa.Check(lambda d: d["low"] <= d[["open", "close"]].min(axis=1),
-             name="low_le_open_close", ignore_na=True),
-])
+_OHLCV_SCHEMA = pa.DataFrameSchema(
+    columns={
+        "open": pa.Column(float, pa.Check.ge(0), nullable=True),
+        "high": pa.Column(float, pa.Check.ge(0), nullable=True),
+        "low": pa.Column(float, pa.Check.ge(0), nullable=True),
+        "close": pa.Column(float, pa.Check.ge(0), nullable=True),
+        "volume": pa.Column(float, pa.Check.ge(0), nullable=True),
+    },
+    checks=[
+        pa.Check(
+            lambda d: d["high"] >= d[["open", "close"]].max(axis=1),
+            name="high_ge_open_close",
+            ignore_na=True,
+        ),
+        pa.Check(
+            lambda d: d["low"] <= d[["open", "close"]].min(axis=1),
+            name="low_le_open_close",
+            ignore_na=True,
+        ),
+    ],
+)
 # Standard OHLCV column mapping (source -> target)
 OHLCV_COLUMN_MAP: Dict[str, str] = {
-    "open": "open", "high": "high", "low": "low", "close": "close",
-    "adj close": "close", "adjusted close": "close", "volume": "volume",
+    "open": "open",
+    "high": "high",
+    "low": "low",
+    "close": "close",
+    "adj close": "close",
+    "adjusted close": "close",
+    "volume": "volume",
 }
 # Chinese name -> ticker mapping
 CN_TICKER_MAP: Dict[str, str] = {
-    "苹果": "AAPL", "微软": "MSFT", "谷歌": "GOOGL", "亚马逊": "AMZN",
-    "特斯拉": "TSLA", "英伟达": "NVDA", "脸书": "META", "元界": "META",
-    "阿里巴巴": "BABA", "腾讯": "TCEHY", "百度": "BIDU", "京东": "JD",
-    "拼多多": "PDD", "台积电": "TSM", "伯克希尔": "BRK.B", "摩根大通": "JPM", "维萨": "V",
+    "苹果": "AAPL",
+    "微软": "MSFT",
+    "谷歌": "GOOGL",
+    "亚马逊": "AMZN",
+    "特斯拉": "TSLA",
+    "英伟达": "NVDA",
+    "脸书": "META",
+    "元界": "META",
+    "阿里巴巴": "BABA",
+    "腾讯": "TCEHY",
+    "百度": "BIDU",
+    "京东": "JD",
+    "拼多多": "PDD",
+    "台积电": "TSM",
+    "伯克希尔": "BRK.B",
+    "摩根大通": "JPM",
+    "维萨": "V",
 }
 
 
@@ -50,7 +77,12 @@ def standardize_ohlc(df: pd.DataFrame) -> pd.DataFrame:
 
 def check_data_quality(df: pd.DataFrame) -> Dict[str, object]:
     """Quality checks with Pandera schema validation (manual fallback)."""
-    report: Dict[str, object] = {"rows": len(df), "columns": list(df.columns), "missing_summary": {}, "outliers": {}}
+    report: Dict[str, object] = {
+        "rows": len(df),
+        "columns": list(df.columns),
+        "missing_summary": {},
+        "outliers": {},
+    }
     report["missing_summary"] = df.isnull().sum()[lambda s: s > 0].to_dict()
     for col in df.select_dtypes(include=["number"]).columns:
         mean, std = df[col].mean(), df[col].std()
@@ -59,7 +91,7 @@ def check_data_quality(df: pd.DataFrame) -> Dict[str, object]:
             if not oo.empty:
                 report["outliers"][col] = {
                     "count": len(oo),
-                    "threshold": f"{mean - 5*std:.2f} ~ {mean + 5*std:.2f}",
+                    "threshold": f"{mean - 5 * std:.2f} ~ {mean + 5 * std:.2f}",
                 }
     ohlc_cols = {"open", "high", "low", "close", "volume"} & set(df.columns)
     if ohlc_cols:

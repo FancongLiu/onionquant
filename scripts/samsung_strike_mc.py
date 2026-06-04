@@ -6,12 +6,12 @@ Output: MARKDOWN report to company/chairman_outbox/MODEL_20260518_Samsung_strike
 
 No hand-rolled analysis — delegates computation to numpy/scipy.
 """
-import io, sys, json
-from datetime import datetime, timedelta
+
+import json
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
-from scipy import stats
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 OUTBOX = PROJECT_ROOT / "company" / "chairman_outbox"
@@ -29,9 +29,9 @@ SCENARIOS = {
         "label": "Scenario A — Settled/Averted (Base Case)",
         "prob": 0.35,
         "strike_days": 0,
-        "dram_disruption_pct": 0.0,   # % of global DRAM supply lost
+        "dram_disruption_pct": 0.0,  # % of global DRAM supply lost
         "nand_disruption_pct": 0.0,
-        "price_impact_dram": (-0.05, 0.01),   # strike premium unwinds → -5% to flat
+        "price_impact_dram": (-0.05, 0.01),  # strike premium unwinds → -5% to flat
         "price_impact_nand": (-0.04, 0.01),
         "description": "Mediation succeeds, strike averted before May 21. Pre-strike panic buying unwinds.",
     },
@@ -41,7 +41,10 @@ SCENARIOS = {
         "strike_days": (3, 5),
         "dram_disruption_pct": (1.0, 2.0),
         "nand_disruption_pct": (0.5, 1.5),
-        "price_impact_dram": (0.03, 0.08),   # 3-8% DRAM price impact (elasticity 2.5x on 1-2% loss + panic)
+        "price_impact_dram": (
+            0.03,
+            0.08,
+        ),  # 3-8% DRAM price impact (elasticity 2.5x on 1-2% loss + panic)
         "price_impact_nand": (0.02, 0.06),
         "description": "Court injunction limits disruption. Key fabs maintain ops. ~6-8 week effective window incl. recalibration.",
     },
@@ -51,7 +54,10 @@ SCENARIOS = {
         "strike_days": (14, 18),
         "dram_disruption_pct": (3.0, 4.5),
         "nand_disruption_pct": (2.0, 3.5),
-        "price_impact_dram": (0.10, 0.20),   # 10-20% DRAM price impact (elasticity 2.5x on 3-4.5% loss)
+        "price_impact_dram": (
+            0.10,
+            0.20,
+        ),  # 10-20% DRAM price impact (elasticity 2.5x on 3-4.5% loss)
         "price_impact_nand": (0.08, 0.15),
         "description": "Full 18-day strike despite injunction. Q3 contract negotiations disrupted. Price peak extends into Q4 2026+.",
     },
@@ -61,40 +67,40 @@ SCENARIOS = {
 TICKERS = {
     "MU": {
         "name": "Micron Technology",
-        "price": 607.50,               # ~ATH range $600-615
-        "annual_revenue_B": 95.0,      # FY2026 estimated (Q3 guide $33.5B → ~$38B Q4 → ~$95B FY)
+        "price": 607.50,  # ~ATH range $600-615
+        "annual_revenue_B": 95.0,  # FY2026 estimated (Q3 guide $33.5B → ~$38B Q4 → ~$95B FY)
         "dram_pct": 0.79,
         "nand_pct": 0.21,
-        "gross_margin": 0.81,          # Q3 guide
-        "eps_annual": 55.0,            # FY2026E (~19.15 Q3 + ~20 Q4 + prior half)
+        "gross_margin": 0.81,  # Q3 guide
+        "eps_annual": 55.0,  # FY2026E (~19.15 Q3 + ~20 Q4 + prior half)
         "revenue_per_1pct_dram": None,  # computed below
         "revenue_per_1pct_nand": None,
-        "beta_strike": 1.8,            # how much price moves per 1% supply disruption (empirical)
+        "beta_strike": 1.8,  # how much price moves per 1% supply disruption (empirical)
     },
     "SNDK": {
         "name": "SanDisk Corp",
-        "price": 406.00,               # ~ATH
-        "annual_revenue_B": 18.0,      # FY2026E ($2.3+3.0+5.95+~8 ≈ $18-19B)
+        "price": 406.00,  # ~ATH
+        "annual_revenue_B": 18.0,  # FY2026E ($2.3+3.0+5.95+~8 ≈ $18-19B)
         "dram_pct": 0.0,
         "nand_pct": 1.0,
-        "gross_margin": 0.79,          # Q4 guide
-        "eps_annual": 45.0,            # FY2026E
+        "gross_margin": 0.79,  # Q4 guide
+        "eps_annual": 45.0,  # FY2026E
         "revenue_per_1pct_dram": None,
         "revenue_per_1pct_nand": None,
         "beta_strike": 1.5,
     },
     "STX": {
         "name": "Seagate Technology",
-        "price": 600.00,               # ~$560-650 range
-        "annual_revenue_B": 13.0,      # FY2026E ($3.11B Q3 → ~$3.45B Q4 → ~$13B FY)
+        "price": 600.00,  # ~$560-650 range
+        "annual_revenue_B": 13.0,  # FY2026E ($3.11B Q3 → ~$3.45B Q4 → ~$13B FY)
         "dram_pct": 0.0,
-        "nand_pct": 0.0,               # Pure HDD play post-SanDisk spin-off
-        "hdd_pct": 1.0,                # HDD benefits from memory shortage → less SSD competition
+        "nand_pct": 0.0,  # Pure HDD play post-SanDisk spin-off
+        "hdd_pct": 1.0,  # HDD benefits from memory shortage → less SSD competition
         "gross_margin": 0.47,
         "eps_annual": 18.0,
         "revenue_per_1pct_dram": None,
         "revenue_per_1pct_nand": None,
-        "beta_strike": 0.6,            # indirect beneficiary — HDD demand rises when NAND prices spike
+        "beta_strike": 0.6,  # indirect beneficiary — HDD demand rises when NAND prices spike
     },
     "WDC": {
         "name": "Western Digital",
@@ -115,8 +121,8 @@ TICKERS = {
 # Market already prices in ~220% DRAM, ~180% NAND increase
 # Strike adds ON TOP of baseline
 BASELINE_PRICE_INCREASE = {
-    "dram_pct": 2.50,   # 250% YoY baseline (Goldman)
-    "nand_pct": 2.00,   # 200% YoY baseline
+    "dram_pct": 2.50,  # 250% YoY baseline (Goldman)
+    "nand_pct": 2.00,  # 200% YoY baseline
 }
 
 # Current Chairman position (from context_state)
@@ -125,7 +131,11 @@ CHAIRMAN_POSITIONS = {
     "SNDK": {"shares": 0, "cost_basis": None, "allocation_pct": 0},
     "STX": {"shares": 0, "cost_basis": None, "allocation_pct": 0},
     "WDC": {"shares": 0, "cost_basis": None, "allocation_pct": 0},
-    "DXYZ": {"shares": 588, "cost_basis": 47.62, "allocation_pct": 1.0},  # full position
+    "DXYZ": {
+        "shares": 588,
+        "cost_basis": 47.62,
+        "allocation_pct": 1.0,
+    },  # full position
 }
 TOTAL_PORTFOLIO = 28_000  # USD
 
@@ -133,15 +143,20 @@ TOTAL_PORTFOLIO = 28_000  # USD
 # MONTE CARLO ENGINE
 # ═══════════════════════════════════════════════════════════════
 
+
 def compute_per_ticker_revenue():
     """Compute revenue sensitivity: how much revenue changes per 1% supply disruption."""
     for sym, t in TICKERS.items():
         if t["dram_pct"] > 0:
-            t["revenue_per_1pct_dram"] = t["annual_revenue_B"] * t["dram_pct"] * 0.01 / 100  # B$ per 1% global DRAM disruption, scaled by market share capture
+            t["revenue_per_1pct_dram"] = (
+                t["annual_revenue_B"] * t["dram_pct"] * 0.01 / 100
+            )  # B$ per 1% global DRAM disruption, scaled by market share capture
         else:
             t["revenue_per_1pct_dram"] = 0.0
         if t["nand_pct"] > 0:
-            t["revenue_per_1pct_nand"] = t["annual_revenue_B"] * t["nand_pct"] * 0.01 / 100
+            t["revenue_per_1pct_nand"] = (
+                t["annual_revenue_B"] * t["nand_pct"] * 0.01 / 100
+            )
         else:
             t["revenue_per_1pct_nand"] = 0.0
 
@@ -187,7 +202,9 @@ def run_single_trial(rng: np.random.Generator) -> dict:
 
     # 4. Compute price impact — use scenario-defined price impacts directly
     #    (these already embed elasticity + panic premium relationship)
-    dram_price_effect = dram_price_impact  # fraction (e.g., 0.20 = 20% additional DRAM price increase)
+    dram_price_effect = (
+        dram_price_impact  # fraction (e.g., 0.20 = 20% additional DRAM price increase)
+    )
     nand_price_effect = nand_price_impact
 
     # 5. Per-ticker revenue uplift
@@ -204,10 +221,14 @@ def run_single_trial(rng: np.random.Generator) -> dict:
         total_rev_uplift_B = t["annual_revenue_B"] * total_rev_uplift_pct
 
         # EPS uplift (flow-through at gross margin)
-        eps_uplift = total_rev_uplift_B * t["gross_margin"] / 1.0  # simplified: assumes 1B shares outstanding approximate
+        eps_uplift = (
+            total_rev_uplift_B * t["gross_margin"] / 1.0
+        )  # simplified: assumes 1B shares outstanding approximate
 
         # Price target uplift (P/E expansion from positive revision cycle)
-        pe_expansion = total_rev_uplift_pct * 0.5  # P/E expands ~0.5x the revenue uplift
+        pe_expansion = (
+            total_rev_uplift_pct * 0.5
+        )  # P/E expands ~0.5x the revenue uplift
         price_uplift_pct = total_rev_uplift_pct + pe_expansion
         price_uplift_abs = t["price"] * price_uplift_pct
 
@@ -326,15 +347,19 @@ def compute_position_sizing(results: dict) -> dict:
     }
 
     for sym in TICKERS:
-        returns = np.array([t["tickers"][sym]["price_uplift_pct"] / 100.0
-                           for t in results["raw_trials"]])
+        returns = np.array(
+            [
+                t["tickers"][sym]["price_uplift_pct"] / 100.0
+                for t in results["raw_trials"]
+            ]
+        )
 
         mu = np.mean(returns)
         sigma2 = np.var(returns)
 
         # Add vol floor: even synthetic bets have irreducible macro risk (~15% annualized)
         # For a 3-6 week event window: ~15% * sqrt(6/52) ≈ 5%
-        event_vol_floor = 0.05 ** 2  # 5% event-window vol floor
+        event_vol_floor = 0.05**2  # 5% event-window vol floor
         effective_sigma2 = max(sigma2, event_vol_floor)
 
         # Continuous Kelly: f = μ / σ²
@@ -351,7 +376,9 @@ def compute_position_sizing(results: dict) -> dict:
         corr_discount = 1.0  # base
         for other_sym in TICKERS:
             if other_sym != sym and correlation_penalty[sym][other_sym] > 0.7:
-                corr_discount = min(corr_discount, 1.0 - correlation_penalty[sym][other_sym] * 0.5)
+                corr_discount = min(
+                    corr_discount, 1.0 - correlation_penalty[sym][other_sym] * 0.5
+                )
 
         # Max single position after correlation consideration
         effective_max = 0.25 if sym in ["MU", "SNDK"] else 0.10  # memory: 25%, HDD: 10%
@@ -386,7 +413,9 @@ def compute_position_sizing(results: dict) -> dict:
             "half_kelly": round(half_kelly, 3),
             "recommended_allocation_pct": round(recommended_pct * 100, 1),
             "recommended_dollars": round(dollar_allocation, 0),
-            "recommended_shares": round(dollar_allocation / TICKERS[sym]["price"], 0) if recommended_pct > 0.01 else 0,
+            "recommended_shares": round(dollar_allocation / TICKERS[sym]["price"], 0)
+            if recommended_pct > 0.01
+            else 0,
             "tier": tier,
         }
 
@@ -399,45 +428,79 @@ def format_markdown(results: dict, sizing: dict) -> str:
     ts = results["ticker_stats"]
 
     lines = []
-    lines.append(f"# Samsung Strike Monte Carlo Quant Model")
+    lines.append("# Samsung Strike Monte Carlo Quant Model")
     lines.append(f"**Generated**: {datetime.now().strftime('%Y-%m-%d %H:%M UTC')}")
     lines.append(f"**Simulations**: {results['n_simulations']:,} trials")
-    lines.append(f"**Deadline**: May 21, 2026 (3 days)")
+    lines.append("**Deadline**: May 21, 2026 (3 days)")
     lines.append("")
     lines.append("---")
     lines.append("")
     lines.append("## Executive Summary")
     lines.append("")
-    lines.append("Samsung Electronics 18-day general strike (43K-50K workers, ≥50% of DS division) ")
-    lines.append("is the single largest supply-side catalyst in the memory semiconductor sector since ")
-    lines.append("the 2017-2018 super-cycle. Court injunction + emergency mediation create uncertainty, ")
-    lines.append("but DRAM spot prices already +20% at Huaqiangbei on pre-strike panic buying.")
+    lines.append(
+        "Samsung Electronics 18-day general strike (43K-50K workers, ≥50% of DS division) "
+    )
+    lines.append(
+        "is the single largest supply-side catalyst in the memory semiconductor sector since "
+    )
+    lines.append(
+        "the 2017-2018 super-cycle. Court injunction + emergency mediation create uncertainty, "
+    )
+    lines.append(
+        "but DRAM spot prices already +20% at Huaqiangbei on pre-strike panic buying."
+    )
     lines.append("")
-    lines.append("**Key finding**: Even a partial strike (Scenario B, 45% probability) generates ")
-    lines.append("material upside for MU (+7.8% mean, P90 +12.8%), SNDK (+6.0% mean, P90 +10.0%), ")
+    lines.append(
+        "**Key finding**: Even a partial strike (Scenario B, 45% probability) generates "
+    )
+    lines.append(
+        "material upside for MU (+7.8% mean, P90 +12.8%), SNDK (+6.0% mean, P90 +10.0%), "
+    )
     lines.append("with indirect benefits to STX/WDC (+1.8% mean). ")
-    lines.append("A full 18-day strike (Scenario C, 20% prob) would extend the memory price peak into Q4 2026+, ")
-    lines.append("adding $13.6B to MU annual revenue and pushing MU to $738 — hitting the Mizuho $740 target.")
+    lines.append(
+        "A full 18-day strike (Scenario C, 20% prob) would extend the memory price peak into Q4 2026+, "
+    )
+    lines.append(
+        "adding $13.6B to MU annual revenue and pushing MU to $738 — hitting the Mizuho $740 target."
+    )
     lines.append("")
     lines.append("---")
     lines.append("")
     lines.append("## 1. Scenario Definitions")
     lines.append("")
-    lines.append("| Scenario | Probability | Strike Days | DRAM Supply Loss | NAND Supply Loss | Description |")
-    lines.append("|----------|------------|-------------|-----------------|-----------------|-------------|")
+    lines.append(
+        "| Scenario | Probability | Strike Days | DRAM Supply Loss | NAND Supply Loss | Description |"
+    )
+    lines.append(
+        "|----------|------------|-------------|-----------------|-----------------|-------------|"
+    )
     for key in ["A_settled", "B_partial", "C_full"]:
         s = SCENARIOS[key]
         sc_stats = sc.get(key, {})
         dram_r = s["dram_disruption_pct"]
         nand_r = s["nand_disruption_pct"]
-        dram_s = f"{dram_r[0]}-{dram_r[1]}%" if isinstance(dram_r, tuple) else f"{dram_r}%"
-        nand_s = f"{nand_r[0]}-{nand_r[1]}%" if isinstance(nand_r, tuple) else f"{nand_r}%"
-        days_s = f"{s['strike_days'][0]}-{s['strike_days'][1]}" if isinstance(s['strike_days'], tuple) else "0"
-        lines.append(f"| {s['label']} | **{s['prob']*100:.0f}%** | {days_s} | {dram_s} | {nand_s} | {s['description']} |")
+        dram_s = (
+            f"{dram_r[0]}-{dram_r[1]}%" if isinstance(dram_r, tuple) else f"{dram_r}%"
+        )
+        nand_s = (
+            f"{nand_r[0]}-{nand_r[1]}%" if isinstance(nand_r, tuple) else f"{nand_r}%"
+        )
+        days_s = (
+            f"{s['strike_days'][0]}-{s['strike_days'][1]}"
+            if isinstance(s["strike_days"], tuple)
+            else "0"
+        )
+        lines.append(
+            f"| {s['label']} | **{s['prob'] * 100:.0f}%** | {days_s} | {dram_s} | {nand_s} | {s['description']} |"
+        )
 
     lines.append("")
-    lines.append("> **Source**: TrendForce supply disruption estimates (3-4% DRAM, 2-3% NAND full strike). ")
-    lines.append("> Goldman Sachs DRAM +250-280% YoY baseline. KB Securities daily loss ~₩3T ($2B/day).")
+    lines.append(
+        "> **Source**: TrendForce supply disruption estimates (3-4% DRAM, 2-3% NAND full strike). "
+    )
+    lines.append(
+        "> Goldman Sachs DRAM +250-280% YoY baseline. KB Securities daily loss ~₩3T ($2B/day)."
+    )
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -445,27 +508,58 @@ def format_markdown(results: dict, sizing: dict) -> str:
     lines.append("")
     lines.append("### 2.1 All-Scenario Expected Price Impact")
     lines.append("")
-    lines.append("| Ticker | Mean | Median | P10 (downside) | P25 | P75 | P90 (upside) | P95 | Win Prob |")
-    lines.append("|--------|------|--------|----------------|-----|-----|---------------|-----|----------|")
+    lines.append(
+        "| Ticker | Mean | Median | P10 (downside) | P25 | P75 | P90 (upside) | P95 | Win Prob |"
+    )
+    lines.append(
+        "|--------|------|--------|----------------|-----|-----|---------------|-----|----------|"
+    )
     for sym in ["MU", "SNDK", "STX", "WDC"]:
         s = ts[sym]["price_uplift"]
         wp = sizing[sym]["win_probability"]
-        lines.append(f"| **{sym}** | **+{s['mean']:.1f}%** | +{s['median']:.1f}% | {s['p10']:.1f}% | {s['p25']:.1f}% | {s['p75']:.1f}% | **+{s['p90']:.1f}%** | +{s['p95']:.1f}% | {wp:.0%} |")
+        lines.append(
+            f"| **{sym}** | **+{s['mean']:.1f}%** | +{s['median']:.1f}% | {s['p10']:.1f}% | {s['p25']:.1f}% | {s['p75']:.1f}% | **+{s['p90']:.1f}%** | +{s['p95']:.1f}% | {wp:.0%} |"
+        )
 
     lines.append("")
     lines.append("### 2.2 Scenario-Conditional Price Uplift (Mean)")
     lines.append("")
-    lines.append("| Ticker | Scenario A (Settled) | Scenario B (Partial) | Scenario C (Full Strike) |")
-    lines.append("|--------|---------------------|---------------------|--------------------------|")
+    lines.append(
+        "| Ticker | Scenario A (Settled) | Scenario B (Partial) | Scenario C (Full Strike) |"
+    )
+    lines.append(
+        "|--------|---------------------|---------------------|--------------------------|"
+    )
     for sym in ["MU", "SNDK", "STX", "WDC"]:
-        a_val = sc.get("A_settled", {}).get("tickers", {}).get(sym, {}).get("price_uplift_mean", 0)
-        b_val = sc.get("B_partial", {}).get("tickers", {}).get(sym, {}).get("price_uplift_mean", 0)
-        c_val = sc.get("C_full", {}).get("tickers", {}).get(sym, {}).get("price_uplift_mean", 0)
-        lines.append(f"| **{sym}** | {a_val:+.1f}% | {b_val:+.1f}% | **{c_val:+.1f}%** |")
+        a_val = (
+            sc.get("A_settled", {})
+            .get("tickers", {})
+            .get(sym, {})
+            .get("price_uplift_mean", 0)
+        )
+        b_val = (
+            sc.get("B_partial", {})
+            .get("tickers", {})
+            .get(sym, {})
+            .get("price_uplift_mean", 0)
+        )
+        c_val = (
+            sc.get("C_full", {})
+            .get("tickers", {})
+            .get(sym, {})
+            .get("price_uplift_mean", 0)
+        )
+        lines.append(
+            f"| **{sym}** | {a_val:+.1f}% | {b_val:+.1f}% | **{c_val:+.1f}%** |"
+        )
 
     lines.append("")
-    lines.append("> **Interpretation**: Scenario A = no alpha (market already pricing strike risk). ")
-    lines.append("> Scenario B = actionable alpha. Scenario C = multi-standard-deviation event for memory stocks.")
+    lines.append(
+        "> **Interpretation**: Scenario A = no alpha (market already pricing strike risk). "
+    )
+    lines.append(
+        "> Scenario B = actionable alpha. Scenario C = multi-standard-deviation event for memory stocks."
+    )
     lines.append("")
     lines.append("---")
     lines.append("")
@@ -473,19 +567,29 @@ def format_markdown(results: dict, sizing: dict) -> str:
     lines.append("")
     lines.append("### 3.1 Expected Revenue Uplift (All Trials Mean)")
     lines.append("")
-    lines.append("| Ticker | Current Annual Rev (Est) | Rev Uplift Mean | Rev Uplift P25-P75 | EPS Uplift Mean | EPS Uplift P25-P75 |")
-    lines.append("|--------|-------------------------|-----------------|---------------------|-----------------|---------------------|")
+    lines.append(
+        "| Ticker | Current Annual Rev (Est) | Rev Uplift Mean | Rev Uplift P25-P75 | EPS Uplift Mean | EPS Uplift P25-P75 |"
+    )
+    lines.append(
+        "|--------|-------------------------|-----------------|---------------------|-----------------|---------------------|"
+    )
     for sym in ["MU", "SNDK", "STX", "WDC"]:
         t = TICKERS[sym]
         ru = ts[sym]["rev_uplift"]
         eu = ts[sym]["eps_uplift"]
-        lines.append(f"| **{sym}** | ${t['annual_revenue_B']:.0f}B | **+{ru['mean']:.2f}%** (${t['annual_revenue_B']*ru['mean']/100:.1f}B) | {ru['p25']:.2f}%–{ru['p75']:.2f}% | **+${eu['mean']:.2f}** | ${eu['p25']:.2f}–${eu['p75']:.2f} |")
+        lines.append(
+            f"| **{sym}** | ${t['annual_revenue_B']:.0f}B | **+{ru['mean']:.2f}%** (${t['annual_revenue_B'] * ru['mean'] / 100:.1f}B) | {ru['p25']:.2f}%–{ru['p75']:.2f}% | **+${eu['mean']:.2f}** | ${eu['p25']:.2f}–${eu['p75']:.2f} |"
+        )
 
     lines.append("")
     lines.append("### 3.2 Scenario C (Full Strike) Revenue Uplift Detail")
     lines.append("")
-    lines.append("| Ticker | Rev Uplift % | Rev Uplift $B | EPS Uplift $ | Strike-Only Price | Analyst Full-Cycle Target |")
-    lines.append("|--------|-------------|---------------|--------------|-------------------|--------------------------|")
+    lines.append(
+        "| Ticker | Rev Uplift % | Rev Uplift $B | EPS Uplift $ | Strike-Only Price | Analyst Full-Cycle Target |"
+    )
+    lines.append(
+        "|--------|-------------|---------------|--------------|-------------------|--------------------------|"
+    )
     for sym in ["MU", "SNDK", "STX", "WDC"]:
         ct = sc.get("C_full", {}).get("tickers", {}).get(sym, {})
         if ct:
@@ -496,11 +600,17 @@ def format_markdown(results: dict, sizing: dict) -> str:
                 "STX": "$582–$1,000",
                 "WDC": "$405–$530",
             }
-            lines.append(f"| **{sym}** | +{ct['rev_uplift_mean']:.1f}% | +${ct['rev_uplift_mean']*TICKERS[sym]['annual_revenue_B']/100:.1f}B | +${ct['eps_uplift_mean']:.1f} | ${implied_price:.0f} (+{ct['price_uplift_mean']:.0f}%) | {targets[sym]} |")
+            lines.append(
+                f"| **{sym}** | +{ct['rev_uplift_mean']:.1f}% | +${ct['rev_uplift_mean'] * TICKERS[sym]['annual_revenue_B'] / 100:.1f}B | +${ct['eps_uplift_mean']:.1f} | ${implied_price:.0f} (+{ct['price_uplift_mean']:.0f}%) | {targets[sym]} |"
+            )
 
     lines.append("")
-    lines.append("> **Note**: Analyst targets reflect full memory super-cycle upside (Goldman +250-280% DRAM). ")
-    lines.append("> Strike-only implied prices above are INCREMENTAL to current price. Full-cycle + strike = materially above targets.")
+    lines.append(
+        "> **Note**: Analyst targets reflect full memory super-cycle upside (Goldman +250-280% DRAM). "
+    )
+    lines.append(
+        "> Strike-only implied prices above are INCREMENTAL to current price. Full-cycle + strike = materially above targets."
+    )
 
     lines.append("")
     lines.append("---")
@@ -508,32 +618,50 @@ def format_markdown(results: dict, sizing: dict) -> str:
     lines.append("## 4. Position Sizing Recommendation")
     lines.append("")
     lines.append(f"**Portfolio Value**: ${TOTAL_PORTFOLIO:,}")
-    lines.append(f"**Current Allocation**: 100% DXYZ @ ${CHAIRMAN_POSITIONS['DXYZ']['cost_basis']:.2f}")
+    lines.append(
+        f"**Current Allocation**: 100% DXYZ @ ${CHAIRMAN_POSITIONS['DXYZ']['cost_basis']:.2f}"
+    )
     lines.append("")
-    lines.append("### 4.1 Recommended Allocation (Half-Kelly, Correlation-Adjusted Caps)")
+    lines.append(
+        "### 4.1 Recommended Allocation (Half-Kelly, Correlation-Adjusted Caps)"
+    )
     lines.append("")
-    lines.append("| Ticker | Tier | Allocation % | Allocation $ | Shares | Current Price | Mean Return | Upside P90 | Downside P10 |")
-    lines.append("|--------|------|-------------|-------------|--------|---------------|-------------|------------|--------------|")
+    lines.append(
+        "| Ticker | Tier | Allocation % | Allocation $ | Shares | Current Price | Mean Return | Upside P90 | Downside P10 |"
+    )
+    lines.append(
+        "|--------|------|-------------|-------------|--------|---------------|-------------|------------|--------------|"
+    )
     for sym in ["MU", "SNDK", "STX", "WDC"]:
         sz = sizing[sym]
-        lines.append(f"| **{sym}** | {sz['tier']} | **{sz['recommended_allocation_pct']:.1f}%** | ${sz['recommended_dollars']:,.0f} | {sz['recommended_shares']:.0f} | ${TICKERS[sym]['price']:.2f} | +{sz['mean_return_pct']:.1f}% | +{sz['upside_p90_pct']:.1f}% | {sz['downside_p10_pct']:.1f}% |")
+        lines.append(
+            f"| **{sym}** | {sz['tier']} | **{sz['recommended_allocation_pct']:.1f}%** | ${sz['recommended_dollars']:,.0f} | {sz['recommended_shares']:.0f} | ${TICKERS[sym]['price']:.2f} | +{sz['mean_return_pct']:.1f}% | +{sz['upside_p90_pct']:.1f}% | {sz['downside_p10_pct']:.1f}% |"
+        )
 
     lines.append("")
     lines.append("### 4.2 Execution Plan — Staggered Entry")
     lines.append("")
     lines.append("```")
     lines.append("Phase 1 (NOW — Before May 21):")
-    lines.append(f"  MU:    Buy {sizing['MU']['recommended_shares']*0.5:.0f} shares (~${sizing['MU']['recommended_dollars']*0.5:,.0f}) — 50% of allocation")
-    lines.append(f"  SNDK:  Buy {sizing['SNDK']['recommended_shares']*0.5:.0f} shares (~${sizing['SNDK']['recommended_dollars']*0.5:,.0f}) — 50% of allocation")
+    lines.append(
+        f"  MU:    Buy {sizing['MU']['recommended_shares'] * 0.5:.0f} shares (~${sizing['MU']['recommended_dollars'] * 0.5:,.0f}) — 50% of allocation"
+    )
+    lines.append(
+        f"  SNDK:  Buy {sizing['SNDK']['recommended_shares'] * 0.5:.0f} shares (~${sizing['SNDK']['recommended_dollars'] * 0.5:,.0f}) — 50% of allocation"
+    )
     lines.append("")
     lines.append("Phase 2 (May 21-23 — Strike confirmation):")
     lines.append("  If strike BEGINS → deploy remaining 50% MU + SNDK")
-    lines.append(f"  If strike AVERTED → hold Phase 1 position, DO NOT add")
+    lines.append("  If strike AVERTED → hold Phase 1 position, DO NOT add")
     lines.append("")
     lines.append("Phase 3 (May 24+ — Escalation window):")
     lines.append("  If strike extends beyond 5 days → add STX/WDC tactical positions")
-    lines.append(f"  STX:   Buy {sizing['STX']['recommended_shares']:.0f} shares (~${sizing['STX']['recommended_dollars']:,.0f})")
-    lines.append(f"  WDC:   Buy {sizing['WDC']['recommended_shares']:.0f} shares (~${sizing['WDC']['recommended_dollars']:,.0f})")
+    lines.append(
+        f"  STX:   Buy {sizing['STX']['recommended_shares']:.0f} shares (~${sizing['STX']['recommended_dollars']:,.0f})"
+    )
+    lines.append(
+        f"  WDC:   Buy {sizing['WDC']['recommended_shares']:.0f} shares (~${sizing['WDC']['recommended_dollars']:,.0f})"
+    )
     lines.append("```")
     lines.append("")
     lines.append("### 4.3 Risk Controls")
@@ -541,61 +669,83 @@ def format_markdown(results: dict, sizing: dict) -> str:
     lines.append("| Control | Rule |")
     lines.append("|---------|------|")
     lines.append("| **Stop-Loss** | -8% from entry on each position |")
-    lines.append("| **Max Portfolio Drawdown** | -15% → liquidate all strike positions |")
+    lines.append(
+        "| **Max Portfolio Drawdown** | -15% → liquidate all strike positions |"
+    )
     lines.append("| **Time Stop** | If no strike by May 24, reduce MU/SNDK by 50% |")
     lines.append("| **Profit Target** | Take 50% off at +20% gain, let remainder run |")
-    lines.append("| **Correlation Risk** | MU+SNDK correlation ~0.85 during memory events — treat as one 30% position |")
+    lines.append(
+        "| **Correlation Risk** | MU+SNDK correlation ~0.85 during memory events — treat as one 30% position |"
+    )
     lines.append("")
     lines.append("---")
     lines.append("")
     lines.append("## 5. Capital Sourcing & DXYZ Tradeoff")
     lines.append("")
-    lines.append(f"**Total New Capital Required**: ${sum(sizing[s]['recommended_dollars'] for s in ['MU','SNDK','STX','WDC']):,.0f} (70% of portfolio)")
-    lines.append(f"**Current DXYZ Position**: ${TOTAL_PORTFOLIO:,} (588 shares @ ${CHAIRMAN_POSITIONS['DXYZ']['cost_basis']:.2f})")
+    lines.append(
+        f"**Total New Capital Required**: ${sum(sizing[s]['recommended_dollars'] for s in ['MU', 'SNDK', 'STX', 'WDC']):,.0f} (70% of portfolio)"
+    )
+    lines.append(
+        f"**Current DXYZ Position**: ${TOTAL_PORTFOLIO:,} (588 shares @ ${CHAIRMAN_POSITIONS['DXYZ']['cost_basis']:.2f})"
+    )
     lines.append("")
     lines.append("### Options (in order of recommendation):")
     lines.append("")
     lines.append("| Priority | Action | Capital Freed | Pros | Cons |")
     lines.append("|----------|--------|--------------|------|------|")
-    lines.append(f"| **1** | Sell 50% DXYZ (294 shares) | ~$13,800 | DXYZ Starship risk (IFT-12 May 19) — sell into strength; 7/7 historical Starship events show post-launch decline | Lose remaining DXYZ upside if IFT-12 successful + IPO announced |")
-    lines.append(f"| **2** | Phase 1 only (MU/SNDK 50%) | ~$7,000 | No DXYZ sale needed; minimum viable position | Miss STX/WDC tactical upside |")
-    lines.append(f"| **3** | Full allocation, keep DXYZ | $19,600 new capital | Pure additive; no opportunity cost | Chairman must inject fresh capital |")
+    lines.append(
+        "| **1** | Sell 50% DXYZ (294 shares) | ~$13,800 | DXYZ Starship risk (IFT-12 May 19) — sell into strength; 7/7 historical Starship events show post-launch decline | Lose remaining DXYZ upside if IFT-12 successful + IPO announced |"
+    )
+    lines.append(
+        "| **2** | Phase 1 only (MU/SNDK 50%) | ~$7,000 | No DXYZ sale needed; minimum viable position | Miss STX/WDC tactical upside |"
+    )
+    lines.append(
+        "| **3** | Full allocation, keep DXYZ | $19,600 new capital | Pure additive; no opportunity cost | Chairman must inject fresh capital |"
+    )
     lines.append("")
-    lines.append(f"**Recommendation**: Option 1 (sell 50% DXYZ) + Phase 1-2 MU/SNDK entry. ")
-    lines.append("Starship IFT-12 on May 19 creates a natural exit window — historically DXYZ rallies into launch then declines ")
-    lines.append("regardless of outcome. Taking 50% off at/after IFT-12 and rotating into the Samsung strike play converts ")
-    lines.append("one binary event into another with better risk/reward (68-72% win probability vs DXYZ 14%).")
+    lines.append(
+        "**Recommendation**: Option 1 (sell 50% DXYZ) + Phase 1-2 MU/SNDK entry. "
+    )
+    lines.append(
+        "Starship IFT-12 on May 19 creates a natural exit window — historically DXYZ rallies into launch then declines "
+    )
+    lines.append(
+        "regardless of outcome. Taking 50% off at/after IFT-12 and rotating into the Samsung strike play converts "
+    )
+    lines.append(
+        "one binary event into another with better risk/reward (68-72% win probability vs DXYZ 14%)."
+    )
     lines.append("")
     lines.append("---")
     lines.append("")
     lines.append("## 6. Scenario Probability Tree")
     lines.append("")
     lines.append("```")
-    lines.append(f"Samsung Strike Decision Tree (May 18 → May 21+)")
-    lines.append(f"")
-    lines.append(f"├── 35% ─ Scenario A: SETTLED/AVERTED")
-    lines.append(f"│   ├── DRAM supply loss: 0%")
-    lines.append(f"│   ├── MU: -4.3% to +1.5% (strike premium unwinds)")
-    lines.append(f"│   ├── SNDK: -3.8% to +1.2%")
-    lines.append(f"│   ├── STX/WDC: -1.2% to +0.4%")
-    lines.append(f"│   └── Action: Hold 50% Phase 1 position, time-stop May 24")
-    lines.append(f"│")
-    lines.append(f"├── 45% ─ Scenario B: PARTIAL STRIKE (3-5 days)")
-    lines.append(f"│   ├── DRAM supply loss: 1-2%")
-    lines.append(f"│   ├── MU: +4.5% to +12.8% ▲ (mean +7.8%)")
-    lines.append(f"│   ├── SNDK: +3.3% to +10.0% ▲ (mean +6.0%)")
-    lines.append(f"│   ├── STX: +1.0% to +3.0% (indirect, mean +1.8%)")
-    lines.append(f"│   ├── WDC: +1.0% to +3.0% (indirect, mean +1.8%)")
-    lines.append(f"│   └── Action: FULL Phase 1+2 MU/SNDK, tactical STX")
-    lines.append(f"│")
-    lines.append(f"└── 20% ─ Scenario C: FULL 18-DAY STRIKE")
-    lines.append(f"    ├── DRAM supply loss: 3-4.5%")
-    lines.append(f"    ├── MU: +15.0% to +29.2% ▲▲ (mean +21.4%)")
-    lines.append(f"    ├── SNDK: +12.2% to +23.7% ▲▲ (mean +17.4%)")
-    lines.append(f"    ├── STX: +3.6% to +7.2% ▲ (mean +5.2%)")
-    lines.append(f"    ├── WDC: +3.6% to +7.2% ▲ (mean +5.2%)")
-    lines.append(f"    ├── Q3 contract prices spike → memory cycle extends to Q4 2026+")
-    lines.append(f"    └── Action: MAX position MU/SNDK, overweight STX/WDC")
+    lines.append("Samsung Strike Decision Tree (May 18 → May 21+)")
+    lines.append("")
+    lines.append("├── 35% ─ Scenario A: SETTLED/AVERTED")
+    lines.append("│   ├── DRAM supply loss: 0%")
+    lines.append("│   ├── MU: -4.3% to +1.5% (strike premium unwinds)")
+    lines.append("│   ├── SNDK: -3.8% to +1.2%")
+    lines.append("│   ├── STX/WDC: -1.2% to +0.4%")
+    lines.append("│   └── Action: Hold 50% Phase 1 position, time-stop May 24")
+    lines.append("│")
+    lines.append("├── 45% ─ Scenario B: PARTIAL STRIKE (3-5 days)")
+    lines.append("│   ├── DRAM supply loss: 1-2%")
+    lines.append("│   ├── MU: +4.5% to +12.8% ▲ (mean +7.8%)")
+    lines.append("│   ├── SNDK: +3.3% to +10.0% ▲ (mean +6.0%)")
+    lines.append("│   ├── STX: +1.0% to +3.0% (indirect, mean +1.8%)")
+    lines.append("│   ├── WDC: +1.0% to +3.0% (indirect, mean +1.8%)")
+    lines.append("│   └── Action: FULL Phase 1+2 MU/SNDK, tactical STX")
+    lines.append("│")
+    lines.append("└── 20% ─ Scenario C: FULL 18-DAY STRIKE")
+    lines.append("    ├── DRAM supply loss: 3-4.5%")
+    lines.append("    ├── MU: +15.0% to +29.2% ▲▲ (mean +21.4%)")
+    lines.append("    ├── SNDK: +12.2% to +23.7% ▲▲ (mean +17.4%)")
+    lines.append("    ├── STX: +3.6% to +7.2% ▲ (mean +5.2%)")
+    lines.append("    ├── WDC: +3.6% to +7.2% ▲ (mean +5.2%)")
+    lines.append("    ├── Q3 contract prices spike → memory cycle extends to Q4 2026+")
+    lines.append("    └── Action: MAX position MU/SNDK, overweight STX/WDC")
     lines.append("```")
     lines.append("")
     lines.append("---")
@@ -604,19 +754,35 @@ def format_markdown(results: dict, sizing: dict) -> str:
     lines.append("")
     lines.append("| Risk | Severity | Mitigation |")
     lines.append("|------|----------|------------|")
-    lines.append("| Court injunction fully blocks strike | **High** | Phase 1 only = 50% position, time-stop May 24 |")
-    lines.append("| Samsung fabs highly automated → minimal output loss | **Medium** | Even 1-2% disruption = $2-4B supply gap in 4-week inventory market |")
-    lines.append("| Memory cycle already priced in | **Medium** | Market pricing ~220% DRAM increase; Goldman sees 250-280% = ~15-25% unpriced upside |")
-    lines.append("| MU/SNDK already at ATH — crowded trade | **Medium** | Half-Kelly sizing + staggered entry reduces drawdown risk |")
-    lines.append("| Broader market selloff (KOSPI -4% on May 18) | **Medium** | Memory stocks decoupled from macro in 2026 (AI structural demand) |")
-    lines.append("| SK Hynix captures more upside than MU | **Low** | SK Hynix not accessible (Korean exchange); MU is the best US-listed proxy |")
+    lines.append(
+        "| Court injunction fully blocks strike | **High** | Phase 1 only = 50% position, time-stop May 24 |"
+    )
+    lines.append(
+        "| Samsung fabs highly automated → minimal output loss | **Medium** | Even 1-2% disruption = $2-4B supply gap in 4-week inventory market |"
+    )
+    lines.append(
+        "| Memory cycle already priced in | **Medium** | Market pricing ~220% DRAM increase; Goldman sees 250-280% = ~15-25% unpriced upside |"
+    )
+    lines.append(
+        "| MU/SNDK already at ATH — crowded trade | **Medium** | Half-Kelly sizing + staggered entry reduces drawdown risk |"
+    )
+    lines.append(
+        "| Broader market selloff (KOSPI -4% on May 18) | **Medium** | Memory stocks decoupled from macro in 2026 (AI structural demand) |"
+    )
+    lines.append(
+        "| SK Hynix captures more upside than MU | **Low** | SK Hynix not accessible (Korean exchange); MU is the best US-listed proxy |"
+    )
     lines.append("")
     lines.append("---")
     lines.append("")
     lines.append("## 8. Data Sources")
     lines.append("")
-    lines.append("- TrendForce: DRAM/NAND supply disruption estimates (3-4% DRAM, 2-3% NAND)")
-    lines.append("- Goldman Sachs: DRAM +250-280% YoY, NAND +200-250% YoY forecast (April 2026)")
+    lines.append(
+        "- TrendForce: DRAM/NAND supply disruption estimates (3-4% DRAM, 2-3% NAND)"
+    )
+    lines.append(
+        "- Goldman Sachs: DRAM +250-280% YoY, NAND +200-250% YoY forecast (April 2026)"
+    )
     lines.append("- KB Securities: Daily loss estimate ~₩3T ($2B/day)")
     lines.append("- Mizuho (Vijay Rakesh): MU $740, SNDK $1,625 price targets")
     lines.append("- Cantor Fitzgerald (CJ Muse): MU $700, SNDK $1,800 price targets")
@@ -631,17 +797,19 @@ def format_markdown(results: dict, sizing: dict) -> str:
     lines.append("```")
     lines.append("Monte Carlo parameters:")
     lines.append(f"  Trials:              {results['n_simulations']:,}")
-    lines.append(f"  Price elasticity:    2.5x (DRAM), 2.0x (NAND)")
-    lines.append(f"  Panic multiplier:    1.0 + 0.5 × supply_disruption_pct")
-    lines.append(f"  HDD substitution:    0.3 × NAND_price_increase")
-    lines.append(f"  P/E expansion:       0.5 × revenue_uplift_pct")
-    lines.append(f"  Current DRAM price:  ~$40.70 DDR5 16Gb spot")
-    lines.append(f"  Current NAND price:  1Tb wafer up 386% YoY")
-    lines.append(f"  Global DRAM inv:     4-6 weeks coverage")
-    lines.append(f"  Global NAND inv:     ~6-8 weeks coverage")
+    lines.append("  Price elasticity:    2.5x (DRAM), 2.0x (NAND)")
+    lines.append("  Panic multiplier:    1.0 + 0.5 × supply_disruption_pct")
+    lines.append("  HDD substitution:    0.3 × NAND_price_increase")
+    lines.append("  P/E expansion:       0.5 × revenue_uplift_pct")
+    lines.append("  Current DRAM price:  ~$40.70 DDR5 16Gb spot")
+    lines.append("  Current NAND price:  1Tb wafer up 386% YoY")
+    lines.append("  Global DRAM inv:     4-6 weeks coverage")
+    lines.append("  Global NAND inv:     ~6-8 weeks coverage")
     lines.append("```")
     lines.append("")
-    lines.append(f"*Model generated {datetime.now().strftime('%Y-%m-%d %H:%M')} | N={results['n_simulations']:,} trials | For Chairman review*")
+    lines.append(
+        f"*Model generated {datetime.now().strftime('%Y-%m-%d %H:%M')} | N={results['n_simulations']:,} trials | For Chairman review*"
+    )
 
     return "\n".join(lines)
 
@@ -650,12 +818,13 @@ def format_markdown(results: dict, sizing: dict) -> str:
 # MAIN
 # ═══════════════════════════════════════════════════════════════
 
+
 def main():
     compute_per_ticker_revenue()
 
     print(f"Running {N_SIMULATIONS:,} Monte Carlo trials...")
     results = run_monte_carlo(N_SIMULATIONS)
-    print(f"Done. Computing position sizing...")
+    print("Done. Computing position sizing...")
     sizing = compute_position_sizing(results)
 
     # Print summary to stdout
@@ -663,16 +832,22 @@ def main():
     for key in ["A_settled", "B_partial", "C_full"]:
         sc = SCENARIOS[key]
         ss = results["scenario_stats"].get(key, {})
-        print(f"  {sc['label']}: {ss.get('count', 0):,} trials ({sc['prob']*100:.0f}% prior)")
+        print(
+            f"  {sc['label']}: {ss.get('count', 0):,} trials ({sc['prob'] * 100:.0f}% prior)"
+        )
         if ss:
             for sym in ["MU", "SNDK", "STX", "WDC"]:
                 ct = ss.get("tickers", {}).get(sym, {})
-                print(f"    {sym}: +{ct.get('price_uplift_mean', 0):.1f}% price, +${ct.get('eps_uplift_mean', 0):.2f} EPS")
+                print(
+                    f"    {sym}: +{ct.get('price_uplift_mean', 0):.1f}% price, +${ct.get('eps_uplift_mean', 0):.2f} EPS"
+                )
 
     print("\n═══ Position Sizing (Half-Kelly) ═══\n")
     for sym in ["MU", "SNDK", "STX", "WDC"]:
         sz = sizing[sym]
-        print(f"  {sym}: {sz['tier']} | {sz['recommended_allocation_pct']:.1f}% = ${sz['recommended_dollars']:,.0f} ({sz['recommended_shares']:.0f} shares)")
+        print(
+            f"  {sym}: {sz['tier']} | {sz['recommended_allocation_pct']:.1f}% = ${sz['recommended_dollars']:,.0f} ({sz['recommended_shares']:.0f} shares)"
+        )
 
     # Write markdown report
     md = format_markdown(results, sizing)
@@ -685,8 +860,13 @@ def main():
     json_data = {
         "generated": datetime.now().isoformat(),
         "n_simulations": results["n_simulations"],
-        "scenario_stats": {k: {kk: vv for kk, vv in v.items() if kk != "tickers"} for k, v in results["scenario_stats"].items()},
-        "position_sizing": {k: {kk: vv for kk, vv in v.items()} for k, v in sizing.items()},
+        "scenario_stats": {
+            k: {kk: vv for kk, vv in v.items() if kk != "tickers"}
+            for k, v in results["scenario_stats"].items()
+        },
+        "position_sizing": {
+            k: {kk: vv for kk, vv in v.items()} for k, v in sizing.items()
+        },
     }
     json_path.write_text(json.dumps(json_data, indent=2, default=str), encoding="utf-8")
     print(f"JSON data written to: {json_path}")

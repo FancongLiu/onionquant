@@ -11,7 +11,6 @@ Usage:
 
 import argparse
 import json
-import os
 import sys
 from datetime import UTC, datetime, time
 from pathlib import Path
@@ -21,7 +20,13 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 OUTBOX_DIR = PROJECT_ROOT / "company" / "chairman_outbox"
 REPORTS_DIR = PROJECT_ROOT / "company" / "reports"
-STATE_FILE = PROJECT_ROOT / "company" / "departments" / "execution" / "research_publisher_state.json"
+STATE_FILE = (
+    PROJECT_ROOT
+    / "company"
+    / "departments"
+    / "execution"
+    / "research_publisher_state.json"
+)
 STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
 
 
@@ -47,6 +52,7 @@ def fetch_dxyz_price():
     """获取 DXYZ 最新价格."""
     try:
         import yfinance as yf
+
         tk = yf.Ticker("DXYZ")
         info = tk.info or {}
         price = info.get("currentPrice") or info.get("regularMarketPrice")
@@ -57,7 +63,9 @@ def fetch_dxyz_price():
         return None, None
 
 
-def should_publish(price: float, prev_close: float, state: dict, force: bool = False) -> bool:
+def should_publish(
+    price: float, prev_close: float, state: dict, force: bool = False
+) -> bool:
     """判断是否需要发布更新."""
     if force:
         return True
@@ -84,12 +92,12 @@ def generate_report(price: float, prev_close: float, state: dict) -> str:
 
     return f"""# 🔴 DXYZ 盘中研报更新
 
-**时间**: {now.strftime('%Y-%m-%d %H:%M UTC')}
+**时间**: {now.strftime("%Y-%m-%d %H:%M UTC")}
 **DXYZ**: ${price:.2f} ({direction} {abs(change_pct):.1f}%)
 
 ## 仓位提示
-- 距上次报告: {state.get('last_report_ts', '首次')}
-- 累计发布: {state['publish_count'] + 1} 次
+- 距上次报告: {state.get("last_report_ts", "首次")}
+- 累计发布: {state["publish_count"] + 1} 次
 
 ## 关键关注
 1. Starship V3 首飞 5/19 18:30 EDT — 发射前最后交易日
@@ -98,7 +106,7 @@ def generate_report(price: float, prev_close: float, state: dict) -> str:
 4. SpaceX IPO 招股书随时可能公开
 
 ---
-*自动研报 · 触发条件: {'强制' if abs(change_pct) < 5 else f'价格变动 {abs(change_pct):.1f}%'}*
+*自动研报 · 触发条件: {"强制" if abs(change_pct) < 5 else f"价格变动 {abs(change_pct):.1f}%"}*
 """
 
 
@@ -112,10 +120,10 @@ def publish_report(report: str, state: dict):
     # Outbox notification
     notify_content = f"""# [RESEARCH] DXYZ 研报更新
 
-**时间**: {datetime.now().strftime('%Y-%m-%d %H:%M')}
+**时间**: {datetime.now().strftime("%Y-%m-%d %H:%M")}
 
 报告: {report_file.relative_to(PROJECT_ROOT)}
-累计发布: {state['publish_count'] + 1} 次
+累计发布: {state["publish_count"] + 1} 次
 """
     outbox_file = OUTBOX_DIR / f"NOTIFY_{ts}_research_dxyz.md"
     outbox_file.write_text(notify_content, encoding="utf-8")
@@ -129,13 +137,15 @@ def publish_report(report: str, state: dict):
 
 def main():
     parser = argparse.ArgumentParser(description="Research Report Auto-Publisher")
-    parser.add_argument("--force", action="store_true", help="Force publish regardless of conditions")
+    parser.add_argument(
+        "--force", action="store_true", help="Force publish regardless of conditions"
+    )
     args = parser.parse_args()
 
     state = _load_state()
 
     if not _is_market_hours() and not args.force:
-        print(f"[research_pub] Market closed. Skip. (force with --force)")
+        print("[research_pub] Market closed. Skip. (force with --force)")
         return
 
     price, prev_close = fetch_dxyz_price()

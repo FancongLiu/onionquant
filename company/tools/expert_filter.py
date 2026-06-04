@@ -24,9 +24,7 @@ Usage:
 """
 
 import json
-from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -98,7 +96,9 @@ def get_expert_signal(ticker: str) -> dict:
     for name, data in EXPERT_DATABASE.items():
         if ticker_upper in [f.upper() for f in data.get("focus", [])]:
             w = data["default_weight"]
-            experts_found.append({"name": name, "platform": data["platform"], "weight": w})
+            experts_found.append(
+                {"name": name, "platform": data["platform"], "weight": w}
+            )
             total_weight += w
             bull_score += w  # 目前已知的都是看多, 后续加入方向字段
 
@@ -152,6 +152,7 @@ def filter_hot_stocks(scan_results: list[dict]) -> list[dict]:
 # ─── CLI ────────────────────────────────────────────────
 if __name__ == "__main__":
     import argparse
+
     p = argparse.ArgumentParser()
     p.add_argument("--ticker", type=str, help="Single ticker to check")
     p.add_argument("--list-experts", action="store_true")
@@ -160,10 +161,14 @@ if __name__ == "__main__":
     if args.list_experts:
         print("=== 已知专家库 ===")
         for name, data in EXPERT_DATABASE.items():
-            print(f"  {name} ({data['platform']}) — {data['focus']} [weight:{data['default_weight']}]")
+            print(
+                f"  {name} ({data['platform']}) — {data['focus']} [weight:{data['default_weight']}]"
+            )
         print("\n=== 散户KOL (仅参考) ===")
         for name, data in INFLUENCER_LIST.items():
-            print(f"  {name} ({data['platform']}, {data['followers']}) — {data['note']}")
+            print(
+                f"  {name} ({data['platform']}, {data['followers']}) — {data['note']}"
+            )
     elif args.ticker:
         result = get_expert_signal(args.ticker)
         print(json.dumps(result, indent=2, ensure_ascii=False, default=str))

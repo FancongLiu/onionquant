@@ -32,7 +32,9 @@ ALPHA_FACTORS = FACTOR_REGISTRY
 compute_factors = compute_all_factors
 
 
-def neutralize_industry(factor_df: pd.DataFrame, industry_col: str = "industry") -> pd.DataFrame:
+def neutralize_industry(
+    factor_df: pd.DataFrame, industry_col: str = "industry"
+) -> pd.DataFrame:
     """行业中性化 (兼容 wrapper，不标准化)."""
     result = factor_df.copy()
     factor_cols = [c for c in result.columns if c in FACTOR_REGISTRY]
@@ -60,8 +62,9 @@ def standardize(factor_df: pd.DataFrame, sigma: float = 3.0) -> pd.DataFrame:
     return result
 
 
-def compute_all(df: pd.DataFrame, neutralize: bool = True,
-                factors: Optional[list] = None) -> pd.DataFrame:
+def compute_all(
+    df: pd.DataFrame, neutralize: bool = True, factors: Optional[list] = None
+) -> pd.DataFrame:
     """一站式：计算因子 → 中性化 → 标准化 (v4: 委托 qlib_factor_engine)."""
     result = compute_all_factors(df, factors)
     if neutralize:
@@ -72,24 +75,30 @@ def compute_all(df: pd.DataFrame, neutralize: bool = True,
 
 
 # ─── Alphalens 集成 (唯一保留的手工逻辑，无等价开源库) ───
-def evaluate_factor(factor_df: pd.DataFrame, factor_name: str,
-                    price_series: pd.Series) -> dict:
+def evaluate_factor(
+    factor_df: pd.DataFrame, factor_name: str, price_series: pd.Series
+) -> dict:
     """使用 Alphalens-Reloaded 评估单因子。"""
     try:
         import alphalens as al
     except ImportError:
         return {"error": "alphalens not installed"}
-    aligned = pd.DataFrame({
-        "factor": factor_df[factor_name],
-        "price": price_series,
-    }).dropna()
+    aligned = pd.DataFrame(
+        {
+            "factor": factor_df[factor_name],
+            "price": price_series,
+        }
+    ).dropna()
     if len(aligned) < 20:
         return {"error": f"insufficient data: {len(aligned)} rows"}
     factor = aligned["factor"]
     prices = aligned["price"]
     try:
         factor_data = al.utils.get_clean_factor_and_forward_returns(
-            factor, prices, quantiles=5, periods=(1, 5, 21),
+            factor,
+            prices,
+            quantiles=5,
+            periods=(1, 5, 21),
         )
         ic = al.performance.factor_information_coefficient(factor_data)
         ic_summary = ic.mean()
@@ -106,29 +115,45 @@ def evaluate_factor(factor_df: pd.DataFrame, factor_name: str,
 
 def report_factors(factor_df: pd.DataFrame) -> str:
     """生成因子摘要报告 (v4: 使用 FACTOR_REGISTRY)."""
-    lines = ["## Factor Report", "", "| Factor | Direction | Mean | Std |",
-             "|--------|-----------|------|-----|"]
+    lines = [
+        "## Factor Report",
+        "",
+        "| Factor | Direction | Mean | Std |",
+        "|--------|-----------|------|-----|",
+    ]
     for name in FACTOR_REGISTRY:
         if name in factor_df.columns:
             col = factor_df[name].dropna()
             if len(col) > 0:
                 _, direction = FACTOR_REGISTRY[name]
                 dir_label = "long" if direction == 1 else "short"
-                lines.append(f"| {name} | {dir_label} | {col.mean():.4f} | {col.std():.4f} |")
+                lines.append(
+                    f"| {name} | {dir_label} | {col.mean():.4f} | {col.std():.4f} |"
+                )
     return "\n".join(lines)
 
 
 # ─── CLI ───
 def main():
-    parser = argparse.ArgumentParser(description="Factor Calculator (v4: qlib_factor_engine wrapper)")
+    parser = argparse.ArgumentParser(
+        description="Factor Calculator (v4: qlib_factor_engine wrapper)"
+    )
     parser.add_argument("--input", required=True, help="Input OHLCV CSV/parquet")
     parser.add_argument("--output", default="factors.parquet", help="Output file")
-    parser.add_argument("--no-neutralize", action="store_true", help="Skip industry neutralization")
+    parser.add_argument(
+        "--no-neutralize", action="store_true", help="Skip industry neutralization"
+    )
     parser.add_argument("--report", action="store_true", help="Print factor report")
-    parser.add_argument("--eval", dest="eval_factor", help="Evaluate single factor with Alphalens")
+    parser.add_argument(
+        "--eval", dest="eval_factor", help="Evaluate single factor with Alphalens"
+    )
     args = parser.parse_args()
 
-    df = pd.read_parquet(args.input) if args.input.endswith(".parquet") else pd.read_csv(args.input)
+    df = (
+        pd.read_parquet(args.input)
+        if args.input.endswith(".parquet")
+        else pd.read_csv(args.input)
+    )
     result = compute_all(df, neutralize=not args.no_neutralize)
 
     if args.output.endswith(".parquet"):

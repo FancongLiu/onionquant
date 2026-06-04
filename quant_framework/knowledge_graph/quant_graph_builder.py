@@ -62,15 +62,30 @@ FACTOR_LIST = [
 ]
 
 DEPARTMENTS = [
-    "策略研究部", "风险管理部", "交易执行部", "数据工程部",
-    "IT技术部", "舆情情报部", "回测引擎部", "开源研究院",
-    "学术研究部", "CEO办公室", "极限驱动部", "持续进化部",
-    "汇报展示部", "知识管理部", "秘书处",
+    "策略研究部",
+    "风险管理部",
+    "交易执行部",
+    "数据工程部",
+    "IT技术部",
+    "舆情情报部",
+    "回测引擎部",
+    "开源研究院",
+    "学术研究部",
+    "CEO办公室",
+    "极限驱动部",
+    "持续进化部",
+    "汇报展示部",
+    "知识管理部",
+    "秘书处",
 ]
 
 # Quant tool stack (Phase 7) — maps tools → departments + scripts
 QUANT_TOOLS = {
-    "risk_threshold_engine": {"type": "Library", "category": "风险/状态", "pip": "risk-threshold-engine"},
+    "risk_threshold_engine": {
+        "type": "Library",
+        "category": "风险/状态",
+        "pip": "risk-threshold-engine",
+    },
     "statsmodels_MS": {"type": "Library", "category": "市场状态", "pip": "statsmodels"},
     "yfinance": {"type": "Library", "category": "数据/行情", "pip": "yfinance"},
     "bt_pmorissette": {"type": "Library", "category": "回测/事件驱动", "pip": "bt"},
@@ -78,11 +93,26 @@ QUANT_TOOLS = {
     "networkx": {"type": "Library", "category": "知识图谱", "pip": "networkx"},
 }
 TOOL_SCRIPTS = {
-    "decision_engine_v2": {"path": "scripts/decision_engine_v2.py", "description": "全量因子+决策矩阵"},
-    "binary_catalyst_backtest": {"path": "scripts/binary_catalyst_backtest.py", "description": "二元事件回测+Monte Carlo"},
-    "backtest_harness": {"path": "quant_framework/backtest/harness.py", "description": "统一回测框架(empyrical)"},
-    "regime_detector": {"path": "quant_framework/strategies/regime_detector.py", "description": "MarkovSwitching市场状态"},
-    "quant_graph_builder": {"path": "quant_framework/knowledge_graph/quant_graph_builder.py", "description": "知识图谱构建器"},
+    "decision_engine_v2": {
+        "path": "scripts/decision_engine_v2.py",
+        "description": "全量因子+决策矩阵",
+    },
+    "binary_catalyst_backtest": {
+        "path": "scripts/binary_catalyst_backtest.py",
+        "description": "二元事件回测+Monte Carlo",
+    },
+    "backtest_harness": {
+        "path": "quant_framework/backtest/harness.py",
+        "description": "统一回测框架(empyrical)",
+    },
+    "regime_detector": {
+        "path": "quant_framework/strategies/regime_detector.py",
+        "description": "MarkovSwitching市场状态",
+    },
+    "quant_graph_builder": {
+        "path": "quant_framework/knowledge_graph/quant_graph_builder.py",
+        "description": "知识图谱构建器",
+    },
 }
 TOOL_DEPT_MAP = {
     "risk_threshold_engine": "风险管理部",
@@ -157,7 +187,9 @@ def _build_stock_graph(store: QuantGraphStore) -> None:
     ai_stocks = ["NVDA", "MU", "AMD", "AVGO", "SNDK", "WDC", "STX", "MRVL"]
     for i in range(len(ai_stocks)):
         for j in range(i + 1, len(ai_stocks)):
-            store.add_relationship(ai_stocks[i], ai_stocks[j], "AI_HARDWARE_PEER", {"cluster": "ai_infra"})
+            store.add_relationship(
+                ai_stocks[i], ai_stocks[j], "AI_HARDWARE_PEER", {"cluster": "ai_infra"}
+            )
 
 
 def _build_factor_graph(store: QuantGraphStore) -> None:
@@ -167,7 +199,12 @@ def _build_factor_graph(store: QuantGraphStore) -> None:
             category = "动量因子"
         elif "reversal" in factor:
             category = "反转因子"
-        elif "volatility" in factor.lower() or "beta" in factor or "low_vol" in factor or "atr" in factor:
+        elif (
+            "volatility" in factor.lower()
+            or "beta" in factor
+            or "low_vol" in factor
+            or "atr" in factor
+        ):
             category = "波动因子"
         elif "volume" in factor or "turnover" in factor:
             category = "换手因子"
@@ -214,7 +251,15 @@ def _build_department_graph(store: QuantGraphStore, tracker_path: Path) -> None:
             )
             if m:
                 task_id, name, dept, priority, status = (s.strip() for s in m.groups())
-                store.add_node("Task", {"id": task_id, "name": name, "priority": priority, "status": status})
+                store.add_node(
+                    "Task",
+                    {
+                        "id": task_id,
+                        "name": name,
+                        "priority": priority,
+                        "status": status,
+                    },
+                )
                 store.add_relationship(task_id, f"dept_{dept}", "ASSIGNED_TO")
                 store.add_relationship(task_id, f"priority_{priority}", "HAS_PRIORITY")
                 tasks_found += 1
@@ -224,18 +269,39 @@ def _build_department_graph(store: QuantGraphStore, tracker_path: Path) -> None:
 def _build_tool_graph(store: QuantGraphStore) -> None:
     """Phase 7: Add quant tool/script nodes + connect to departments."""
     for tool_id, info in QUANT_TOOLS.items():
-        store.add_node("Tool", {"id": tool_id, "name": tool_id, "category": info["category"], "pip": info["pip"]})
+        store.add_node(
+            "Tool",
+            {
+                "id": tool_id,
+                "name": tool_id,
+                "category": info["category"],
+                "pip": info["pip"],
+            },
+        )
         dept = TOOL_DEPT_MAP.get(tool_id)
         if dept:
             store.add_relationship(tool_id, f"dept_{dept}", "USED_BY")
     for script_id, info in TOOL_SCRIPTS.items():
-        store.add_node("Script", {"id": script_id, "name": script_id, "path": info["path"], "description": info["description"]})
+        store.add_node(
+            "Script",
+            {
+                "id": script_id,
+                "name": script_id,
+                "path": info["path"],
+                "description": info["description"],
+            },
+        )
         dept = TOOL_DEPT_MAP.get(script_id)
         if dept:
             store.add_relationship(script_id, f"dept_{dept}", "MAINTAINED_BY")
         # Connect scripts to libraries they use
         if script_id == "decision_engine_v2":
-            for lib in ["risk_threshold_engine", "yfinance", "bt_pmorissette", "statsmodels_MS"]:
+            for lib in [
+                "risk_threshold_engine",
+                "yfinance",
+                "bt_pmorissette",
+                "statsmodels_MS",
+            ]:
                 store.add_relationship(script_id, lib, "DEPENDS_ON")
         elif script_id == "binary_catalyst_backtest":
             for lib in ["bt_pmorissette", "yfinance", "empyrical"]:
@@ -259,7 +325,6 @@ def build_correlation_edges(
     and adds CORRELATED_WITH edges for pairs above min_corr.
     Returns number of edges added.
     """
-    import numpy as np
     import pandas as pd
 
     data_dir = PROJECT_ROOT / "quant_framework" / "data" / "raw"
@@ -285,7 +350,9 @@ def build_correlation_edges(
             val = corr.loc[ti, tj]
             if abs(val) >= min_corr:
                 store.add_relationship(
-                    ti, tj, "CORRELATED_WITH",
+                    ti,
+                    tj,
+                    "CORRELATED_WITH",
                     {"correlation": round(float(val), 3), "source": "price_returns"},
                 )
                 edge_count += 1
@@ -293,14 +360,18 @@ def build_correlation_edges(
     return edge_count
 
 
-def export_graph_html(store: QuantGraphStore, output_path: Optional[Path] = None) -> Path:
+def export_graph_html(
+    store: QuantGraphStore, output_path: Optional[Path] = None
+) -> Path:
     """Export the knowledge graph as an interactive vis.js HTML page.
 
     Returns path to the generated HTML file.
     """
     import json
 
-    output_path = output_path or (PROJECT_ROOT / "company" / "reports" / "knowledge_graph_onionquant.html")
+    output_path = output_path or (
+        PROJECT_ROOT / "company" / "reports" / "knowledge_graph_onionquant.html"
+    )
     g = store.get_full_graph()
 
     nodes = []
@@ -323,21 +394,25 @@ def export_graph_html(store: QuantGraphStore, output_path: Optional[Path] = None
             continue
         node_ids_seen.add(nid)
         label = ndata.get("label", "Unknown")
-        nodes.append({
-            "id": nid,
-            "label": ndata.get("name", nid),
-            "group": label,
-            "color": color_map.get(label, "#94a3b8"),
-        })
+        nodes.append(
+            {
+                "id": nid,
+                "label": ndata.get("name", nid),
+                "group": label,
+                "color": color_map.get(label, "#94a3b8"),
+            }
+        )
 
     for src, dst, edata in g.edges(data=True):
         rel = edata.get("rel_type", "RELATED_TO")
-        edges_list.append({
-            "from": src,
-            "to": dst,
-            "label": rel,
-            "arrows": "to",
-        })
+        edges_list.append(
+            {
+                "from": src,
+                "to": dst,
+                "label": rel,
+                "arrows": "to",
+            }
+        )
 
     html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
@@ -367,8 +442,12 @@ new vis.Network(container, data, options);
 </script></body></html>"""
 
     output_path.write_text(html, encoding="utf-8")
-    logger.info("Knowledge graph HTML exported to %s (%d nodes, %d edges)",
-                output_path, len(nodes), len(edges_list))
+    logger.info(
+        "Knowledge graph HTML exported to %s (%d nodes, %d edges)",
+        output_path,
+        len(nodes),
+        len(edges_list),
+    )
     return output_path
 
 

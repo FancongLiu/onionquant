@@ -2,6 +2,7 @@
 Shared state and helpers for server route modules.
 Imported by route files and server.py.
 """
+
 import asyncio
 import json
 import os
@@ -22,7 +23,10 @@ subscribers: list[asyncio.Queue] = []
 
 async def notify_all(event: str, data: dict):
     """Push event to all connected SSE clients."""
-    payload = {"event": event, "data": json.dumps(data, ensure_ascii=False, default=str)}
+    payload = {
+        "event": event,
+        "data": json.dumps(data, ensure_ascii=False, default=str),
+    }
     dead = []
     for q in subscribers:
         try:
@@ -34,22 +38,70 @@ async def notify_all(event: str, data: dict):
 
 
 QUANT_TICKERS = [
-    "AAPL", "MSFT", "GOOGL", "AMZN", "NVDA", "META", "TSLA", "BRK.B",
-    "JPM", "V", "JNJ", "WMT", "PG", "MA", "UNH", "HD", "BAC", "DIS",
-    "ADBE", "CRM", "NFLX", "AMD", "INTC", "QCOM", "TXN", "AVGO",
-    "PYPL", "NKE", "COST", "MRK", "ABBV", "PEP", "KO", "TMO", "LLY",
+    "AAPL",
+    "MSFT",
+    "GOOGL",
+    "AMZN",
+    "NVDA",
+    "META",
+    "TSLA",
+    "BRK.B",
+    "JPM",
+    "V",
+    "JNJ",
+    "WMT",
+    "PG",
+    "MA",
+    "UNH",
+    "HD",
+    "BAC",
+    "DIS",
+    "ADBE",
+    "CRM",
+    "NFLX",
+    "AMD",
+    "INTC",
+    "QCOM",
+    "TXN",
+    "AVGO",
+    "PYPL",
+    "NKE",
+    "COST",
+    "MRK",
+    "ABBV",
+    "PEP",
+    "KO",
+    "TMO",
+    "LLY",
 ]
 
 QUANT_FACTOR_NAMES = [
-    "mom_1d", "mom_5d", "mom_21d", "mom_63d", "mom_126d", "mom_252d",
-    "rev_5d", "rev_10d", "rev_21d",
-    "vol_5d", "vol_21d", "vol_63d",
-    "turn_5d", "turn_21d",
-    "size_log", "val_bp", "val_ep",
-    "roe", "roa", "gross_margin",
-    "corr_5d", "corr_21d",
-    "beta_63d", "beta_252d",
-    "rsi_14", "bb_width",
+    "mom_1d",
+    "mom_5d",
+    "mom_21d",
+    "mom_63d",
+    "mom_126d",
+    "mom_252d",
+    "rev_5d",
+    "rev_10d",
+    "rev_21d",
+    "vol_5d",
+    "vol_21d",
+    "vol_63d",
+    "turn_5d",
+    "turn_21d",
+    "size_log",
+    "val_bp",
+    "val_ep",
+    "roe",
+    "roa",
+    "gross_margin",
+    "corr_5d",
+    "corr_21d",
+    "beta_63d",
+    "beta_252d",
+    "rsi_14",
+    "bb_width",
 ]
 
 RISK_LIMITS = {

@@ -20,9 +20,8 @@ import json
 import subprocess
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 HYPEFINDER_DIR = PROJECT_ROOT / "company" / "tools" / "HypeFinder"
@@ -30,22 +29,31 @@ OUTPUT_DIR = PROJECT_ROOT / "company" / "sentiment_data"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
-def run_hypefinder_scan(top_n: int = 20, sources: str = "reddit", output: str = "csv") -> list[dict]:
+def run_hypefinder_scan(
+    top_n: int = 20, sources: str = "reddit", output: str = "csv"
+) -> list[dict]:
     """Run HypeFinder CLI scan and parse results.
 
     Returns list of dicts with keys: ticker, hype_score, volume_score,
     sentiment_score, mentions, platforms.
     """
     cmd = [
-        sys.executable, str(HYPEFINDER_DIR / "main.py"), "scan",
-        "--sources", sources,
-        "--top", str(top_n),
-        "--output", output,
-        "--min-mentions", "3",
+        sys.executable,
+        str(HYPEFINDER_DIR / "main.py"),
+        "scan",
+        "--sources",
+        sources,
+        "--top",
+        str(top_n),
+        "--output",
+        output,
+        "--min-mentions",
+        "3",
     ]
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120,
-                                cwd=str(HYPEFINDER_DIR))
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, timeout=120, cwd=str(HYPEFINDER_DIR)
+        )
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
         print(f"[warn] HypeFinder failed: {e}")
         return []
@@ -57,14 +65,16 @@ def run_hypefinder_scan(top_n: int = 20, sources: str = "reddit", output: str = 
             with open(csv_path, newline="") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
-                    tickers.append({
-                        "ticker": row.get("Ticker", "").strip(),
-                        "hype_score": float(row.get("Hype Score", 0)),
-                        "volume_score": float(row.get("Volume Score", 0)),
-                        "sentiment_score": float(row.get("Sentiment", 0)),
-                        "mentions": int(row.get("Mentions", 0)),
-                        "platforms": row.get("Platforms", ""),
-                    })
+                    tickers.append(
+                        {
+                            "ticker": row.get("Ticker", "").strip(),
+                            "hype_score": float(row.get("Hype Score", 0)),
+                            "volume_score": float(row.get("Volume Score", 0)),
+                            "sentiment_score": float(row.get("Sentiment", 0)),
+                            "mentions": int(row.get("Mentions", 0)),
+                            "platforms": row.get("Platforms", ""),
+                        }
+                    )
         except Exception:
             pass
     return tickers
@@ -83,12 +93,15 @@ def cross_check_apewisdom() -> list[dict]:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         data = json.loads(urllib.request.urlopen(req, timeout=15).read())
         results = data.get("results", [])[:20]
-        return [{
-            "ticker": r.get("ticker", ""),
-            "mentions": r.get("mentions", 0),
-            "rank": r.get("rank", 999),
-            "sentiment": r.get("sentiment", "N/A"),
-        } for r in results]
+        return [
+            {
+                "ticker": r.get("ticker", ""),
+                "mentions": r.get("mentions", 0),
+                "rank": r.get("rank", 999),
+                "sentiment": r.get("sentiment", "N/A"),
+            }
+            for r in results
+        ]
     except Exception as e:
         print(f"[warn] ApeWisdom fetch failed: {e}")
         return []
@@ -144,11 +157,18 @@ def save_scan_results(results: list[dict]) -> Path:
     """Save scan results to dated JSON for historical tracking."""
     date_str = datetime.now().strftime("%Y%m%d_%H%M")
     path = OUTPUT_DIR / f"scan_{date_str}.json"
-    path.write_text(json.dumps({
-        "timestamp": datetime.now().isoformat(),
-        "source": "HypeFinder + ApeWisdom",
-        "results": results,
-    }, indent=2, default=str), "utf-8")
+    path.write_text(
+        json.dumps(
+            {
+                "timestamp": datetime.now().isoformat(),
+                "source": "HypeFinder + ApeWisdom",
+                "results": results,
+            },
+            indent=2,
+            default=str,
+        ),
+        "utf-8",
+    )
     return path
 
 
@@ -177,7 +197,9 @@ def scan(explain: bool = False) -> list[dict]:
     print("-" * 40)
     for i, r in enumerate(results[:15]):
         xv = "✓" if r["cross_validated"] else "—"
-        print(f"{i+1:<5} {r['ticker']:<8} {r['hype_score']:>6.0f} {xv:>6} {r['aw_rank']:>8}")
+        print(
+            f"{i + 1:<5} {r['ticker']:<8} {r['hype_score']:>6.0f} {xv:>6} {r['aw_rank']:>8}"
+        )
 
     print(f"\n→ Full results: {path}")
     return results
@@ -185,6 +207,7 @@ def scan(explain: bool = False) -> list[dict]:
 
 if __name__ == "__main__":
     import argparse
+
     p = argparse.ArgumentParser()
     p.add_argument("--top", type=int, default=15)
     p.add_argument("--explain", action="store_true")
