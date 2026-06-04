@@ -51,6 +51,13 @@ SERVICES = {
         "start": lambda: _start_wsl_tmux(),
         "name": "WSL tmux ceo-24x7",
     },
+    "bg_scheduler": {
+        "check": lambda: _check_python_script("background_scheduler"),
+        "start": lambda: _start_process(
+            [VENV_PYTHON, str(PROJECT_ROOT / "scripts" / "background_scheduler.py")]
+        ),
+        "name": "background_scheduler",
+    },
 }
 
 _BACKUP_TUNNEL_URL = None

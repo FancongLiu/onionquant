@@ -97,6 +97,8 @@ def main():
         ),
         # Heat collector — every 60 min all day (zero AI tokens)
         ("7 * * * *", "heat_collector.py", ["--once"], 120),
+        # Auto git commit — twice daily (10:07 morning + 22:07 evening BJT)
+        ("7 10,22 * * *", "auto_git_commit.py", [], 120),
     ]
 
     print(f"Watching {len(tasks)} tasks", flush=True)

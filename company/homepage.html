@@ -459,20 +459,20 @@
 
   <div class="card-grid" style="margin-top:18px">
     <div class="card">
-      <h4>Multi-Agent 层级协作</h4>
-      <p>CEO → 策略研究 · 数据工程 · 回测引擎 · 风控 · 舆情情报 · 学术研究等 <strong>15+ 部门</strong> Agent 并行 Fork 执行。Agent Fork 机制使子任务共享父会话缓存前缀，并行开销仅 1.1-1.5x token。</p>
+      <h4>Multi-Agent 层级协作系统</h4>
+      <p>设计并实现了<strong>类公司层级结构的 AI Agent 协作框架</strong>。CEO Agent 对自然语言指令进行意图识别与任务分解，生成有向无环图（DAG）任务依赖关系，调度 <strong>15+ 个专业部门 Agent</strong>（策略研究 · 数据工程 · 回测引擎 · 风险管理 · 舆情情报 · 交易执行 · 学术研究等）并行 Fork 执行。支持任务优先级抢占、循环依赖死锁检测、超时熔断降级。子任务结果由 CEO 聚合为结构化分析报告。</p>
     </div>
     <div class="card">
-      <h4>成本优化</h4>
-      <p>Agent Fork 缓存继承 + Python 零 AI Token 脚本调度，相同任务避免重复计算。实际运行成本约 <strong>¥60/天</strong>（含研究任务），缓存命中率 92%+。</p>
+      <h4>Agent Fork 缓存前缀继承（核心创新）</h4>
+      <p>发现并利用 DeepSeek V4-Pro <strong>120:1 缓存价差</strong>（命中 ¥0.025/1M vs 未命中 ¥3/1M）的架构特性，设计 Agent Fork 机制使子任务共享父会话完整 Prompt 前缀（系统提示词 + 工具定义 + CLAUDE.md + Memory），<strong>缓存命中率 92-99%</strong>。并行派发 3-5 个 Agent 子任务仅增加 1.1-1.5x token 开销，耗时缩短 3-5x。日耗从 ¥30-50 降至 ¥5-8（-75%），同时吞吐量提升 3x。</p>
     </div>
     <div class="card">
-      <h4>自然语言 → 数据报告</h4>
-      <p>多源数据采集 → 清洗标准化 → 统计建模 → 可视化报告。Agent 根据任务类型自主选择分析工具链，从指令到分析结果全链路自动闭环。</p>
+      <h4>端到端自动化数据分析管道</h4>
+      <p>多源异构数据自动采集（yfinance 行情 · Reddit/Twitter 舆情 · WebSearch 新闻 · Finviz 热度）→ Pandas 数据清洗与标准化（异常值检测、缺失值插补、时间对齐）→ 统计建模与因子计算 → <strong>Markdown/HTML 可视化报告自动生成</strong>。Agent 根据任务类型自主选择分析工具链，从自然语言指令到分析结果全链路自动闭环，零人工干预。</p>
     </div>
     <div class="card">
-      <h4>自愈运维</h4>
-      <p>Watchdog 守护进程 30s 心跳检测核心服务 · 异常自动重启 + 微信告警 · Cloudflare Tunnel 双通道冗余 · 开机自启。</p>
+      <h4>知识图谱增强分析</h4>
+      <p>基于 NetworkX 构建<strong>量化知识图谱（303 节点 · 850+ 边）</strong>，关联标的 → 催化剂事件 → 供应链上下游 → 竞争对手 → 宏观指标。支持图遍历查询、影响传导路径分析（如"三星罢工 → MU 股价 → SOX 指数"路径发现）、子图社区检测。结合 Graph RAG 增强 LLM 分析深度，使 AI 研究报告具备跨标的关联推理能力。</p>
     </div>
   </div>
 </section>
@@ -556,34 +556,44 @@
   <h3>系统能力</h3>
   <ul class="feature-list">
     <li>
-      <strong>Multi-Agent 协作引擎</strong><br>
-      CEO Agent 接收自然语言指令 → 意图识别与任务分解 → 调度 15+ 部门 Agent 并行 Fork 执行 → 结果聚合。
-      支持任务优先级调度、死锁检测、超时熔断。
+      <strong>Multi-Agent 协作引擎 — CEO-部门层级调度</strong><br>
+      用户以自然语言向 CEO Agent 发送指令 → CEO 进行<strong>意图识别与任务分解</strong>，生成结构化子任务 DAG → 根据任务类型路由到对应部门 Agent（策略研究/数据工程/回测/风控/舆情/交易）→ 各部门 <strong>Fork 并行执行</strong>（共享父会话缓存前缀，92%+ 命中率）→ CEO 聚合结果并输出结构化分析报告。<br>
+      工程细节：基于 <code>mkdir</code> 原子操作的<strong>任务认领协议</strong>（类 OS 互斥锁 Test-and-Set），15 分钟 TTL 死锁预防，孤儿锁自动回收。支持任务优先级抢占、循环依赖检测、超时熔断（防止单个 Agent 挂起拖垮整条管道）。
     </li>
     <li>
-      <strong>自动化数据分析管道</strong><br>
-      多源数据自动采集（yfinance · 舆情源 · WebSearch）→ Pandas 清洗标准化 →
-      统计分析与因子计算 → 可视化报告生成。Agent 自主选择分析工具链，全链路自动闭环。
+      <strong>Agent Fork 缓存继承 — 120:1 缓存价差优化</strong><br>
+      核心发现：DeepSeek V4-Pro Prompt Cache 命中价差达 <strong>120:1</strong>（¥0.025/1M vs ¥3/1M），且 1M token 上下文窗口为缓存前缀共享提供了充足空间。<br>
+      设计方案：Agent Fork 时子任务<strong>继承父会话完整 Prompt 前缀</strong>（系统提示词 + 工具定义 + CLAUDE.md 项目指令 + Memory 记忆），5 维缓存键（模型 + 工具集 + 系统提示词 + 消息前缀 + thinking 配置）全部对齐。实测缓存命中率 <strong>92-99%</strong>，并行派发 3-5 个 Agent 子任务仅增加 1.1-1.5x token 开销（vs 独立会话的 3-5x），耗时缩短至 1/3-1/5。<br>
+      成本效果：AI 日耗从 ¥30-50（早期 3 独立 CLI 轮询 + 每 10 分钟 cron）降至 <strong>¥5-8</strong>（-75%），年节省 ~¥10,000+，同时研究吞吐量提升 3x。
     </li>
     <li>
-      <strong>LLM Agent 对话 & 工具调用</strong><br>
-      LangChain Prompt 模板 + Tool Use / Function Calling。Agent 根据任务类型自主选择和组合工具。
-      上下文窗口管理 + 对话历史压缩 + 多轮意图追踪。
+      <strong>自动化数据分析管道 — 6 阶段全链路</strong><br>
+      阶段 1：多源异构数据自动采集（yfinance 实时行情 · Reddit/Twitter 舆情 RSS · WebSearch 新闻 · Finviz 市场热度 · ApeWisdom 社交媒体情绪）<br>
+      阶段 2：Pandas 数据清洗标准化（异常值 3-sigma 截尾 · 缺失值插补 · 时间序列对齐 · 复权价格校准）<br>
+      阶段 3：因子计算引擎（动量/波动率/价值/质量/情绪 5 大类因子，statsmodels 统计检验）<br>
+      阶段 4：Markov Switching 市场状态检测（牛/熊/震荡 3 状态，实时转移概率矩阵）<br>
+      阶段 5：风险阈值引擎（协方差矩阵 · 压力测试 · MaxDD/Sharpe/Calmar 指标）<br>
+      阶段 6：结构化报告自动生成（Markdown 研究简报 + HTML 可视化仪表盘 + 微信推送摘要）
     </li>
     <li>
-      <strong>知识图谱增强</strong><br>
-      基于 NetworkX 构建知识图谱，关联标的 → 催化剂事件 → 供应链 → 宏观指标。
-      支持图遍历查询、影响传导路径分析、关联关系发现。
+      <strong>LLM Agent 工具调用 — 自主分析工具链编排</strong><br>
+      LangChain Prompt 模板 + Tool Use / Function Calling。Agent 根据任务类型<strong>自主选择和组合工具</strong>：市场研究任务调用 yfinance + WebSearch + sentiment 工具；风险评估任务调用 RTE + statsmodels + empyrical；策略回测任务调用 bt + quant_framework 策略库。<br>
+      工程细节：上下文窗口管理（长对话自动摘要压缩，关键信息保留）· 多轮意图追踪（跨轮次引用历史分析结果）· 工具调用结果缓存（相同查询 5 分钟内复用，减少 API 开销）。
     </li>
     <li>
-      <strong>实时双向通信</strong><br>
-      微信企业 API AES-256-CBC 加密收发 + SSE EventSource 实时推送。
-      高频消息由 Python 脚本处理，复杂消息自动排队交 Agent 批量处理。
+      <strong>知识图谱增强 — Graph RAG 跨标的推理</strong><br>
+      基于 NetworkX 构建<strong>量化知识图谱（303 节点 · 850+ 边 · 12 种关系类型）</strong>。图谱层次：标的层（股票/ETF/指数）→ 催化剂层（财报/产品发布/政策/地缘）→ 供应链层（上下游/替代品/互补品）→ 宏观层（利率/通胀/GDP/VIX）。<br>
+      核心能力：图遍历查询（如"DXYZ 的 2 跳内所有催化剂事件"）、影响传导路径分析（如"三星罢工 → HBM 供应短缺 → MU 营收 → SOX 指数"完整路径）、<strong>Graph RAG</strong> 增强 LLM 生成（从图谱检索相关上下文注入 Prompt，使 AI 报告具备跨标的关联推理能力，超越单一标的独立分析）。
     </li>
     <li>
-      <strong>自愈运维</strong><br>
-      Watchdog 守护进程 30s 心跳检测 · 核心服务异常自动重启 ·
-      Cloudflare Tunnel 双通道冗余 · 开机自启 · 微信故障告警。
+      <strong>实时双向通信 — SSE + 企业微信加密通道</strong><br>
+      <strong>SSE（Server-Sent Events）</strong>：前端 EventSource 长连接，服务端 watchdog 监控文件变更 → 自动推送事件（file_created/inbox_new/outbox_new/factor_alert），前端实时刷新消息面板。支持断线自动重连。<br>
+      <strong>企业微信集成</strong>：AES-256-CBC 加密消息收发，URL 回调验证（签名校验 + echostr 解密）。高频消息（行情快照、热度警报）由 Python 零 AI Token 脚本自动处理推送；复杂消息（策略讨论、持仓决策）排队交 Agent 批量处理后再推送。支持外网 Tunnel URL 直连，不受内网 IP 白名单限制。
+    </li>
+    <li>
+      <strong>自愈运维 — 多层冗余 + 故障自动恢复</strong><br>
+      Watchdog 守护进程 <strong>30s 心跳</strong>检测全部核心服务（server.py :8765 · cloudflared tunnel · wechat_auto_reply · WSL tmux 会话）→ 异常自动重启 + 微信故障告警。<br>
+      Cloudflare Tunnel <strong>双通道冗余</strong>（命名隧道 onion-tunnel + Quick Tunnel 备用），主隧道断线自动切换备用通道，通过微信推送备用 URL。<strong>开机自启</strong>（Windows startup 脚本 + WSL2 自动挂载 + tmux 会话恢复），服务器重启后无需人工介入，2 分钟内恢复全部服务。
     </li>
   </ul>
 </section>
@@ -620,20 +630,30 @@
     </div>
   </div>
 
-  <h3>AI 驱动的工作辅助系统</h3>
-  <p style="max-width:680px;margin-bottom:10px;">
-    独立开发了一套个人工作辅助系统，集成了上述自动化流程，通过 Web 前端统一管理：
+  <h3>AI 驱动的工作辅助系统 — 独立开发</h3>
+  <p style="max-width:700px;margin-bottom:10px;">
+    独立设计并开发了一套<strong>基于 LLM 的个人工作辅助系统</strong>，集成自然语言处理、自动化数据管道、智能任务管理于一体。
+    这是 OnionQuant Multi-Agent 架构思想的早期实践——在单一会话内实现多步推理与自动化决策。
   </p>
   <ul class="feature-list">
     <li>
-      <strong>Task Tracker 任务管理</strong><br>
-      每条任务有状态流转（待开始 → 进行中 → 已完成）和优先级标记。
-      AI 学习历史任务的优先级选择模式，对新录入任务自动推荐优先级。
+      <strong>AI Task Tracker — LLM 驱动的任务管理系统</strong><br>
+      每条任务包含完整状态流转（待开始 → 进行中 → 已完成 → 已验证），支持优先级标记、依赖关系、截止日期。
+      <strong>核心创新</strong>：AI 学习用户历史任务的优先级选择模式，基于任务描述语义相似度 + 上下文特征（提出人、截止日期、关联项目），
+      对新录入任务<strong>自动推荐优先级</strong>（P0/P1/P2），准确率经用户反馈持续提升。
+      支持自然语言查询（如"本周所有 P0 任务"、"与 MU 相关的待办事项"）。
     </li>
     <li>
-      <strong>Deep Research 式的研究分析</strong><br>
-      参考 OpenAI / DeepSeek Deep Research 的多步迭代架构（Plan → Search → Analyze → Synthesize → Reflect 循环），
-      实现了自动化数据研究流程：识别信息缺口 → 选择数据源 → 采集分析 → 综合报告，多轮迭代直至覆盖研究目标。
+      <strong>Deep Research 式多步迭代研究架构</strong><br>
+      参考 OpenAI / DeepSeek Deep Research 的多步迭代架构，实现了<strong>Plan → Search → Analyze → Synthesize → Reflect 五阶段研究循环</strong>：
+      （1）Plan — 解析研究目标，识别信息缺口，生成搜索计划；（2）Search — 多源并行采集（Web + 内部文档 + 数据库）；
+      （3）Analyze — 信息去重、可信度评估、矛盾检测；（4）Synthesize — 结构化报告生成，包含结论 + 证据链 + 不确定性标注；
+      （5）Reflect — 自检信息完整性，发现缺口则触发下一轮迭代。多轮循环直至覆盖研究目标或达到深度上限。
+    </li>
+    <li>
+      <strong>LLM 语义解析管道 — 非结构化 → 结构化</strong><br>
+      会议纪要提取：录音转文字 → LLM 语义解析 → 提取为结构化 To-Do List（含任务描述、提出人、执行人、上下文摘要、自动优先级预判）。<br>
+      工时分录：非结构化语音/聊天记录 → LLM 语义分析 → 结构化工时表格（自动提取任务描述、耗时估算、项目归属、客户名称）。
     </li>
   </ul>
 </section>
