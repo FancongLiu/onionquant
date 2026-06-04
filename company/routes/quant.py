@@ -3,6 +3,7 @@ Quantitative analysis routes — factors, signals, backtest, optimization, strat
 """
 
 import random
+from datetime import datetime
 from fastapi import APIRouter
 
 from .shared import (
@@ -23,7 +24,7 @@ def _generate_factor_matrix():
         try:
             import pandas as pd
 
-            df = pd.concat([pd.read_parquet(f) for f in price_files[:5]])
+            df = pd.concat([pd.read_parquet(f) for f in price_files[:2]])
             if "ticker" in df.columns and len(df) > 100:
                 from quant_framework.strategies.qlib_factor_engine import (
                     compute_all_factors as compute_all,
@@ -81,7 +82,7 @@ async def quant_signals():
         try:
             import pandas as pd
 
-            df = pd.concat([pd.read_parquet(f) for f in price_files[:5]])
+            df = pd.concat([pd.read_parquet(f) for f in price_files[:2]])
             if "ticker" in df.columns and len(df) > 100:
                 from quant_framework.strategies.qlib_factor_engine import (
                     compute_all_factors,
@@ -170,7 +171,7 @@ async def quant_ic_trend():
         try:
             import pandas as pd
 
-            df = pd.concat([pd.read_parquet(f) for f in price_files[:5]])
+            df = pd.concat([pd.read_parquet(f) for f in price_files[:2]])
             if "ticker" in df.columns and len(df) > 300:
                 from quant_framework.strategies.qlib_factor_engine import (
                     compute_all_factors as compute_all,
@@ -243,7 +244,7 @@ async def quant_risk():
         if price_files:
             import pandas as pd
 
-            df = pd.concat([pd.read_parquet(f) for f in price_files[:5]])
+            df = pd.concat([pd.read_parquet(f) for f in price_files[:2]])
             if "close" in df.columns and len(df) > 50:
                 df["ret"] = df.groupby("ticker")["close"].pct_change()
                 returns = df["ret"].dropna()
@@ -285,7 +286,7 @@ async def bl_optimization():
         try:
             import pandas as pd
 
-            df = pd.concat([pd.read_parquet(f) for f in price_files[:5]])
+            df = pd.concat([pd.read_parquet(f) for f in price_files[:2]])
             if "close" in df.columns and "ticker" in df.columns and len(df) > 100:
                 prices = df.pivot_table(
                     index="date", columns="ticker", values="close"
@@ -360,7 +361,7 @@ async def portfolio_optimization(method: str = "mv"):
         try:
             import pandas as pd
 
-            df = pd.concat([pd.read_parquet(f) for f in price_files[:5]])
+            df = pd.concat([pd.read_parquet(f) for f in price_files[:2]])
             if "close" in df.columns and "ticker" in df.columns and len(df) > 100:
                 prices = df.pivot_table(
                     index="date", columns="ticker", values="close"
@@ -432,7 +433,7 @@ async def backtest_equity_curve():
             import pandas as pd
             import numpy as np
 
-            df = pd.concat([pd.read_parquet(f) for f in price_files[:5]])
+            df = pd.concat([pd.read_parquet(f) for f in price_files[:2]])
             if "close" in df.columns and "ticker" in df.columns and len(df) > 50:
                 prices = df.pivot_table(
                     index="date", columns="ticker", values="close"
@@ -488,7 +489,7 @@ async def strategy_comparison():
                 compare_strategies,
             )
 
-            df = pd.concat([pd.read_parquet(f) for f in price_files[:5]])
+            df = pd.concat([pd.read_parquet(f) for f in price_files[:2]])
             if "close" in df.columns and "ticker" in df.columns and len(df) > 100:
                 prices = df.pivot_table(
                     index="date", columns="ticker", values="close"
@@ -647,7 +648,7 @@ async def quant_risk_enhanced():
         try:
             import pandas as pd
 
-            df = pd.concat([pd.read_parquet(f) for f in price_files[:5]])
+            df = pd.concat([pd.read_parquet(f) for f in price_files[:2]])
             if "close" in df.columns and "ticker" in df.columns and len(df) > 100:
                 df["ret"] = df.groupby("ticker")["close"].pct_change()
                 returns = df["ret"].dropna()
@@ -768,7 +769,7 @@ async def param_sweep():
             import numpy as np
             from quant_framework.backtest.harness import vectorized_backtest
 
-            df = pd.concat([pd.read_parquet(f) for f in price_files[:5]])
+            df = pd.concat([pd.read_parquet(f) for f in price_files[:2]])
             if "close" in df.columns and "ticker" in df.columns and len(df) > 100:
                 prices = df.pivot_table(
                     index="date", columns="ticker", values="close"
@@ -924,7 +925,7 @@ async def strategy_sensitivity():
         )
 
         if price_files:
-            df = pd.concat([pd.read_parquet(f) for f in price_files[:5]])
+            df = pd.concat([pd.read_parquet(f) for f in price_files[:2]])
             if "close" in df.columns and "ticker" in df.columns and len(df) > 200:
                 from quant_framework.strategies.qlib_factor_engine import (
                     compute_all_factors,
@@ -1164,11 +1165,11 @@ async def stock_recommendations():
                 generate_signals,
             )
 
-            df = pd.concat([pd.read_parquet(f) for f in price_files[:5]])
+            df = pd.concat([pd.read_parquet(f) for f in price_files[:2]])
             if "close" not in df.columns or "ticker" not in df.columns:
                 raise ValueError("Data missing required columns")
 
-            factors = compute_all_factors(df, neutralize=True)
+            factors = compute_all_factors(df)
             exclude = {
                 "ticker",
                 "date",
