@@ -41,3 +41,39 @@ WECOM_CALLBACK_CREDS.md
 
 # GitHub 自动同步脚本的日志
 auto_sync_log.txt
+
+# ==================== 🔴 隐私保护 — 绝不提交 ====================
+
+# 日志文件（可能包含 URL 参数中的密码）
+*.log
+
+# 数据库文件（可能包含个人数据）
+*.db
+*.sqlite
+*.sqlite3
+
+# 董事长收件箱（微信聊天记录、个人指令）
+company/chairman_inbox/processed/
+
+# 执行上下文（持仓明细、资金量、交易记录）
+company/departments/execution/context_state.json
+
+# 微信推送记录（联系人信息）
+company/wechat_pushed.json
+
+# 研究报告（个人分析结论）
+company/reports/
+
+# 定时任务配置
+company/cron_config.json
+
+# 微信凭证说明文件
+WECOM_CALLBACK_CREDS.md
+
+# 市场监控数据快照（可能含个人持仓分析）
+company/market_snapshots/
+scripts/market_data/
+
+# 临时构建脚本
+_build_resume.py
+_build_resume_en.py
