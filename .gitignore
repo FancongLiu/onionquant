@@ -77,3 +77,32 @@ scripts/market_data/
 # 临时构建脚本
 _build_resume.py
 _build_resume_en.py
+
+# ==================== 🔴 运行时数据 — 绝不提交 ====================
+
+# 服务器日志（含 auth token）
+company/.server_log.txt
+
+# 运行时状态文件
+company/.watcher_state.json
+company/watcher_seen.json
+
+# 董事长持仓数据（个人财务信息）
+company/chairman_position_tracker.json
+
+# 舆情数据采集结果
+company/sentiment_data/collector/*.json
+!company/sentiment_data/collector/.gitkeep
+
+# 量化原始数据（过大的 parquet 文件）
+quant_framework/data/raw/**/*.parquet
+
+# HVAC 项目数据文件（可能含商业信息）
+projects/hvac_manuals/checkpoint.json
+projects/hvac_manuals/pdf_search_results.xlsx
+projects/hvac_manuals/manifest_backup_before_jci_update.json
+projects/hvac_manuals/_colleague_handoff/
+projects/hvac_manuals/_handoff_ref/
+
+# HVAC 下载的 PDF 手册（可从公开源重新下载）
+projects/hvac_manuals/pdf_downloads/
