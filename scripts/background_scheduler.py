@@ -99,6 +99,8 @@ def main():
         ("7 * * * *", "heat_collector.py", ["--once"], 120),
         # Auto git commit — twice daily (10:07 morning + 22:07 evening BJT)
         ("7 10,22 * * *", "auto_git_commit.py", [], 120),
+        # Health monitor — twice daily (08:03 + 20:03 BJT), auto-recover if server down
+        ("3 8,20 * * *", "health_monitor.py", [], 60),
     ]
 
     print(f"Watching {len(tasks)} tasks", flush=True)

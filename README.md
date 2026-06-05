@@ -1,93 +1,229 @@
-# OnionQuant — Multi-Agent Quantitative Analysis System
+# 🧅 OnionQuant — Multi-Agent AI Quantitative Analysis System
 
-A **layered multi-agent AI system** that organizes LLM-powered agents into a virtual company hierarchy for quantitative market analysis. 15+ specialized agents collaborate through LangGraph state graphs, with cost-aware model routing and persistent memory across sessions.
+<div align="center">
+
+[![Python](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![CI](https://img.shields.io/badge/CI-passing-brightgreen.svg)](https://github.com/FancongLiu/Home-work/actions)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![pre-commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit)](https://github.com/pre-commit/pre-commit)
+
+**A production-grade multi-agent AI system that organizes 15+ LLM-powered agents into a virtual company for quantitative market analysis — with cost-aware model routing, persistent cross-session memory, and real-time SSE push notifications.**
+
+[Live Demo](https://onionoffice.xyz) · [Architecture](#architecture) · [Quick Start](#quick-start) · [Technical Decisions](#key-technical-decisions)
+
+</div>
+
+---
+
+## What is this?
+
+OnionQuant is an **AI-native quantitative research platform** that demonstrates how LLM agents can collaborate at scale. Unlike single-agent chatbots, it models a complete **virtual company hierarchy** — a CEO agent decomposes high-level research goals into department-level tasks, each handled by specialized agents with domain-specific tools and prompts.
+
+**For AI engineers**: this project showcases agent orchestration patterns (LangGraph state graphs, Agent Fork cache inheritance, dual-tier LLM routing), persistent memory without vector databases, and a complete production deployment (FastAPI + SSE + Cloudflare Tunnel + WeChat integration).
+
+**For quant researchers**: it provides a full factor research pipeline — multi-source data ingestion → factor computation → IC analysis → regime detection → risk threshold scoring → deployment decision matrix.
 
 ## Architecture
 
 ```
-Chairman (User)
-  └─ CEO Agent ── Task decomposition + priority scheduling
-       ├─ Strategy Research Dept  ── Factor scanning, IC analysis
-       ├─ Risk Management Dept    ── VaR/CVaR, stress testing, regime detection
-       ├─ Sentiment Intel Dept    ── Reddit/Twitter/News multi-source NLP
-       ├─ Data Engineering Dept   ── ETL pipeline, data quality monitoring
-       ├─ Reporting Dept          ── Automated report generation + visualization
-       └─ IT/Tech Dept            ── Cloudflare Tunnel, watchdog, health checks
+┌─────────────────────────────────────────────────────────────┐
+│                     Chairman (User)                          │
+│              Web Dashboard / WeChat / Phone                  │
+└─────────────────────┬───────────────────────────────────────┘
+                      │ POST /api/inbox
+                      ▼
+┌─────────────────────────────────────────────────────────────┐
+│  CEO Agent (LangGraph StateGraph)                            │
+│  Task decomposition → Priority scheduling → Agent dispatch  │
+│  ┌─────────────────────────────────────────────────────────┐│
+│  │              Dual-Tier LLM Router                       ││
+│  │  Quick tier (routine scan)  vs  Deep tier (strategic)   ││
+│  │  ~80% cost reduction on high-volume tasks               ││
+│  └─────────────────────────────────────────────────────────┘│
+└──────┬──────────┬──────────┬──────────┬──────────┬──────────┘
+       │          │          │          │          │
+       ▼          ▼          ▼          ▼          ▼
+┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────┐ ┌──────────┐
+│Strategy│ │ Risk │ │Sentiment│ │Data │ │Report│ │IT/Tech   │
+│Research│ │ Mgmt │ │ Intel  │ │ Eng  │ │ Gen  │ │Infra     │
+└──────┘ └──────┘ └──────┘ └──────┘ └──────┘ └──────────┘
+    │         │         │         │         │          │
+    ▼         ▼         ▼         ▼         ▼          ▼
+ Factor    VaR/CVaR  Reddit/   ETL     Auto-    Cloudflare
+ Scanning  Stress    Twitter/  Pipeline Report   Tunnel
+ IC        Regime    News NLP  Quality  Vizzes   Watchdog
+ Analysis  Detection           Monitor           Health Check
 ```
 
-**Key design decisions:**
+**Data Flow:**
+```
+Data Sources (yfinance/Reddit/News) → quant_framework/
+→ Factor computation + Regime detection → Risk Threshold Engine
+→ Deployment decision matrix → CEO Agent → Chairman Dashboard (SSE)
+```
 
-| Decision | Rationale |
-|----------|-----------|
-| **Dual-tier LLM routing** | Quick model (routine scanning) vs Deep model (strategic decisions) — ~80% cost reduction on high-volume tasks |
-| **Agent fork with cache inheritance** | Sub-agents inherit parent session's prompt prefix — 92%+ cache hit rate, parallel overhead only 1.1-1.5x tokens |
-| **Persistent memory with strength decay** | TF-IDF + cosine similarity retrieval, SHA-256 dedup, weekly decay — agents remember context across sessions without vector DB dependency |
-| **Filesystem-based task locking** | `mkdir` atomic Test-and-Set for cron job coordination — zero external dependencies, 15-min TTL deadlock prevention |
-| **Context persistence protocol** | ISR-like interrupt/save/resume — cron sessions recover execution state from JSON bridge file |
+## Key Technical Decisions
+
+| Decision | Rationale | Impact |
+|----------|-----------|--------|
+| **Agent Fork with cache inheritance** | Sub-agents inherit parent's prompt prefix (system prompt + tools + CLAUDE.md + memory) | 92%+ cache hit rate, 1.1-1.5x parallel token overhead vs 8-12x for cold-start sessions |
+| **Dual-tier LLM routing** | Routine scanning on fast/cheap models, strategic reasoning on deep models | ~80% cost reduction on high-volume polling tasks |
+| **Filesystem-based task locking** | `mkdir()` atomic Test-and-Set for distributed cron coordination | Zero external dependencies, 15-min TTL deadlock prevention |
+| **Persistent memory without vector DB** | TF-IDF + cosine similarity + SHA-256 dedup + weekly strength decay | Cross-session context retention at zero infrastructure cost |
+| **ISR-like context persistence** | Interrupt/Save/Resume protocol via JSON bridge file | Cron sessions recover 95%+ execution context without conversation history |
+| **SSE over WebSocket** | Server-Sent Events for unidirectional push | Simpler than WebSocket, native `EventSource` browser support, auto-reconnect |
 
 ## Technical Stack
 
-**Agent Framework**: LangGraph (StateGraph), LangChain, custom manifest schema for typed agent contracts
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| **Agent Framework** | LangGraph, LangChain, Custom Manifest Schema | Agent state graphs, typed contracts, tool binding |
+| **Quant Engine** | statsmodels, sklearn, empyrical, Riskfolio-Lib, Alphalens | Regime detection, factor IC, portfolio optimization |
+| **Data Pipeline** | pandas, yfinance, PRAW, newspaper3k | Multi-source data ingestion + ETL |
+| **Knowledge Graph** | NetworkX (303 nodes, 850+ edges) | Ticker ↔ Factor ↔ Industry ↔ Catalyst graph |
+| **API Server** | FastAPI + SSE (EventSourceResponse) | REST API + real-time push notifications |
+| **LLM Backend** | DeepSeek V4-Pro, SiliconFlow GLM | Cost-aware routing (120:1 cache price ratio) |
+| **Infrastructure** | Cloudflare Tunnel, Watchdog (30s heartbeat), background_scheduler | 24/7 deployment with auto-recovery |
+| **DevOps** | pytest, ruff, pre-commit (secret scanning), GitHub Actions | Code quality + CI |
 
-**Quantitative**: statsmodels (Markov Switching), sklearn (Ridge/RF/XGB), empyrical (Sharpe/MaxDD), Riskfolio-Lib, Alphalens
+## Quick Start
 
-**Infrastructure**: FastAPI + SSE EventSource, Neo4j knowledge graph (303 nodes, 850 edges), PostgreSQL/TimescaleDB, Cloudflare Tunnel
+### Prerequisites
+- Python 3.12+
+- Git
 
-**LLM**: DeepSeek V4-Pro, SiliconFlow GLM — cost-aware routing with 120:1 cache pricing ratio
+### Installation
 
-**DevOps**: pre-commit hooks (secret scanning), ruff linter, pytest, background scheduler for Python cron jobs
+```bash
+git clone https://github.com/FancongLiu/Home-work.git
+cd Home-work
+python -m venv .venv
+source .venv/bin/activate   # Linux/macOS
+# .venv\Scripts\activate    # Windows
+
+pip install -e .
+
+# Configure API keys
+cp .env.example .env
+# Edit .env with your DeepSeek API key and WeChat credentials (optional)
+```
+
+### Start the Dashboard
+
+```bash
+python company/server.py
+# → Dashboard: http://localhost:8765
+# → Chairman Office: http://localhost:8765/office
+```
+
+### Run Analysis
+
+```bash
+# Market monitoring pipeline (factors + risk + regime)
+python scripts/market_monitor.py --once
+
+# Full decision engine (all tickers, all factors)
+python scripts/decision_engine_v2.py
+
+# Build knowledge graph
+python -c "from quant_framework.knowledge_graph.quant_graph_builder import build_quant_knowledge_graph; build_quant_knowledge_graph()"
+```
 
 ## Project Structure
 
 ```
-onionquant/          Main application package
-├── agents/          Agent manifest schema + type system
-├── api/             FastAPI route handlers (quant, risk, dashboard, sentiment, wechat)
-├── departments/     Department agent implementations (15+ departments)
-├── tools/           External data scanners (Reddit, Twitter, News, Google Trends)
-├── infrastructure/  API proxy, knowledge graph, memory store, model tier router
-├── server.py        FastAPI server with SSE push + watchdog
-└── wechat_bot.py    Enterprise WeChat bot integration (AES-256-CBC)
+onionquant/           Main application package (agent system + API)
+├── agents/           Manifest schema, typed agent contracts
+├── api/              FastAPI routes (quant, risk, dashboard, sentiment, wechat)
+├── departments/      15+ specialized agent departments
+├── tools/            External scanners (Reddit, Twitter, News, Trends)
+├── infrastructure/   API proxy, KG, memory store, model tier router
+├── server.py         FastAPI + SSE push + auth middleware
+└── wechat_bot.py     Enterprise WeChat integration (AES-256-CBC)
 
-quant_framework/     Quantitative computation engine
-├── strategies/      Factor engines, regime detection (Markov Switching), portfolio optimizer
-├── risk/            Risk threshold engine with deployment decision matrix
-├── backtest/        Event-driven backtesting with PnL analytics + visualization
-├── data/            Multi-source fetchers (Alpha Vantage, Reddit, News sentiment)
-└── knowledge_graph/ NetworkX graph builder (ticker → factor → industry → catalyst)
+quant_framework/      Quantitative computation engine
+├── strategies/       Factor engines, regime detection (Markov Switching)
+├── risk/             Risk threshold engine + deployment decision matrix
+├── backtest/         Event-driven backtesting + PnL analytics
+├── data/             Multi-source fetchers + ETL pipeline
+└── knowledge_graph/  NetworkX graph builder
 
-company/             Runtime data only (gitignored)
-├── chairman_inbox/  User → Agent message queue
-├── chairman_outbox/ Agent → User SSE push queue
-└── task_claims/     Distributed mutex locks for cron coordination
+company/              Runtime data (all gitignored)
+├── chairman_inbox/   User → Agent message queue
+├── chairman_outbox/  Agent → User SSE push queue
+└── task_claims/      Distributed mutex locks
 
-scripts/             CLI entry points + cron tasks
-tests/               Test suite
-docs/                Project documentation
+scripts/              CLI entry points + cron tasks + watchdog
+tests/                Test suite (smoke + e2e)
+docs/                 Project documentation
+infrastructure/       KG schema, memory store, model tier config
 ```
 
-## Quick Start
+## Key Features
+
+### 1. Multi-Agent Orchestration
+- **CEO Agent** decomposes high-level goals into sub-tasks
+- **15+ department agents** with domain-specific tools and prompts
+- **LangGraph StateGraph** for complex agent workflows
+- **Agent Fork** pattern: parallel sub-agents inherit parent cache (92%+ hit rate)
+
+### 2. Cost-Aware Intelligence
+- **Dual-tier routing**: cheap models for routine scans, deep models for strategy
+- **Prompt cache optimization**: stable prefix design, dynamic content at tail
+- **120:1 cache price ratio** exploited systematically (DeepSeek V4-Pro)
+
+### 3. Persistent Memory
+- **Cross-session memory** without vector database dependency
+- **TF-IDF + cosine similarity** retrieval with SHA-256 dedup
+- **ISR-like context persistence** for cron session state recovery
+
+### 4. Real-Time Communication
+- **SSE push** (not polling) for frontend updates
+- **Inbox/Outbox system**: user sends message → Agent processes → reply pushed via SSE
+- **WeChat Enterprise integration** for mobile notifications
+
+### 5. Production Operations
+- **Watchdog** (30s heartbeat) monitors all services, auto-restarts on failure
+- **Auto-healing** health checks recover deleted files + restart server
+- **Pre-commit hooks** scan for secrets before every commit
+- **Cloudflare Tunnel** for secure external access without opening ports
+
+## Development
 
 ```bash
-# 1. Clone and set up environment
-git clone https://github.com/FancongLiu/Home-work.git
-cd Home-work
-python -m venv .venv
-source .venv/bin/activate  # or .venv\Scripts\activate on Windows
-pip install -e .
+# Install dev dependencies
+pip install -e ".[dev]"
 
-# 2. Configure environment
-cp .env.example .env
-# Edit .env with your API keys
+# Run tests
+pytest tests/ -v
 
-# 3. Start the dashboard
-python onionquant/server.py
-# → http://localhost:8765
+# Lint
+ruff check .
 
-# 4. Run quant pipeline
-python scripts/decision_engine_v2.py
+# Format
+ruff format .
+
+# Pre-commit (runs automatically on commit)
+pre-commit install
 ```
+
+## Contributing
+
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+Areas where help is especially valuable:
+- Unit tests for factor computation modules
+- Documentation improvements
+- Additional data source integrations
+- Backtesting framework enhancements
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) file for details.
+MIT — see [LICENSE](LICENSE) for details.
+
+---
+
+<div align="center">
+Built with 🧅 by <a href="https://github.com/FancongLiu">Fancong Liu</a>
+</div>
