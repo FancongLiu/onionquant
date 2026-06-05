@@ -1,0 +1,95 @@
+{
+  "template": "classic",
+  "header": {
+    "name": "Ada Lovelace",
+    "contact": {
+      "location": "London, UK",
+      "email": "ada@example.com",
+      "phone": "+44 20 7946 0958"
+    },
+    "links": [
+      { "label": "github.com/ada", "href": "https://github.com/ada" },
+      { "label": "lovelace.dev", "href": "https://lovelace.dev" }
+    ]
+  },
+  "sections": [
+    {
+      "name": "Summary",
+      "kind": "prose",
+      "data": {
+        "body": "Mathematician and writer with a focus on the analytical engine. Interested in the marriage of mechanics and abstraction — particularly programs that produce music, art, and proofs."
+      }
+    },
+    {
+      "name": "Skills",
+      "kind": "keyvalue",
+      "data": {
+        "items": [
+          { "label": "Languages:", "value": "Analytical-engine assembly, French, Latin" },
+          { "label": "Math:", "value": "Differential calculus, Bernoulli numbers, symbolic algebra" },
+          { "label": "Tools:", "value": "Babbage's difference engine, mechanical loom punched cards" }
+        ]
+      }
+    },
+    {
+      "name": "Experience",
+      "kind": "timeline",
+      "data": {
+        "items": [
+          {
+            "title": "Translator and Annotator",
+            "org": "Self-employed",
+            "location": "London, UK",
+            "dates": "1842 – 1843",
+            "bullets": [
+              "Translated Luigi Menabrea's memoir on Charles Babbage's Analytical Engine from French to English.",
+              "Authored a set of Notes three times the length of the original, including what is considered the first computer algorithm — a method for computing Bernoulli numbers on the engine.",
+              "Anticipated general-purpose computation a century before the first electronic computer."
+            ]
+          },
+          {
+            "title": "Correspondent and Collaborator",
+            "org": "Charles Babbage's Workshop",
+            "dates": "1833 – 1843",
+            "bullets": [
+              "Maintained ongoing technical correspondence with Charles Babbage on the design of the Analytical Engine.",
+              "Drafted operational diagrams describing how punched cards could direct the engine through conditional branches and loops."
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "name": "Education",
+      "kind": "timeline",
+      "data": {
+        "items": [
+          {
+            "title": "Private tutelage in mathematics",
+            "org": "Under Augustus De Morgan, University of London",
+            "dates": "1840 – 1842"
+          },
+          {
+            "title": "Private tutelage in mathematics and music",
+            "org": "Various private tutors",
+            "dates": "1828 – 1840"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Selected Writings",
+      "kind": "list",
+      "data": {
+        "items": [
+          {
+            "text": "Notes on the Analytical Engine, by the Translator (1843)",
+            "href": "https://example.com/notes-on-the-analytical-engine"
+          },
+          { "text": "Letter to Charles Babbage on the Bernoulli sequence (1842)" },
+          { "text": "On the influence of imagination on mathematical reasoning (essay, 1841)" }
+        ]
+      }
+    }
+  ]
+}

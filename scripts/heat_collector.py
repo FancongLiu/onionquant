@@ -64,7 +64,7 @@ signal.signal(signal.SIGINT, handle_sigint)
 def collect_heat_rankings() -> dict | None:
     """采集 ApeWisdom 热度数据."""
     try:
-        from company.tools.heat_rankings import HeatRankings
+        from onionquant.tools.heat_rankings import HeatRankings
 
         engine = HeatRankings()
         engine.fetch_all_filters(max_pages_per_filter=5)
@@ -119,7 +119,7 @@ def collect_heat_rankings() -> dict | None:
 def collect_market_heat() -> dict | None:
     """采集市场热力数据."""
     try:
-        from company.tools.market_heat import MarketHeat
+        from onionquant.tools.market_heat import MarketHeat
 
         mh = MarketHeat()
         vol_results = mh.unusual_volume_scan(AI_CHAIN_TICKERS)

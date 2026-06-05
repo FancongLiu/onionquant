@@ -259,7 +259,7 @@
 - 项目根目录: `e:/2026_AgentStudy/Python_code/`
 - Python 虚拟环境: `.venv/`
 - Python 版本: 3.12
-- 前端服务器: `python company/server.py` → http://localhost:8765 (本地) / tunnel URL 见 context_state.json `key_context.tunnel_url` (外网)
+- 前端服务器: `python onionquant/server.py` → http://localhost:8765 (本地) / tunnel URL 见 context_state.json `key_context.tunnel_url` (外网)
 - **🔴 发微信/邮件/任何用户可见消息时，必须用外网 tunnel URL，绝不能用 localhost**
 - 启动前先 kill 旧进程: `taskkill //F //PID <pid>` (Windows)
 
@@ -269,12 +269,13 @@
 - **董事长回复**: 点批准/拒绝 → 写入 inbox → Agent 下轮读到
 
 ## 项目结构
-- `company/` — 公司架构、部门、前端、报告
-- `quant_framework/` — 量化代码 (data, strategies, risk)
-- `infrastructure/` — Docker Compose, Dagster, TimescaleDB
-- `TASK_TRACKER.md` — 任务追踪面板
-- `KNOWLEDGE_GRAPH.md` — 知识图谱
-- `RESEARCH_ROADMAP.md` — 研究路线图
+- `onionquant/` — 主源码包 (server, agents, api, departments, tools, wechat_bot)
+- `quant_framework/` — 量化代码 (data, strategies, risk, backtest)
+- `infrastructure/` — 基础设施 (KG schema, memory store, model tier, quant pipeline)
+- `company/` — 运行时数据 (inbox, outbox, task_claims, execution state)
+- `docs/` — 项目文档 (TASK_TRACKER, KNOWLEDGE_GRAPH, RESEARCH_ROADMAP)
+- `scripts/` — CLI 脚本 & cron 任务
+- `tests/` — 测试套件
 
 ## 🔬 量化工具栈 (禁止手搓分析)
 
@@ -296,7 +297,7 @@
 - `python scripts/market_monitor.py --loop` — 持续循环模式 (每5分钟)
 - `python -c "from quant_framework.knowledge_graph.quant_graph_builder import build_quant_knowledge_graph; build_quant_knowledge_graph()"` — 知识图谱
 
-**部门技能**: `company/departments/strategy_research/SKILL.md` / `risk_management/SKILL.md`
+**部门技能**: `onionquant/departments/strategy_research/SKILL.md` / `risk_management/SKILL.md`
 
 ### DXYZ Starship 回测铁律 (2026-05-18 实测)
 - DXYZ 7次历史 Starship 事件, 胜率仅 14% (1/7), 平均收益 -1.4%

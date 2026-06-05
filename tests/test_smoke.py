@@ -1577,9 +1577,9 @@ def test_import_manifest_schema():
 
 def test_agent_manifests():
     from pathlib import Path
-    from company.agents.manifest_schema import ManifestRegistry
+    from onionquant.agents.manifest_schema import ManifestRegistry
 
-    manifests_dir = Path("company/agents/manifests")
+    manifests_dir = Path("onionquant/agents/manifests")
     if not manifests_dir.exists():
         pytest.skip("manifests directory not found")
 

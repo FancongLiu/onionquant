@@ -1,0 +1,552 @@
+{
+  "timestamp": "2026-06-04T22:08:38.933450+00:00",
+  "timestamp_display": "2026-06-04 22:08 UTC",
+  "heat": {
+    "source": "ApeWisdom v2.0",
+    "total_stocks": 759,
+    "top_20": [
+      {
+        "ticker": "AVGO",
+        "mentions": 868,
+        "rank": 1,
+        "rank_change": 5,
+        "subreddits": [
+          "4chan",
+          "Daytrading",
+          "investing",
+          "options",
+          "stocks"
+        ]
+      },
+      {
+        "ticker": "MU",
+        "mentions": 759,
+        "rank": 2,
+        "rank_change": 1,
+        "subreddits": [
+          "4chan",
+          "WallstreetbetsELITE",
+          "investing",
+          "stocks",
+          "wallstreetbets"
+        ]
+      },
+      {
+        "ticker": "SPY",
+        "mentions": 430,
+        "rank": 3,
+        "rank_change": 2,
+        "subreddits": [
+          "4chan",
+          "Daytrading",
+          "investing",
+          "options",
+          "stocks"
+        ]
+      },
+      {
+        "ticker": "MRVL",
+        "mentions": 320,
+        "rank": 4,
+        "rank_change": -3,
+        "subreddits": [
+          "4chan",
+          "Daytrading",
+          "WallstreetbetsELITE",
+          "stocks",
+          "wallstreetbets"
+        ]
+      },
+      {
+        "ticker": "NVDA",
+        "mentions": 297,
+        "rank": 5,
+        "rank_change": 2,
+        "subreddits": [
+          "4chan",
+          "Daytrading",
+          "investing",
+          "options",
+          "stocks"
+        ]
+      },
+      {
+        "ticker": "MSFT",
+        "mentions": 238,
+        "rank": 6,
+        "rank_change": -2,
+        "subreddits": [
+          "4chan",
+          "Daytrading",
+          "WallstreetbetsELITE",
+          "investing",
+          "stocks"
+        ]
+      },
+      {
+        "ticker": "LULU",
+        "mentions": 219,
+        "rank": 7,
+        "rank_change": 63,
+        "subreddits": [
+          "wallstreetbets"
+        ]
+      },
+      {
+        "ticker": "SPCE",
+        "mentions": 153,
+        "rank": 8,
+        "rank_change": -6,
+        "subreddits": [
+          "4chan",
+          "Daytrading",
+          "WallstreetbetsELITE",
+          "investing",
+          "options"
+        ]
+      },
+      {
+        "ticker": "QQQ",
+        "mentions": 149,
+        "rank": 9,
+        "rank_change": 2,
+        "subreddits": [
+          "4chan",
+          "Daytrading",
+          "investing",
+          "stocks",
+          "wallstreetbets"
+        ]
+      },
+      {
+        "ticker": "MSTR",
+        "mentions": 138,
+        "rank": 10,
+        "rank_change": 8,
+        "subreddits": [
+          "4chan",
+          "investing",
+          "stocks",
+          "wallstreetbets"
+        ]
+      },
+      {
+        "ticker": "RDDT",
+        "mentions": 135,
+        "rank": 11,
+        "rank_change": 21,
+        "subreddits": [
+          "4chan",
+          "investing",
+          "stocks",
+          "wallstreetbets"
+        ]
+      },
+      {
+        "ticker": "NOW",
+        "mentions": 120,
+        "rank": 12,
+        "rank_change": -2,
+        "subreddits": [
+          "4chan",
+          "Daytrading",
+          "Wallstreetbetsnew",
+          "investing",
+          "stocks"
+        ]
+      },
+      {
+        "ticker": "AMD",
+        "mentions": 119,
+        "rank": 13,
+        "rank_change": 2,
+        "subreddits": [
+          "4chan",
+          "investing",
+          "options",
+          "stocks",
+          "wallstreetbets"
+        ]
+      },
+      {
+        "ticker": "PL",
+        "mentions": 95,
+        "rank": 14,
+        "rank_change": 70,
+        "subreddits": [
+          "4chan",
+          "stocks",
+          "wallstreetbets"
+        ]
+      },
+      {
+        "ticker": "CXAI",
+        "mentions": 93,
+        "rank": 15,
+        "rank_change": 41,
+        "subreddits": [
+          "wallstreetbets"
+        ]
+      },
+      {
+        "ticker": "SPCX",
+        "mentions": 88,
+        "rank": 16,
+        "rank_change": 6,
+        "subreddits": [
+          "4chan",
+          "investing",
+          "options",
+          "stocks",
+          "wallstreetbets"
+        ]
+      },
+      {
+        "ticker": "DTE",
+        "mentions": 78,
+        "rank": 17,
+        "rank_change": 9,
+        "subreddits": [
+          "4chan",
+          "Daytrading",
+          "WallstreetbetsELITE",
+          "investing",
+          "options"
+        ]
+      },
+      {
+        "ticker": "ASTS",
+        "mentions": 72,
+        "rank": 18,
+        "rank_change": -4,
+        "subreddits": [
+          "4chan",
+          "stocks",
+          "wallstreetbets"
+        ]
+      },
+      {
+        "ticker": "TSLA",
+        "mentions": 70,
+        "rank": 19,
+        "rank_change": 5,
+        "subreddits": [
+          "investing",
+          "options",
+          "stocks",
+          "wallstreetbets"
+        ]
+      },
+      {
+        "ticker": "BB",
+        "mentions": 68,
+        "rank": 20,
+        "rank_change": -12,
+        "subreddits": [
+          "Daytrading",
+          "Wallstreetbetsnew",
+          "stocks",
+          "wallstreetbets"
+        ]
+      }
+    ],
+    "ai_chain": [
+      {
+        "ticker": "AVGO",
+        "mentions": 868,
+        "rank": 1,
+        "rank_change": 5,
+        "subreddit_count": 6
+      },
+      {
+        "ticker": "MU",
+        "mentions": 759,
+        "rank": 2,
+        "rank_change": 1,
+        "subreddit_count": 5
+      },
+      {
+        "ticker": "MRVL",
+        "mentions": 320,
+        "rank": 4,
+        "rank_change": -3,
+        "subreddit_count": 5
+      },
+      {
+        "ticker": "NVDA",
+        "mentions": 297,
+        "rank": 5,
+        "rank_change": 2,
+        "subreddit_count": 6
+      },
+      {
+        "ticker": "AMD",
+        "mentions": 119,
+        "rank": 13,
+        "rank_change": 2,
+        "subreddit_count": 5
+      },
+      {
+        "ticker": "ASTS",
+        "mentions": 72,
+        "rank": 18,
+        "rank_change": -4,
+        "subreddit_count": 3
+      },
+      {
+        "ticker": "SNDK",
+        "mentions": 64,
+        "rank": 23,
+        "rank_change": -3,
+        "subreddit_count": 3
+      },
+      {
+        "ticker": "RKLB",
+        "mentions": 61,
+        "rank": 25,
+        "rank_change": -6,
+        "subreddit_count": 4
+      },
+      {
+        "ticker": "INTC",
+        "mentions": 19,
+        "rank": 53,
+        "rank_change": -14,
+        "subreddit_count": 5
+      },
+      {
+        "ticker": "AAOI",
+        "mentions": 18,
+        "rank": 61,
+        "rank_change": 123,
+        "subreddit_count": 3
+      },
+      {
+        "ticker": "RDW",
+        "mentions": 18,
+        "rank": 62,
+        "rank_change": 19,
+        "subreddit_count": 2
+      },
+      {
+        "ticker": "CIEN",
+        "mentions": 17,
+        "rank": 68,
+        "rank_change": 633,
+        "subreddit_count": 1
+      },
+      {
+        "ticker": "TSM",
+        "mentions": 14,
+        "rank": 74,
+        "rank_change": 89,
+        "subreddit_count": 3
+      },
+      {
+        "ticker": "LITE",
+        "mentions": 14,
+        "rank": 75,
+        "rank_change": -2,
+        "subreddit_count": 3
+      },
+      {
+        "ticker": "LUNR",
+        "mentions": 12,
+        "rank": 84,
+        "rank_change": -47,
+        "subreddit_count": 3
+      },
+      {
+        "ticker": "ANET",
+        "mentions": 3,
+        "rank": 196,
+        "rank_change": -32,
+        "subreddit_count": 2
+      },
+      {
+        "ticker": "FN",
+        "mentions": 2,
+        "rank": 281,
+        "rank_change": 640,
+        "subreddit_count": 1
+      },
+      {
+        "ticker": "COHR",
+        "mentions": 1,
+        "rank": 706,
+        "rank_change": -513,
+        "subreddit_count": 2
+      }
+    ],
+    "rising_10": [
+      {
+        "ticker": "STI",
+        "mentions": 49,
+        "rank_change": 1199
+      },
+      {
+        "ticker": "RBRK",
+        "mentions": 19,
+        "rank_change": 1158
+      },
+      {
+        "ticker": "MOBX",
+        "mentions": 5,
+        "rank_change": 1080
+      },
+      {
+        "ticker": "TKO",
+        "mentions": 6,
+        "rank_change": 1065
+      },
+      {
+        "ticker": "AMPX",
+        "mentions": 8,
+        "rank_change": 1024
+      },
+      {
+        "ticker": "OWL",
+        "mentions": 8,
+        "rank_change": 973
+      },
+      {
+        "ticker": "IBRX",
+        "mentions": 6,
+        "rank_change": 941
+      },
+      {
+        "ticker": "OUST",
+        "mentions": 5,
+        "rank_change": 856
+      },
+      {
+        "ticker": "MAGA",
+        "mentions": 7,
+        "rank_change": 647
+      },
+      {
+        "ticker": "CIEN",
+        "mentions": 17,
+        "rank_change": 633
+      }
+    ]
+  },
+  "market": {
+    "source": "MarketHeat",
+    "volume_heat": [
+      {
+        "ticker": "CIEN",
+        "volume_ratio": 3.41,
+        "current_volume": 7588956,
+        "price_change_pct": -13.66,
+        "heat_level": "🔥🔥🔥 极度放量"
+      },
+      {
+        "ticker": "AVGO",
+        "volume_ratio": 3.05,
+        "current_volume": 80554978,
+        "price_change_pct": -12.59,
+        "heat_level": "🔥🔥🔥 极度放量"
+      },
+      {
+        "ticker": "MRVL",
+        "volume_ratio": 1.67,
+        "current_volume": 85668645,
+        "price_change_pct": 4.9,
+        "heat_level": "🔥 温和放量"
+      },
+      {
+        "ticker": "AAOI",
+        "volume_ratio": 1.29,
+        "current_volume": 14399786,
+        "price_change_pct": 10.22,
+        "heat_level": "正常"
+      },
+      {
+        "ticker": "RDW",
+        "volume_ratio": 1.12,
+        "current_volume": 74644188,
+        "price_change_pct": 15.09,
+        "heat_level": "正常"
+      },
+      {
+        "ticker": "COHR",
+        "volume_ratio": 1.06,
+        "current_volume": 6001404,
+        "price_change_pct": 1.07,
+        "heat_level": "正常"
+      },
+      {
+        "ticker": "MU",
+        "volume_ratio": 1.03,
+        "current_volume": 53659458,
+        "price_change_pct": -7.74,
+        "heat_level": "正常"
+      },
+      {
+        "ticker": "LITE",
+        "volume_ratio": 1.03,
+        "current_volume": 6005503,
+        "price_change_pct": 0.75,
+        "heat_level": "正常"
+      },
+      {
+        "ticker": "TSM",
+        "volume_ratio": 1.0,
+        "current_volume": 10923566,
+        "price_change_pct": 1.88,
+        "heat_level": "正常"
+      },
+      {
+        "ticker": "AMD",
+        "volume_ratio": 0.9,
+        "current_volume": 28296824,
+        "price_change_pct": -3.56,
+        "heat_level": "正常"
+      },
+      {
+        "ticker": "ANET",
+        "volume_ratio": 0.89,
+        "current_volume": 8901442,
+        "price_change_pct": -4.79,
+        "heat_level": "正常"
+      },
+      {
+        "ticker": "NVDA",
+        "volume_ratio": 0.88,
+        "current_volume": 167707274,
+        "price_change_pct": 1.82,
+        "heat_level": "正常"
+      },
+      {
+        "ticker": "RKLB",
+        "volume_ratio": 0.87,
+        "current_volume": 24644721,
+        "price_change_pct": 4.58,
+        "heat_level": "正常"
+      },
+      {
+        "ticker": "INTC",
+        "volume_ratio": 0.64,
+        "current_volume": 76359899,
+        "price_change_pct": -0.83,
+        "heat_level": "缩量"
+      },
+      {
+        "ticker": "LUNR",
+        "volume_ratio": 0.61,
+        "current_volume": 12559562,
+        "price_change_pct": -0.59,
+        "heat_level": "缩量"
+      },
+      {
+        "ticker": "ASTS",
+        "volume_ratio": 0.55,
+        "current_volume": 16629388,
+        "price_change_pct": -0.41,
+        "heat_level": "缩量"
+      }
+    ],
+    "finviz_unusual": []
+  }
+}

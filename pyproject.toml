@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=75.0", "wheel>=0.44"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "onionquant"
+version = "0.1.0"
+description = "Multi-Agent Quantitative Analysis System — layered AI agents for factor research, regime detection, and market analysis"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.12"
+authors = [
+    {name = "Fancong Liu", email = "liufancong2002@163.com"},
+]
+keywords = [
+    "quantitative-analysis",
+    "multi-agent",
+    "ai-agent",
+    "langgraph",
+    "factor-research",
+    "market-regime",
+    "risk-management",
+    "llm-orchestration",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Office/Business :: Financial :: Investment",
+]
+
+[project.urls]
+Homepage = "https://onionoffice.xyz"
+Repository = "https://github.com/FancongLiu/Home-work"
+Documentation = "https://github.com/FancongLiu/Home-work/blob/main/README.md"
+
+[tool.setuptools.packages.find]
+include = ["onionquant*", "quant_framework*", "infrastructure*"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["projects", "tradingagents", ".venv", ".venv-linux", "lib"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

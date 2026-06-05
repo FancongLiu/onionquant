@@ -38,7 +38,7 @@ timeout /t 2 /nobreak >nul
 
 REM ── 启动服务器 ──
 echo 🚀 启动 Dashboard Server...
-start "OnionQuant-Server" /MIN .venv\Scripts\python company/server.py
+start "OnionQuant-Server" /MIN .venv\Scripts\python onionquant/server.py
 
 REM ── 等待服务器就绪 ──
 echo ⏳ 等待服务器就绪...

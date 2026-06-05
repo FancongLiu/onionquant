@@ -20,7 +20,7 @@ OUT_PATH = PROJECT_ROOT / "company" / "reports" / "knowledge_graph_onionquant.ht
 
 
 def scan_departments() -> dict:
-    """Scan company/agents/manifests/ for department YAMLs."""
+    """Scan onionquant/agents/manifests/ for department YAMLs."""
     dept_info = {}
     manifest_dir = PROJECT_ROOT / "company" / "agents" / "manifests"
     if not manifest_dir.exists():

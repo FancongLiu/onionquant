@@ -24,6 +24,6 @@ echo    浏览器打开: http://localhost:8765
 echo    按 Ctrl+C 停止
 echo.
 
-.venv\Scripts\python company/server.py
+.venv\Scripts\python onionquant/server.py
 
 pause
