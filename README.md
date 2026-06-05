@@ -84,7 +84,7 @@ Data Sources (yfinance/Reddit/News) → quant_framework/
 | **Knowledge Graph** | NetworkX (303 nodes, 850+ edges) | Ticker ↔ Factor ↔ Industry ↔ Catalyst graph |
 | **API Server** | FastAPI + SSE (EventSourceResponse) | REST API + real-time push notifications |
 | **LLM Backend** | DeepSeek V4-Pro, SiliconFlow GLM | Cost-aware routing (120:1 cache price ratio) |
-| **Infrastructure** | Cloudflare Tunnel, Watchdog (30s heartbeat), background_scheduler | 24/7 deployment with auto-recovery |
+| **Infrastructure** | Cloudflare Tunnel, Watchdog (30s heartbeat), Docker, background_scheduler | 24/7 deployment with auto-recovery |
 | **DevOps** | pytest, ruff, pre-commit (secret scanning), GitHub Actions | Code quality + CI |
 
 ## Quick Start

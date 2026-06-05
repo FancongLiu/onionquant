@@ -101,6 +101,8 @@ def main():
         ("7 10,22 * * *", "auto_git_commit.py", [], 120),
         # Health monitor — twice daily (08:03 + 20:03 BJT), auto-recover if server down
         ("3 8,20 * * *", "health_monitor.py", [], 60),
+        # Content reviewer — twice daily (09:13 + 21:13 BJT), no AI tokens
+        ("13 9,21 * * *", "content_review.py", [], 60),
     ]
 
     print(f"Watching {len(tasks)} tasks", flush=True)
