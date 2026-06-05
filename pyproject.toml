@@ -34,8 +34,8 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://onionoffice.xyz"
-Repository = "https://github.com/FancongLiu/Home-work"
-Documentation = "https://github.com/FancongLiu/Home-work/blob/main/README.md"
+Repository = "https://github.com/FancongLiu/onionquant"
+Documentation = "https://github.com/FancongLiu/onionquant/blob/main/README.md"
 
 [tool.setuptools.packages.find]
 include = ["onionquant*", "quant_framework*", "infrastructure*"]
