@@ -1475,7 +1475,9 @@ async def api_research_catalysts():
     }
 
 
-static_dir = PROJECT_ROOT / "company" / "static"
+static_dir = PROJECT_ROOT / "onionquant" / "static"
+if not static_dir.exists():
+    static_dir = PROJECT_ROOT / "company" / "static"
 if static_dir.exists():
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
