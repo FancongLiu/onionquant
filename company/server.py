@@ -1221,7 +1221,7 @@ async def root(request: Request):
         return HTMLResponse("<h1>Chairman Office not found.</h1>")
 
     # Public visitor → personal homepage
-    homepage = PROJECT_ROOT / "company" / "homepage.html"
+    homepage = PROJECT_ROOT / "onionquant" / "homepage.html"
     if homepage.exists():
         return HTMLResponse(homepage.read_text(encoding="utf-8"))
     return HTMLResponse("<h1>OnionQuant</h1><p>AI Engineer & Quant Developer</p>")
