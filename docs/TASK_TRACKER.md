@@ -1,6 +1,6 @@
 # 📋 任务追踪面板
 
-> **最后更新**：2026-06-05 00:20 CST (2h研究迭代v13·5天补课完成·✅MU HBM4三家确认·AVGO-15%至$410·CRDO triple beat→selloff·NVDA Computex满分:N1X RTX Spark+Vera Rubin+CPO·COHR+17%→获利回吐至$403·LITE+13%→回吐至$896·DXYZ-37%→反弹至$43.60·SPCX $135路演中·🔴今日非农20:30 CST+70%gamma到期·SOXX流出$907.5M·Burry SOXX看跌·6/24 MU财报)
+> **最后更新**：2026-06-05 21:30 CST (v16 NFP day研究迭代·✅NFP 172K beat(共识85-95K)·加息概率48→68%·SOX ATH13890→13617(-2.15%日内-6%)·High beta crushed ARM-8%MRVL-8%MU-6.25%AMD-5.7%·NVDA独涨+1.82%·gamma到期已过·DXYZ$40.43 premium 63%·SPCX路演D2 insatiable·AVGO 0 Sell 8家上调PT·DRAM Q3减速确认·Samsung HBM4E首发·3 agent fork完成·全文BRIEF_20260605_NFP_research.md)
 > **执行模式**：Claude Code 2 cron (research :07 + inbox :37) + 并行子Agent
 > **自动批准**：🤖 ON (非安全问题自动执行)
 > **驱动官**：⚔️ 铁腕·极限驱动部
@@ -357,6 +357,24 @@
 | T967 | DXYZ+存储股舆情实时监控面板 | IT技术部 | P1 | ✅ /api/sentiment/dxyz + /api/sentiment/watchlist + yfinance news + price_sentiment(趋势/波动比) |
 | T968 | 12股投资组合优化 (Riskfolio-Lib) | 风险管理部 | P1 | ✅ MV(WDC42%), Kelly(WDC65%), RiskParity(GE20%), HRP(GE29%). DXYZ仅2.9-6.5%因高波动 |
 | T969 | 每日DXYZ简报自动生成 (cron) | 汇报展示部 | P0 | ✅ scripts/daily_dxyz_briefing.py: 价格+指标+新闻+预警+outbox告警 |
+
+## 📊 研究迭代 v16 (2026-06-05 NFP Day · 3 Agent Fork)
+
+> 🔴 NFP 172K beat(共识85-95K) · 加息概率48→68% · SOX 13890ATH→13617(-2.15%日内-6%) · High beta crushed · NVDA独涨+1.82%
+> DXYZ $40.43(premium 63%压缩) · SPCX路演D2 insatiable · AVGO 0 Sell 8家上调PT · DRAM Q3减速确认 · Samsung HBM4E首发
+> 全文: BRIEF_20260605_NFP_research.md
+
+| 领域 | 核心发现 |
+|------|---------|
+| 🔴 Macro | NFP 172K大幅beat → 12月加息68% · 10Y>4.5% 30Y>5% · VIX 15.77 complacent · SOX日内-6%收-2.15% · 禁止交易决策正确 |
+| 🔴 MRVL | NFP日-8% · 接近$275硬止损 · 确认当前价格 · 反弹$295-300减仓 |
+| 🟡 DXYZ | $40.43(2周-37%) · 6/12 SPCX上市+DXYZ财报同日 · GBTC类比实时演绎 · 清仓加速 |
+| 🟡 AVGO | Post-earnings -15%至$411 · 华尔街0 Sell · 8家24h上调PT(JPM$580/Jeff$550) · 200MA$397 |
+| 🟡 MU | $960-991(ATH$1079-8~11%) · DRAM Q3确认减速(PC+8-13%vsQ2+46%) · CEO卖$57M@ATH · 等$950-980 |
+| 🟢 NVDA | +1.82%NFP日唯一涨 · flight-to-quality+$80B回购 · Senate 6/11听证· Jensen须6/8前确认 |
+| 🟢 SPCX | 路演D2 insatiable · Fidelity最低$2000 · 5零售券商 · SpaceX 4天拿$6.45B军事合同 |
+| 🟡 航天 | RKLB$120内部卖$68M · ASTS$107 DB降级 · LUNR$30.69 $500M ATM稀释 · RDW$21.57毛利率9% |
+| 🟢 光学 | COHR~$410(B2B>4x·高于入口$360-380)· LITE~$935(入<$1000入口·173xPE谨慎)· InP短缺扩大 |
 
 ## 🟢 新任务 (Sprint 25 — 量化研究优先 · 71→12去重精简)
 
