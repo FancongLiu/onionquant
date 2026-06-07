@@ -59,8 +59,13 @@ auto_sync_log.txt
 # 董事长收件箱（微信聊天记录、个人指令）
 company/chairman_inbox/processed/
 
-# 执行上下文（持仓明细、资金量、交易记录）
+# 执行上下文和运行时状态（持仓明细、资金量、交易记录、监控状态）
 company/departments/execution/context_state.json
+company/departments/execution/monitor_state.json
+company/departments/execution/*.json
+company/departments/execution/*.txt
+company/departments/execution/*.bin
+company/departments/execution/*.jsonl
 
 # 微信推送记录（联系人信息）
 company/wechat_pushed.json
