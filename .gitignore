@@ -36,6 +36,10 @@ company/task_claims/*/.claim/
 # Agent 发件箱（可能包含敏感信息如 API key）
 company/chairman_outbox/
 
+# 微信锁文件
+company/.wechat_locks/
+company/wechat_locks/
+
 # 凭证文件（绝对不能提交）
 WECOM_CALLBACK_CREDS.md
 
@@ -106,3 +110,11 @@ projects/hvac_manuals/_handoff_ref/
 
 # HVAC 下载的 PDF 手册（可从公开源重新下载）
 projects/hvac_manuals/pdf_downloads/
+
+# ==================== 🔴 董事长个人成长数据 — 绝不提交 ====================
+# 包含薪资、技能缺口、跳槽计划、面试准备等敏感个人信息
+# SKILL.md 是 AI agent 技能定义，不含个人数据，可以提交
+onionquant/departments/chairman_growth/_INDEX.md
+onionquant/departments/chairman_growth/skill_inventory.md
+onionquant/departments/chairman_growth/learning_roadmap.md
+onionquant/departments/chairman_growth/market_intel.md

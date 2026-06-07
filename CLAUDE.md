@@ -297,7 +297,15 @@
 - `python scripts/market_monitor.py --loop` — 持续循环模式 (每5分钟)
 - `python -c "from quant_framework.knowledge_graph.quant_graph_builder import build_quant_knowledge_graph; build_quant_knowledge_graph()"` — 知识图谱
 
-**部门技能**: `onionquant/departments/strategy_research/SKILL.md` / `risk_management/SKILL.md`
+**部门技能**: `onionquant/departments/strategy_research/SKILL.md` / `risk_management/SKILL.md` / `chairman_growth/SKILL.md`
+
+### 🔴 董事长成长系统 (Chairman Growth Department)
+
+每次会话开始时，检查 `onionquant/departments/chairman_growth/skill_inventory.md` 和 `learning_roadmap.md`。当董事长提到学习、面试、换工作、技能相关话题时，主动：
+1. 更新技能清单（学了什么、到什么程度）
+2. 检查学习路线是否需要调整
+3. 如有重大变化，同时更新 memory 目录确保跨会话持久化
+4. 每两周用 WebSearch 扫描最新 AI 岗位市场趋势，更新 `market_intel.md`
 
 ### DXYZ Starship 回测铁律 (2026-05-18 实测)
 - DXYZ 7次历史 Starship 事件, 胜率仅 14% (1/7), 平均收益 -1.4%
