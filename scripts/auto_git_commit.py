@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """
-Daily auto-commit — stages all changes and pushes to GitHub.
+Daily auto-commit — safely stages non-sensitive changes and pushes to GitHub.
 Runs twice a day (morning + evening Beijing time).
-Does NOT commit .env or credential files.
+
+SAFETY: Never stages files matching SENSITIVE_PATTERNS.
+.gitignore provides a second layer of protection.
+pre-commit hook scans for secrets before every commit.
 """
 
 import subprocess
@@ -13,7 +16,19 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 BEIJING_TZ = timezone(timedelta(hours=8))
 
-SENSITIVE_PATTERNS = [".env", "credentials", ".key", ".pem", "secret", "password"]
+# Files/paths matching any of these patterns are NEVER auto-committed
+SENSITIVE_PATTERNS = [
+    ".env", "credentials", ".key", ".pem", "secret", "password",
+    ".log", ".lock", ".state", ".pid",
+    "chairman_inbox/", "chairman_outbox/", "task_claims/",
+    "chairman_position_tracker", "watcher_state", "watcher_seen",
+    "context_state.json", "cron_config.json", "wechat_pushed.json",
+    ".parquet", "sentiment_data/", "market_snapshots/",
+    "WECOM_CALLBACK_CREDS",
+    # Never auto-commit files that might contain personal data
+    "company/departments/execution/",
+    "company/.server_", "company/.watcher_", "company/.wechat_",
+]
 
 
 def run(cmd: list, cwd: str = None) -> tuple[int, str, str]:
@@ -37,36 +52,99 @@ def run(cmd: list, cwd: str = None) -> tuple[int, str, str]:
         return -1, "", str(e)
 
 
-def has_changes() -> bool:
-    """Check if there are any uncommitted changes."""
-    # Check modified/deleted files
-    code1, out, _ = run(["git", "status", "--porcelain"])
-    if code1 != 0:
-        return False
-    # Filter out sensitive files
+def get_changed_files() -> list[str]:
+    """Return list of changed file paths from git status."""
+    code, out, _ = run(["git", "status", "--porcelain"])
+    if code != 0:
+        return []
+    files = []
     for line in out.split("\n"):
         line = line.strip()
-        if not line:
+        if not line or len(line) < 4:
             continue
-        fpath = line[3:].strip()
-        if any(p in fpath.lower() for p in SENSITIVE_PATTERNS):
-            continue
-        return True
+        fpath = line[3:].strip().strip('"')
+        files.append(fpath)
+    return files
+
+
+def is_sensitive(fpath: str) -> bool:
+    """Check if a file path matches any sensitive pattern."""
+    lower = fpath.lower()
+    return any(p.lower() in lower for p in SENSITIVE_PATTERNS)
+
+
+def has_safe_changes() -> bool:
+    """Check if there are non-sensitive uncommitted changes."""
+    for fpath in get_changed_files():
+        if not is_sensitive(fpath):
+            return True
     return False
+
+
+def stage_safe_files() -> int:
+    """Stage only non-sensitive files. Returns count of staged files."""
+    staged = 0
+    skipped = 0
+    for fpath in get_changed_files():
+        if is_sensitive(fpath):
+            print(f"  [SKIP] {fpath}", flush=True)
+            skipped += 1
+            continue
+        code, out, err = run(["git", "add", "--", fpath])
+        if code == 0:
+            staged += 1
+        else:
+            print(f"  [ERR] staging {fpath}: {err}", flush=True)
+    if skipped:
+        print(f"  Skipped {skipped} sensitive file(s)", flush=True)
+    return staged
+
+
+def verify_no_secrets_staged() -> bool:
+    """Verify no staged files contain hardcoded secrets."""
+    code, diff, _ = run(["git", "diff", "--cached", "--name-only"])
+    if code != 0:
+        return True  # If we can't check, let pre-commit hook catch it
+
+    # Quick scan of staged content for obvious secrets
+    code, content, _ = run(["git", "diff", "--cached"])
+    if code != 0:
+        return True
+
+    # Check for common secret patterns in staged diff
+    import re
+    secret_patterns = [
+        r'sk-[a-zA-Z0-9]{20,}',      # API keys
+        r'ghp_[a-zA-Z0-9]{36}',       # GitHub tokens
+        r'AKIA[0-9A-Z]{16}',          # AWS keys
+    ]
+    for pattern in secret_patterns:
+        if re.search(pattern, content):
+            print(f"  [BLOCKED] Secret pattern detected in staged files!", flush=True)
+            return False
+    return True
 
 
 def main():
     now = datetime.now(BEIJING_TZ)
     print(f"[{now.isoformat()}] auto_git_commit starting", flush=True)
 
-    if not has_changes():
-        print("No changes to commit", flush=True)
+    if not has_safe_changes():
+        print("No safe changes to commit", flush=True)
         return 0
 
-    # Stage all changes
-    code, out, err = run(["git", "add", "-A"])
-    if code != 0:
-        print(f"git add failed: {err}", flush=True)
+    # Stage only non-sensitive files (NOT git add -A!)
+    staged = stage_safe_files()
+    if staged == 0:
+        print("No files staged (all changes are in sensitive paths)", flush=True)
+        return 0
+    print(f"Staged {staged} file(s)", flush=True)
+
+    # Quick pre-commit secret check (defense in depth)
+    if not verify_no_secrets_staged():
+        # Unstage everything and abort
+        run(["git", "reset", "HEAD", "--"])
+        print("Commit aborted — secrets detected", flush=True)
         return 1
 
     # Create commit
