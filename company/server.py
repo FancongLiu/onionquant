@@ -40,7 +40,7 @@ if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
-from fastapi import FastAPI, Request, Response
+from fastapi import BackgroundTasks, FastAPI, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sse_starlette.sse import EventSourceResponse
@@ -285,7 +285,13 @@ async def get_departments():
 
 
 @app.post("/api/inbox")
-async def post_inbox(request: Request):
+async def post_inbox(request: Request, background_tasks: BackgroundTasks):
+    """Event-driven inbox: user clicks send → immediate ACK → background AI processing.
+
+    No polling needed. Zero resource usage when idle.
+    Urgent messages (含'紧急/urgent'): DeepSeek API called in background.
+    Normal messages: added to task queue for batch processing.
+    """
     body = await request.json()
     text = body.get("text", "").strip()
     if not text:
@@ -295,12 +301,120 @@ async def post_inbox(request: Request):
     filename = f"MSG_{timestamp}.md"
     filepath = INBOX_DIR / filename
 
+    # Save to inbox (for record keeping)
     content = f"# 董事长来信\n\n**时间**：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n{text}\n"
     filepath.write_text(content, encoding="utf-8")
 
+    # Notify SSE subscribers immediately
     await notify_all("inbox_new", {"file": filename, "preview": text[:100]})
 
-    return {"ok": True, "file": filename}
+    # Fire-and-forget: process in background (doesn't block the HTTP response)
+    background_tasks.add_task(_process_inbox_message, filepath, text)
+
+    return {"ok": True, "file": filename, "processing": "started"}
+
+
+# ─── Inbox Message Processor (Event-Driven, Zero Polling) ───
+
+URGENT_KEYWORDS = ["紧急", "urgent", "URGENT", "urgent", "interrupt", "立刻", "马上"]
+TASK_QUEUE_FILE = PROJECT_ROOT / "company" / "task_queue.json"
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
+
+
+def _infer_priority(text: str) -> str:
+    """Infer task priority from keywords. Zero AI tokens."""
+    p0_kw = ["紧急", "urgent", "立刻", "马上", "爆仓", "止损", "崩盘", "暴跌"]
+    p1_kw = ["分析", "持仓", "建议", "报告", "研究", "策略", "交易", "买入", "卖出"]
+    if any(kw in text for kw in p0_kw):
+        return "P0"
+    if any(kw in text.lower() for kw in p1_kw):
+        return "P1"
+    return "P2"
+
+
+def _is_urgent(text: str) -> bool:
+    return any(kw in text for kw in URGENT_KEYWORDS)
+
+
+def _write_outbox(prefix: str, title: str, body: str):
+    """Write reply to outbox. Zero AI tokens."""
+    now = datetime.now()
+    filename = f"{prefix}_{now.strftime('%Y%m%d_%H%M%S')}.md"
+    (OUTBOX_DIR / filename).write_text(
+        f"# {title}\n\n**时间**：{now.strftime('%Y-%m-%d %H:%M:%S')} CST\n\n{body}",
+        encoding="utf-8")
+    return filename
+
+
+def _add_to_queue(message_id: str, text: str, preview: str):
+    """Add message to unified task queue. Zero AI tokens."""
+    task = {
+        "id": message_id,
+        "source": "inbox",
+        "priority": _infer_priority(text),
+        "preview": preview[:200],
+        "full_text": text[:2000],
+        "received_at": datetime.now().isoformat(),
+    }
+    queue = {"tasks": []}
+    if TASK_QUEUE_FILE.exists():
+        try:
+            queue = json.loads(TASK_QUEUE_FILE.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            pass
+    ids = {t.get("id") for t in queue.get("tasks", [])}
+    if task["id"] not in ids:
+        queue.setdefault("tasks", []).append(task)
+        order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
+        queue["tasks"].sort(key=lambda t: order.get(t.get("priority", "P2"), 2))
+        TASK_QUEUE_FILE.write_text(json.dumps(queue, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _call_deepseek(message: str) -> str | None:
+    """Call DeepSeek API. Costs tokens — only for urgent messages."""
+    if not DEEPSEEK_API_KEY:
+        return None
+    try:
+        from openai import OpenAI
+        client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
+        resp = client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[
+                {"role": "system", "content": "你是 OnionQuant CEO Agent。紧急响应模式：直接给结论和可执行步骤，精炼回复。署名: -- CEO Agent"},
+                {"role": "user", "content": message},
+            ],
+            max_tokens=800, temperature=0.3)
+        return resp.choices[0].message.content.strip()
+    except Exception:
+        return None
+
+
+async def _process_inbox_message(filepath: Path, text: str):
+    """Background task: process one inbox message. Called by post_inbox."""
+    message_id = filepath.stem
+    preview = text[:150]
+
+    if _is_urgent(text):
+        # Urgent: immediate DeepSeek (costs tokens, justified)
+        _write_outbox("URGENT_ACK", "[URGENT] 紧急来信 - 立即处理中",
+            f"紧急消息已中断当前队列，立即处理。\n\n> {preview}\n\n预计15秒内完成。")
+        reply = _call_deepseek(text)
+        if reply:
+            _write_outbox("URGENT_REPLY", "[URGENT] CEO Agent 紧急回复", reply)
+        # Notify SSE
+        await notify_all("outbox_new", {"type": "urgent_reply", "preview": (reply or "")[:100]})
+    else:
+        # Normal: queue for batch processing (zero AI tokens)
+        _write_outbox("ACK", "收到来信 - 已加入任务队列",
+            f"已收到董事长的消息，已加入统一任务队列。\n\n> {preview}\n\n---\n"
+            f"优先级: {_infer_priority(text)} | 零 AI token 消耗 | 将在批量处理周期内处理")
+        _add_to_queue(message_id, text, preview)
+        await notify_all("outbox_new", {"type": "ack_queued", "preview": preview})
+
+    # Move to processed
+    dest = PROCESSED_DIR / filepath.name
+    if filepath.exists():
+        filepath.rename(dest)
 
 
 def _parse_msg_metadata(filename: str, text: str | None = None) -> dict:
