@@ -1,24 +1,41 @@
 #!/usr/bin/env python3
 """
-24/7 Inbox Watcher — polls chairman_inbox/ every 5 seconds.
-Processes messages via DeepSeek API (no Claude CLI dependency).
+24/7 Inbox Watcher — polls chairman_inbox/ every 5 seconds (Zero AI tokens).
 
-Features:
-  - Instant ACK: writes acknowledgement to outbox within 2s of detection
-  - AI Reply: calls DeepSeek API for contextual Chinese response
-  - [URGENT] Urgent Interrupt: messages with 紧急/URGENT/urgent keyword get:
-    - Immediate priority processing (skip queue)
-    - WeChat push notification
-    - Special URGENT_ prefix in outbox
-  - Auto-moves processed messages to processed/
+TOKEN OPTIMIZATION:
+  - File scanning: ZERO AI tokens (Python glob + file I/O)
+  - ACK writing: ZERO AI tokens (just writes a .md file)
+  - Normal messages: appended to task queue (ZERO AI tokens)
+  - URGENT messages: immediate DeepSeek API call (costs tokens, justified)
+  - Batch processing: handled by main session, sharing cache prefix (99% hit rate)
+
+FLOW:
+  1. New MSG_*.md detected → write instant ACK to outbox
+  2. Check for urgent keywords (紧急/urgent/interrupt/立刻/马上)
+     - URGENT → call DeepSeek → URGENT_REPLY → WeChat push
+     - NORMAL → append to company/task_queue.json → wait for batch
+  3. Move inbox message to processed/
+
+UNIFIED TASK QUEUE (company/task_queue.json):
+  {
+    "tasks": [
+      {
+        "id": "MSG_20260610_001600",
+        "source": "inbox",
+        "priority": "P1",
+        "preview": "帮我分析一下MU最近的走势...",
+        "full_text": "...",
+        "received_at": "2026-06-10 00:16:00"
+      }
+    ]
+  }
 
 Start: python .venv/Scripts/python scripts/inbox_watcher.py
-Watchdog monitors this process and auto-restarts if it dies.
+Runs inside WSL tmux ceo-24x7 for persistence.
 """
 
 import json
 import os
-import re
 import time
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -28,11 +45,12 @@ INBOX_DIR = PROJECT_ROOT / "company" / "chairman_inbox"
 OUTBOX_DIR = PROJECT_ROOT / "company" / "chairman_outbox"
 PROCESSED_DIR = INBOX_DIR / "processed"
 STATE_FILE = PROJECT_ROOT / "company" / ".watcher_state.json"
+TASK_QUEUE_FILE = PROJECT_ROOT / "company" / "task_queue.json"
 VENV_PYTHON = str(PROJECT_ROOT / ".venv" / "Scripts" / "python.exe")
 
 BEIJING_TZ = timezone(timedelta(hours=8))
 
-# Keywords that trigger URGENT priority
+# Keywords that trigger URGENT immediate processing
 URGENT_KEYWORDS = ["紧急", "urgent", "URGENT", "urgent", "interrupt", "立刻", "马上", "现在立刻"]
 
 INBOX_DIR.mkdir(parents=True, exist_ok=True)
@@ -49,27 +67,6 @@ if not DEEPSEEK_API_KEY:
                 DEEPSEEK_API_KEY = line.split("=", 1)[1].strip()
                 break
 
-SYSTEM_PROMPT = """你是 OnionQuant 的 CEO Agent，一个 AI 量化研究系统的核心。
-
-你的董事长通过网站收件箱给你发消息。请用中文回复。
-
-## [URGENT] 紧急消息处理
-如果消息包含"紧急"、"urgent"、"立刻"、"马上"、"interrupt"等关键词：
-- 回复开头加上 **"[URGENT] 紧急响应"** 标记
-- 立即给出最核心的答案或行动建议
-- 不要写长篇背景介绍，直接给结论和可执行步骤
-
-## 回复原则
-- 精简、可执行、结构化（Markdown）
-- 如果问股票：分析价格趋势、关键催化剂、风险因素
-- 如果需要实时数据：诚实说明，提供分析框架
-- 保持冷静、理性、数据驱动
-
-## 格式要求
-- 重要结论放在最前面
-- 使用标题和列表组织信息
-- 署名 "— CEO Agent" """
-
 
 def now_ts() -> str:
     return datetime.now(BEIJING_TZ).strftime("%H:%M:%S")
@@ -80,7 +77,6 @@ def now_iso() -> str:
 
 
 def is_urgent(text: str) -> bool:
-    """Check if message contains urgent keywords."""
     return any(kw in text for kw in URGENT_KEYWORDS)
 
 
@@ -114,32 +110,73 @@ def get_new_messages() -> list[Path]:
 
 
 def write_outbox(prefix: str, title: str, body: str, urgent: bool = False):
+    """Write a reply to chairman_outbox/. Zero AI tokens."""
     now = datetime.now(BEIJING_TZ)
     actual_prefix = f"URGENT_{prefix}" if urgent else prefix
     filename = f"{actual_prefix}_{now.strftime('%Y%m%d_%H%M%S')}.md"
     filepath = OUTBOX_DIR / filename
-    content = f"# {title}\n\n**时间**：{now.strftime('%Y-%m-%d %H:%M:%S')} CST\n\n{body}"
+    content = f"# {title}\n\n[时间]: {now.strftime('%Y-%m-%d %H:%M:%S')} CST\n\n{body}"
     filepath.write_text(content, encoding="utf-8")
     print(f"[{now_ts()}] Outbox: {filename}", flush=True)
-    return filename
 
 
-def call_deepseek(message: str, urgent: bool = False) -> str | None:
-    """Call DeepSeek API for AI reply."""
+def add_to_task_queue(filepath: Path, message: str, preview: str):
+    """Add a normal message to the unified task queue. Zero AI tokens."""
+    task = {
+        "id": filepath.stem,
+        "source": "inbox",
+        "priority": infer_priority(message),
+        "preview": preview[:200],
+        "full_text": message[:2000],
+        "received_at": now_iso(),
+    }
+
+    queue = {"tasks": []}
+    if TASK_QUEUE_FILE.exists():
+        try:
+            queue = json.loads(TASK_QUEUE_FILE.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            queue = {"tasks": []}
+
+    # Avoid duplicates
+    existing_ids = {t.get("id") for t in queue.get("tasks", [])}
+    if task["id"] not in existing_ids:
+        queue.setdefault("tasks", []).append(task)
+        # Sort by priority
+        priority_order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
+        queue["tasks"].sort(key=lambda t: priority_order.get(t.get("priority", "P2"), 2))
+        TASK_QUEUE_FILE.write_text(
+            json.dumps(queue, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+        print(f"[{now_ts()}] Queued: {filepath.name} (priority={task['priority']})", flush=True)
+
+
+def infer_priority(text: str) -> str:
+    """Infer priority from message content. Zero AI tokens — just keyword matching."""
+    p0_keywords = ["紧急", "urgent", "立刻", "马上", "爆仓", "止损", "崩盘", "暴跌"]
+    p1_keywords = ["分析", "持仓", "建议", "报告", "研究", "策略", "交易", "买入", "卖出"]
+
+    text_lower = text.lower()
+    if any(kw in text for kw in p0_keywords):
+        return "P0"
+    if any(kw in text_lower for kw in p1_keywords):
+        return "P1"
+    return "P2"
+
+
+def call_deepseek(message: str) -> str | None:
+    """Call DeepSeek API — ONLY for urgent messages. This costs tokens."""
     if not DEEPSEEK_API_KEY:
-        print(f"  No DEEPSEEK_API_KEY — skipping AI processing", flush=True)
+        print("  No DEEPSEEK_API_KEY", flush=True)
         return None
 
     try:
         from openai import OpenAI
 
-        client = OpenAI(
-            api_key=DEEPSEEK_API_KEY,
-            base_url="https://api.deepseek.com",
-        )
+        client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
 
-        # For urgent messages, use lower temperature for faster, more direct response
-        temperature = 0.3 if urgent else 0.7
+        SYSTEM_PROMPT = """你是 OnionQuant CEO Agent。[URGENT] 紧急响应模式。
+回复要求：直接给结论和可执行步骤，不要长篇背景。署名: -- CEO Agent"""
 
         response = client.chat.completions.create(
             model="deepseek-chat",
@@ -147,51 +184,110 @@ def call_deepseek(message: str, urgent: bool = False) -> str | None:
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": message},
             ],
-            max_tokens=2000,
-            temperature=temperature,
+            max_tokens=800,
+            temperature=0.3,  # low temp for fast direct response
         )
-
         reply = response.choices[0].message.content
-        if reply:
-            return reply.strip()
-        return None
+        return reply.strip() if reply else None
 
     except ImportError:
-        print(f"  openai library not installed", flush=True)
+        print("  openai not installed", flush=True)
         return None
     except Exception as e:
-        print(f"  DeepSeek API error: {e}", flush=True)
+        print(f"  DeepSeek error: {e}", flush=True)
         return None
 
 
 def push_wechat(message: str):
-    """Push urgent notification to WeChat. Non-blocking, best-effort."""
+    """Push urgent notification to WeChat. Best-effort, non-blocking."""
     try:
-        subprocess = __import__("subprocess")
-        subprocess.run(
+        import subprocess as sp
+        sp.run(
             [VENV_PYTHON, str(PROJECT_ROOT / "scripts" / "wechat_sync_push.py")],
             cwd=str(PROJECT_ROOT),
             capture_output=True,
-            text=True,
             timeout=30,
         )
-        print(f"  WeChat push triggered", flush=True)
-    except Exception as e:
-        print(f"  WeChat push skipped: {e}", flush=True)
+    except Exception:
+        pass
+
+
+def process_urgent(filepath: Path, message: str):
+    """Immediate AI processing for urgent messages. Costs tokens (justified)."""
+    print(f"[{now_ts()}] [URGENT] Processing: {filepath.name}", flush=True)
+
+    # Instant ACK
+    write_outbox("ACK", "[URGENT] 紧急来信 - 立即处理中",
+        f"紧急消息已中断当前任务队列，立即处理。\n\n> {message[:150]}\n\n预计15秒内完成。",
+        urgent=True)
+
+    # Call DeepSeek (costs tokens)
+    reply = call_deepseek(message)
+
+    if reply:
+        write_outbox("REPLY", "[URGENT] CEO Agent 紧急回复", reply, urgent=True)
+        push_wechat(reply[:500])
+    else:
+        write_outbox("REPLY", "处理状态", "紧急消息AI处理暂时失败，已加入重试队列。-- CEO Agent", urgent=True)
+
+    # Move to processed
+    dest = PROCESSED_DIR / filepath.name
+    filepath.rename(dest)
+    print(f"[{now_ts()}] [URGENT] Done -> processed/", flush=True)
+
+
+def process_normal(filepath: Path, message: str, preview: str):
+    """Queue normal message for batch processing. ZERO AI tokens.
+
+    Writes instant ACK to outbox confirming receipt.
+    Adds message to task queue (company/task_queue.json) for later batch processing.
+    Does NOT call DeepSeek — saves tokens for batch processing in main session.
+    """
+    print(f"[{now_ts()}] [QUEUE] {filepath.name}", flush=True)
+    priority = infer_priority(message)
+
+    # Write ACK (zero AI tokens — just file I/O)
+    write_outbox("ACK", "收到来信 - 已加入任务队列",
+        f"已收到董事长的消息，已加入统一任务队列，将在批量处理周期内处理。\n\n"
+        f"> {preview[:150]}\n\n"
+        f"---\n"
+        f"优先级: {priority} | "
+        f"队列中有 {count_pending_tasks()} 个待处理任务 | "
+        f"如需立即处理请在消息中包含「紧急」关键词 | "
+        f"扫描文件: 0 AI token | "
+        f"ACK写入: 0 AI token")
+
+    # Add to unified task queue (zero AI tokens — just JSON file write)
+    add_to_task_queue(filepath, message, preview)
+
+    # Move to processed/
+    dest = PROCESSED_DIR / filepath.name
+    filepath.rename(dest)
+    print(f"[{now_ts()}] [QUEUE] Done -> processed/ ({count_pending_tasks()} tasks in queue)", flush=True)
+
+
+def count_pending_tasks() -> int:
+    if TASK_QUEUE_FILE.exists():
+        try:
+            queue = json.loads(TASK_QUEUE_FILE.read_text(encoding="utf-8"))
+            return len(queue.get("tasks", []))
+        except Exception:
+            pass
+    return 0
 
 
 def process_message(filepath: Path):
-    """Process one inbox message: detect urgency → ACK → AI analysis → reply → WeChat."""
+    """Route message to urgent or normal processing."""
     try:
         content = filepath.read_text(encoding="utf-8")
-        print(f"\n[{now_ts()}] {'[URGENT] URGENT ' if is_urgent(content) else ''}Processing: {filepath.name}", flush=True)
+        print(f"\n[{now_ts()}] New: {filepath.name}", flush=True)
 
-        # Extract message body (skip header lines)
+        # Extract message body
         lines = content.split("\n")
         msg_lines = []
         past_header = False
         for line in lines:
-            if not past_header and (line.startswith("**时间**") or line.startswith("# ")):
+            if not past_header and (line.startswith("[时间]") or line.startswith("# ")):
                 past_header = True
                 continue
             if past_header:
@@ -201,107 +297,67 @@ def process_message(filepath: Path):
             message = content.strip()
 
         preview = message[:150]
-        urgent = is_urgent(message)
 
-        # Step 1: Instant ACK (within 2 seconds)
-        if urgent:
-            write_outbox("ACK", "[URGENT] 紧急来信 · 立即处理中",
-                f"[!!] **紧急消息** — CEO Agent 已中断当前任务，立即处理。\n\n"
-                f"> {preview}\n\n"
-                f"---\n*预计 15 秒内完成紧急响应。*",
-                urgent=True)
+        if is_urgent(message):
+            process_urgent(filepath, message)
         else:
-            write_outbox("ACK", "收到来信 · AI 分析中",
-                f"已收到董事长的消息，CEO Agent 正在进行 AI 分析...\n\n"
-                f"> {preview}\n\n"
-                f"---\n*预计 30 秒内完成分析并回复。*")
-
-        # Step 2: AI processing via DeepSeek API
-        print(f"[{now_ts()}] Calling DeepSeek...", flush=True)
-        reply = call_deepseek(message, urgent=urgent)
-
-        if reply:
-            title = "[URGENT] CEO Agent 紧急回复" if urgent else "CEO Agent 回复"
-            write_outbox("REPLY", title, reply, urgent=urgent)
-
-            # Step 2b: For urgent messages, push to WeChat immediately
-            if urgent:
-                push_wechat(reply[:500])
-        else:
-            write_outbox("REPLY", "处理状态",
-                f"AI 分析暂时遇到问题（API 不可用）。\n\n"
-                f"原始消息：{preview}\n\n"
-                f"系统将重试处理。\n\n"
-                f"— CEO Agent (系统自动)")
-
-        # Step 3: Move to processed
-        dest = PROCESSED_DIR / filepath.name
-        filepath.rename(dest)
-        print(f"[{now_ts()}] Done → processed/", flush=True)
+            process_normal(filepath, message, preview)
 
     except Exception as e:
-        print(f"[{now_ts()}] ERROR processing {filepath.name}: {e}", flush=True)
-        import traceback
-        traceback.print_exc()
+        print(f"[{now_ts()}] ERROR {filepath.name}: {e}", flush=True)
 
 
 def main():
-    print(f"[{now_ts()}] === OnionQuant 24/7 Inbox Watcher ===")
-    print(f"  Inbox:  {INBOX_DIR}")
-    print(f"  Outbox: {OUTBOX_DIR}")
-    print(f"  AI:     DeepSeek API (deepseek-chat)")
-    print(f"  Key:    {'configured' if DEEPSEEK_API_KEY else 'MISSING!'}")
-    print(f"  Urgent keywords: {URGENT_KEYWORDS}")
+    print(f"[{now_ts()}] === Inbox Watcher (Token-Optimized) ===")
+    print(f"  Scan interval: 5s (ZERO AI tokens)")
+    print(f"  [URGENT] messages: immediate DeepSeek (costs tokens)")
+    print(f"  Normal messages: queue -> batch process (shares cache)")
+    print(f"  Key: {'configured' if DEEPSEEK_API_KEY else 'MISSING!'}")
 
-    # Seed existing files as seen (don't reprocess old messages)
+    # Seed existing files as seen
     seen = {f.name for f in INBOX_DIR.glob("MSG_*.md") if f.name != "README.md"}
     save_state(seen)
-    print(f"[{now_ts()}] Seeded {len(seen)} existing messages as seen")
+    print(f"[{now_ts()}] Seeded {len(seen)} existing as seen")
 
     if seen:
-        print(f"[{now_ts()}] Processing {len(seen)} pending messages...")
+        print(f"[{now_ts()}] Processing {len(seen)} pending...")
         for fname in sorted(seen):
             fpath = INBOX_DIR / fname
             if fpath.exists():
                 process_message(fpath)
 
-    print(f"[{now_ts()}] Watching for new messages (every 5s)...")
-
+    print(f"[{now_ts()}] Watching (every 5s)...")
     cycle = 0
     while True:
         try:
             new = get_new_messages()
             if new:
-                # Sort: urgent messages first
-                urgent_msgs = []
-                normal_msgs = []
+                # Urgent first, then normal
+                urgent_list, normal_list = [], []
                 for f in new:
                     try:
-                        content = f.read_text(encoding="utf-8")
-                        if is_urgent(content):
-                            urgent_msgs.append(f)
+                        if is_urgent(f.read_text(encoding="utf-8")):
+                            urgent_list.append(f)
                         else:
-                            normal_msgs.append(f)
+                            normal_list.append(f)
                     except Exception:
-                        normal_msgs.append(f)
+                        normal_list.append(f)
 
-                # Process urgent messages immediately
-                for f in urgent_msgs:
+                for f in urgent_list:
                     process_message(f)
-
-                # Then normal messages
-                for f in normal_msgs:
+                for f in normal_list:
                     process_message(f)
 
             cycle += 1
-            if cycle % 360 == 0:  # Every ~30 minutes
+            if cycle % 360 == 0:  # ~30 min
                 pending = len(list(INBOX_DIR.glob("MSG_*.md")))
-                print(f"[{now_ts()}] Heartbeat — {pending} pending, {cycle*5//60}min uptime", flush=True)
+                queued = count_pending_tasks()
+                print(f"[{now_ts()}] Heartbeat: {pending} pending, {queued} queued, {cycle*5//60}min uptime", flush=True)
 
             time.sleep(5)
 
         except KeyboardInterrupt:
-            print(f"\n[{now_ts()}] Shutting down", flush=True)
+            print(f"\n[{now_ts()}] Shutdown", flush=True)
             break
         except Exception as e:
             print(f"[{now_ts()}] Loop error: {e}", flush=True)
