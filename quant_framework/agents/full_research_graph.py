@@ -64,7 +64,10 @@ class FullResearchState(TypedDict):
     route: str
     steps_completed: Annotated[list[str], operator.add]
     errors: Annotated[list[str], operator.add]
-    skipped: list[str]
+    skipped: Annotated[list[str], operator.add]
+
+    # Irrelevant departments pre-classified by keyword heuristics (zero-token)
+    irrelevant_depts: list[str]
 
     # Real market data (populated by data_engineering via yfinance/empyrical/risk_threshold_engine)
     market_data: dict[str, Any]
@@ -221,6 +224,66 @@ def _parse_confidence(text: str) -> tuple[str, float | None]:
     # Remove trailing blank lines
     cleaned = cleaned.rstrip()
     return cleaned, score
+
+
+def _classify_irrelevant_departments(user_request: str, tickers: list[str]) -> list[str]:
+    """Zero-token keyword classifier: determine which departments are irrelevant.
+
+    Saves 10-20% LLM tokens by skipping departments that add no value for the query type.
+    Never skips core departments: data_engineering, reporting, ceo_office, chairman_secretariat.
+    """
+    text = user_request.lower()
+    has_tickers = bool(tickers) and tickers != ["SPY"]
+
+    # Query type signals
+    is_macro_only = any(kw in text for kw in (
+        "宏观", "macro", "fed", "美联储", "利率", "加息", "降息",
+        "gdp", "通胀", "cpi", "ppi", "经济", "recession", "衰退",
+        "非农", "失业率", "货币政策"
+    )) and not has_tickers
+
+    is_quick = any(kw in text for kw in (
+        "快速", "简要", "quick", "brief", "简单", "一句话", "极简"
+    ))
+
+    is_event = any(kw in text for kw in (
+        "财报", "earnings", "发射", "launch", "ipo", "并购",
+        "merger", "罢工", "strike", "分红", "dividend", "拆股", "split"
+    ))
+
+    is_pure_technical = any(kw in text for kw in (
+        "技术面", "technical", "ma", "macd", "rsi", "布林", "bollinger"
+    )) and not any(kw in text for kw in ("舆情", "sentiment", "情绪", "新闻", "news"))
+
+    irrelevant = set()
+
+    # Academic research: financial theories rarely actionable for real-time/event queries
+    if is_quick or is_event or is_macro_only:
+        irrelevant.add("academic_research")
+
+    # Knowledge management: supply chain / macro sensitivity — heavy for quick queries
+    if is_quick:
+        irrelevant.add("knowledge_management")
+
+    # Extreme drive: black swan analysis — heavy for quick queries
+    if is_quick:
+        irrelevant.add("extreme_drive")
+
+    # Backtest engine: needs historical price data — skip for macro-only
+    if is_macro_only:
+        irrelevant.add("backtest_engine")
+        irrelevant.add("strategy_research")
+        irrelevant.add("risk_management")
+
+    # Sentiment intel: skip for pure technical queries (user wants charts, not news)
+    if is_pure_technical and not is_event:
+        irrelevant.add("sentiment_intel")
+
+    # Never skip these core departments
+    for essential in ("data_engineering", "reporting", "ceo_office", "chairman_secretariat"):
+        irrelevant.discard(essential)
+
+    return sorted(irrelevant)
 
 
 # Department execution order (reflects parallel topology: de[0] → de[1:4] parallel → de[4:] sequential)
@@ -448,6 +511,13 @@ def _make_dept_node(dept_key: str, progress_callback=None):
     result_field = f"{dept_key}_result"
 
     def node_fn(state: FullResearchState) -> dict:
+        # Pre-classified irrelevant → skip LLM call entirely (zero token cost)
+        if dept_key in state.get("irrelevant_depts", []):
+            skip_msg = f"[SKIPPED] {dept_key}: 智能跳过 — 与当前查询类型不相关"
+            if progress_callback:
+                progress_callback("skip", dept_key, DEPT_NAMES.get(dept_key, dept_key),
+                                  {"reason": "智能跳过：与查询类型不相关"})
+            return {result_field: skip_msg, "steps_completed": [dept_key], "skipped": [dept_key]}
         if progress_callback:
             progress_callback("start", dept_key, DEPT_NAMES.get(dept_key, dept_key))
         tickers = state.get("tickers", [])
@@ -643,6 +713,9 @@ class FullResearchGraph:
         ticker_key = "_".join(sorted(tickers)) if tickers else "SPY"
         thread_id = f"full_{ticker_key}"
 
+        # Classify irrelevant departments (zero-token heuristic)
+        irrelevant = _classify_irrelevant_departments(user_request, tickers)
+
         # Check for existing checkpoint
         existing_state = None
         if resume:
@@ -651,10 +724,14 @@ class FullResearchGraph:
         if existing_state and existing_state.get("steps_completed"):
             # Resume from checkpoint — skip already-completed nodes
             initial = existing_state
+            # Preserve original irrelevant classification
+            if "irrelevant_depts" not in initial:
+                initial["irrelevant_depts"] = irrelevant
         else:
             initial = {
                 "user_request": user_request, "tickers": tickers, "urgent": urgent,
                 "route": DEPT_ORDER[0], "steps_completed": [], "errors": [], "skipped": [],
+                "irrelevant_depts": irrelevant,
                 "final_report": "", "market_data": {}, "risk_metrics": {},
                 "confidence_scores": {},
                 **{f"{d}_result": "" for d in DEPT_ORDER},
