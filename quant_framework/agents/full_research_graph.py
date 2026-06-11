@@ -30,6 +30,13 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, StateGraph
 
 
+def _merge_dicts(left: dict, right: dict) -> dict:
+    """Reducer for merging confidence_scores dict from parallel nodes."""
+    merged = {**left}
+    merged.update(right)
+    return merged
+
+
 class FullResearchState(TypedDict):
     """State shared across all 11 department nodes."""
     user_request: str
@@ -50,7 +57,8 @@ class FullResearchState(TypedDict):
     chairman_secretariat_result: str
 
     # Per-department confidence scores (0.0-10.0, parsed from LLM output)
-    confidence_scores: dict[str, float]
+    # Uses dict merge reducer so parallel nodes (strategy/risk/sentiment) can update concurrently
+    confidence_scores: Annotated[dict[str, float], _merge_dicts]
 
     # Progress tracking
     route: str
@@ -440,7 +448,7 @@ def _call_llm(prompt: str, system: str, temperature: float = 0.3, max_tokens: in
 
 # ─── Node Factory ─────────────────────────────────────────
 
-def _make_dept_node(dept_key: str):
+def _make_dept_node(dept_key: str, progress_callback=None):
     """Create a node function for a given department with error recovery.
 
     Node failures are recorded in state.errors but never crash the pipeline.
@@ -450,6 +458,8 @@ def _make_dept_node(dept_key: str):
     result_field = f"{dept_key}_result"
 
     def node_fn(state: FullResearchState) -> dict:
+        if progress_callback:
+            progress_callback("start", dept_key, DEPT_NAMES.get(dept_key, dept_key))
         tickers = state.get("tickers", [])
         request = state.get("user_request", "")
         market_data = state.get("market_data", {})
@@ -501,11 +511,17 @@ def _make_dept_node(dept_key: str):
         try:
             result = _call_llm(prompt, system, max_tokens=max_tok)
             cleaned, score = _parse_confidence(result)
+            if progress_callback:
+                progress_callback("complete", dept_key, DEPT_NAMES.get(dept_key, dept_key),
+                                  {"score": score, "summary": cleaned[:120]})
             updates: dict = {result_field: cleaned, "steps_completed": [dept_key]}
             if score is not None:
                 updates["confidence_scores"] = {dept_key: score}
             return updates
         except Exception as e:
+            if progress_callback:
+                progress_callback("error", dept_key, DEPT_NAMES.get(dept_key, dept_key),
+                                  {"error": str(e)[:150]})
             skip_msg = f"[SKIPPED] {dept_key}: {e} (retried 2x, pipeline continues)"
             return {result_field: skip_msg, "steps_completed": [dept_key], "errors": [f"{dept_key}: {e}"],
                     "skipped": [dept_key]}
@@ -513,12 +529,14 @@ def _make_dept_node(dept_key: str):
     return node_fn
 
 
-def _make_data_engineering_node():
+def _make_data_engineering_node(progress_callback=None):
     """Specialized data_engineering node: fetches real market data via yfinance
     and computes risk metrics via empyrical + risk_threshold_engine before LLM analysis."""
     result_field = "data_engineering_result"
 
     def node_fn(state: FullResearchState) -> dict:
+        if progress_callback:
+            progress_callback("start", "data_engineering", "数据工程部 (fetching yfinance...)")
         tickers = state.get("tickers", [])
         request = state.get("user_request", "")
 
@@ -551,6 +569,10 @@ def _make_data_engineering_node():
         try:
             result = _call_llm(prompt, system, max_tokens=max_tok)
             cleaned, score = _parse_confidence(result)
+            if progress_callback:
+                progress_callback("complete", "data_engineering", "数据工程部",
+                                  {"score": score, "tickers_loaded": len(market_data),
+                                   "risk_tickers": len(risk_metrics)})
             resp = {
                 result_field: cleaned,
                 "steps_completed": ["data_engineering"],
@@ -561,6 +583,9 @@ def _make_data_engineering_node():
                 resp["confidence_scores"] = {"data_engineering": score}
             return resp
         except Exception as e:
+            if progress_callback:
+                progress_callback("error", "data_engineering", "数据工程部",
+                                  {"error": str(e)[:150], "tickers_loaded": len(market_data)})
             skip_msg = f"[SKIPPED] data_engineering: {e} (retried 2x)"
             return {
                 result_field: skip_msg,
@@ -579,12 +604,13 @@ def _make_data_engineering_node():
 class FullResearchGraph:
     """Complete 11-department LangGraph pipeline for stock research."""
 
-    def __init__(self, db_path: str = None):
+    def __init__(self, db_path: str = None, progress_callback=None):
         if db_path is None:
             db_path = str(Path(__file__).resolve().parent.parent.parent / "company" / "full_research_checkpoints.db")
         self.db_path = db_path
         self._db_conn = sqlite3.connect(db_path, check_same_thread=False)
         self.checkpointer = SqliteSaver(self._db_conn)
+        self.progress_callback = progress_callback
         self.graph = self._build()
         self.token_usage = {"total_input": 0, "total_output": 0}
 
@@ -592,9 +618,9 @@ class FullResearchGraph:
         workflow = StateGraph(FullResearchState)
 
         # Add all 11 department nodes (data_engineering uses specialized node with real tools)
-        workflow.add_node("data_engineering", _make_data_engineering_node())
+        workflow.add_node("data_engineering", _make_data_engineering_node(self.progress_callback))
         for dept in DEPT_ORDER[1:]:
-            workflow.add_node(dept, _make_dept_node(dept))
+            workflow.add_node(dept, _make_dept_node(dept, self.progress_callback))
 
         # Set entry point
         workflow.set_entry_point("data_engineering")
@@ -697,7 +723,8 @@ class FullResearchGraph:
         return sorted(found) if found else ["SPY"]
 
 
-def run_full_research(user_request: str, tickers: list[str] = None, urgent: bool = False) -> str:
-    graph = FullResearchGraph()
+def run_full_research(user_request: str, tickers: list[str] = None, urgent: bool = False,
+                     progress_callback=None) -> str:
+    graph = FullResearchGraph(progress_callback=progress_callback)
     result = graph.run_sync(user_request, tickers=tickers, urgent=urgent)
     return result.get("final_report", "[ERROR]")

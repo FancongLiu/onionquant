@@ -1563,6 +1563,91 @@ async def research_panel_page(request: Request):
     return HTMLResponse("<h1>Research Panel not found.</h1>")
 
 
+@app.get("/api/research/stream")
+async def api_research_stream(request: Request, tickers: str = "", query: str = ""):
+    """SSE endpoint: streams LangGraph 11-department research pipeline progress.
+
+    GET /api/research/stream?tickers=NVDA,MU&query=分析NVDA和MU目标价
+
+    Events:
+      - progress: {dept_key, name, status, ...} — each department start/complete/error
+      - done: {final_report, steps_completed, errors, ...} — pipeline finished
+      - error: {message} — pipeline crashed
+    """
+    ticker_list = [t.strip().upper() for t in tickers.split(",") if t.strip()] if tickers else []
+    user_query = query or ("分析 " + ", ".join(ticker_list)) if ticker_list else "市场分析"
+
+    event_queue: asyncio.Queue = asyncio.Queue(maxsize=100)
+
+    def _make_threadsafe_callback():
+        """Returns a progress callback that pushes events into the asyncio queue
+        from any thread using loop.call_soon_threadsafe."""
+        def _callback(event_type: str, dept_key: str, dept_name: str, extra: dict = None):
+            payload = {
+                "event": event_type,
+                "dept_key": dept_key,
+                "dept_name": dept_name,
+                "ts": datetime.now().isoformat(),
+            }
+            if extra:
+                payload.update(extra)
+            try:
+                loop.call_soon_threadsafe(
+                    lambda: asyncio.ensure_future(
+                        event_queue.put({"event": "progress", "data": json.dumps(payload, ensure_ascii=False)}),
+                        loop=loop))
+            except Exception:
+                pass
+        return _callback
+
+    async def _run_research():
+        """Run the LangGraph pipeline in a thread pool and push results."""
+        try:
+            from quant_framework.agents.full_research_graph import FullResearchGraph
+            graph = FullResearchGraph(progress_callback=_make_threadsafe_callback())
+            result = await asyncio.to_thread(
+                graph.run_sync, user_query, tickers=ticker_list, urgent=False)
+            await event_queue.put({
+                "event": "done",
+                "data": json.dumps({
+                    "final_report": result.get("final_report", ""),
+                    "steps_completed": result.get("steps_completed", []),
+                    "errors": result.get("errors", []),
+                    "skipped": result.get("skipped", []),
+                    "confidence_scores": result.get("confidence_scores", {}),
+                    "token_usage": result.get("token_usage", {}),
+                }, ensure_ascii=False),
+            })
+        except Exception as e:
+            import traceback
+            await event_queue.put({
+                "event": "error",
+                "data": json.dumps({"message": str(e), "traceback": traceback.format_exc()[-500:]},
+                                   ensure_ascii=False),
+            })
+
+    async def event_generator():
+        # Start research in background (doesn't block first yield)
+        task = asyncio.ensure_future(_run_research())
+        yield {"event": "connected",
+               "data": json.dumps({"msg": "Research pipeline started", "tickers": ticker_list,
+                                   "query": user_query}, ensure_ascii=False)}
+
+        while True:
+            try:
+                msg = await asyncio.wait_for(event_queue.get(), timeout=25)
+                yield msg
+                if msg.get("event") in ("done", "error"):
+                    break
+            except asyncio.TimeoutError:
+                yield {"event": "heartbeat",
+                       "data": json.dumps({"ts": datetime.now().isoformat()})}
+
+        await task  # Ensure background task completes
+
+    return EventSourceResponse(event_generator())
+
+
 @app.get("/api/research/dxyz")
 async def api_research_dxyz():
     """DXYZ live research data."""
