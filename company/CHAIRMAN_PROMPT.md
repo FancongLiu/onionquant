@@ -94,7 +94,7 @@ Python 脚本用 `background_scheduler.py`（零 AI token）。
 7. ✅ 添加置信度评分 (2026-06-12: 每部门输出 [置信度: X.X/10], 基于数据质量+信号强度+推理链, CEO办公室聚合所有部门评分)
 
 **P2 — 服务器集成**
-8. 添加 /api/research SSE 流式进度推送
+8. ✅ 添加 /api/research SSE 流式进度推送 (2026-06-12: SSE endpoint streams per-dept start/complete/error, thread-safe callback bridge)
 9. 前端展示部门分析进度
 10. 研究报告历史存储
 
