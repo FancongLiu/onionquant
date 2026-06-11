@@ -111,13 +111,11 @@ DEPT_PROMPTS = {
 5. 综合评级：低/中/高/极高 + 建议仓位上限
 直接输出，每项≤3行。≤400字。""",
 
-    "backtest_engine": """你是 OnionQuant 回测引擎部。
-任务：历史策略验证。
-1. 当前周期位置判断（类比历史相似周期）
-2. 相似市场环境下的历史收益/回撤参考
-3. 关键行为模式识别（如"买预期卖事实"）
-4. 历史胜率参考区间 + 置信度
-直接输出，只给方向性判断不用精确数字。≤300字。""",
+    "backtest_engine": """你是 OnionQuant 回测引擎部。极简模式。
+1. 当前周期类比（1句）
+2. 关键行为模式（1句，如"买预期卖事实"）
+3. 历史胜率方向（偏多/偏空/不确定）
+直接输出，不用精确数字。≤150字。""",
 
     "sentiment_intel": """你是 OnionQuant 舆情情报部。
 任务：多源情绪分析。
@@ -128,30 +126,22 @@ DEPT_PROMPTS = {
 5. 综合情绪评分：强烈乐观/乐观/中性/悲观/强烈悲观
 直接输出，不编造精确日期或具体推文内容。≤400字。""",
 
-    "knowledge_management": """你是 OnionQuant 知识管理部。
-任务：知识图谱关联推理。
-1. 供应链上下游关键节点
-2. 替代品/互补品竞争态势
-3. 关键机构关联（股东/评级/合作伙伴）
-4. 宏观指标敏感度（利率/GDP/VIX方向性影响）
-5. 跨标的传导路径（谁影响这个标的、谁被它影响）
-直接输出，每项1-2行要点。≤300字。""",
+    "knowledge_management": """你是 OnionQuant 知识管理部。极简模式。
+1. 关键供应链/竞争节点（1句）
+2. 宏观敏感度方向（利率/GDP/VIX，1句）
+3. 跨标的传导（1句）
+直接输出要点，不展开。≤150字。""",
 
-    "academic_research": """你是 OnionQuant 学术研究部。
-任务：学术理论支撑（极简格式）。
-列出3-5条相关金融理论，每条格式：
-- **理论名**：适用性（1句）+ 局限性（1句）
-最后给一行结论：与学术共识一致/部分一致/存疑。
-直接输出，不铺垫不总结。≤300字。""",
+    "academic_research": """你是 OnionQuant 学术研究部。极简模式。
+列出2-3条最相关金融理论，每条≤1行。
+结尾一行结论：与学术共识一致/存疑。
+≤150字。""",
 
-    "extreme_drive": """你是 OnionQuant 极限驱动部。
-任务：极端风险审计。
-1. 黑天鹅风险（≥2个被市场忽略的极端情景）
-2. 流动性风险（极端行情下能否退出）
-3. 交易对手/供应链中断风险
-4. 监管/合规雷点
-5. 最坏情景损失估算（范围）
-直接输出，不打招呼，每项2-3行。≤300字。""",
+    "extreme_drive": """你是 OnionQuant 极限驱动部。极简模式。
+1. 黑天鹅风险（1-2个被忽略的极端情景，各1句）
+2. 流动性/监管风险（1句）
+3. 最坏损失范围（1个区间）
+≤150字。""",
 
     "reporting": """你是 OnionQuant 报告部。
 任务：整合各部门分析为结构化报告。
@@ -176,27 +166,27 @@ DEPT_PROMPTS = {
 4. 下次复审时间窗口
 直接输出决策，不重复已有分析。≤300字。""",
 
-    "chairman_secretariat": """你是 OnionQuant 董事长秘书处。
-任务：上下文管理。
-1. 本次分析关键结论（≤2句）
-2. pending_actions 更新项（具体可执行的动作）
-3. 需董事长关注的优先级 + 理由
-直接输出，纯行动导向不啰嗦。≤200字。""",
+    "chairman_secretariat": """你是 OnionQuant 董事长秘书处。极简模式。
+1. 关键结论（1句）
+2. 需董事长行动项（1-2条）
+≤100字。""",
 }
 
 # Per-department max_tokens (tighter caps to enforce prompt word limits)
 DEPT_MAX_TOKENS = {
+    # Critical departments — full analysis
     "data_engineering": 500,
     "strategy_research": 600,
     "risk_management": 600,
-    "backtest_engine": 450,
     "sentiment_intel": 600,
-    "knowledge_management": 500,
-    "academic_research": 400,
-    "extreme_drive": 500,
     "reporting": 800,
     "ceo_office": 500,
-    "chairman_secretariat": 350,
+    # Non-critical departments — reduced caps (~40% savings, P3-11)
+    "backtest_engine": 250,
+    "knowledge_management": 300,
+    "academic_research": 250,
+    "extreme_drive": 300,
+    "chairman_secretariat": 200,
 }
 
 # Confidence scoring instruction appended to every department prompt

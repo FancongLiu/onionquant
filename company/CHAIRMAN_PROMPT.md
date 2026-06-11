@@ -99,7 +99,7 @@ Python 脚本用 `background_scheduler.py`（零 AI token）。
 10. ✅ 研究报告历史存储 (2026-06-12: JSON存档到 company/reports/langgraph/, /api/research/history API, 前端历史面板)
 
 **P3 — 优化**
-11. 减少非关键部门的 token 消耗
+11. ✅ 减少非关键部门的 token 消耗 (2026-06-12: 5 depts prompts→≤150字, max_tokens -40%, saves 900 tok/run)
 12. 智能跳过不相关的部门
 13. 30分钟内同标的 → 复用缓存分析
 14. 引入 stigmergy-langgraph 替代顺序执行 (9.5x 提速)
