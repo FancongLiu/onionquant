@@ -25,6 +25,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Any, TypedDict
 
+import numpy as np
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, StateGraph
 
@@ -54,6 +55,10 @@ class FullResearchState(TypedDict):
     errors: Annotated[list[str], operator.add]
     skipped: list[str]
 
+    # Real market data (populated by data_engineering via yfinance/empyrical/risk_threshold_engine)
+    market_data: dict[str, Any]
+    risk_metrics: dict[str, Any]
+
     # Final output
     final_report: str
 
@@ -68,33 +73,32 @@ _NO_FABRICATE = (
 
 DEPT_PROMPTS = {
     "data_engineering": """你是 OnionQuant 数据工程部。
-任务：准备分析所需数据。
-1. 确认需要的数据源类型（行情/财务/舆情/宏观）
-2. 标注各类数据的可用性和质量等级
-3. 给出数据获取方案（API/爬虫/人工），标注优先级
-4. 数据缺口及替代方案
-直接输出结构化报告，用数字编号，每条≤2行。≤300字。"""
-    + _NO_FABRICATE,
+任务：基于已获取的实时行情数据，完成数据准备分析。
+提示中已包含 yfinance 实时行情数据，直接基于这些数据做分析。
+1. 评估数据质量和完整性（有多少天数据、是否有缺口）
+2. 判断当前价格处于什么区间（vs MA20，MA50）
+3. 近期趋势方向（1月/3月涨跌幅）
+4. 数据缺口（如缺少财务数据、舆情数据），建议补充方案
+直接输出，每条≤2行。≤300字。""",
 
     "strategy_research": """你是 OnionQuant 策略研究部。
-任务：因子分析与交易信号。
-1. 动量因子评估（5d/20d方向与强度）
-2. 波动率因子（当前波动率vs历史区间）
-3. Sharpe比率估算（风险调整后收益）
+任务：因子分析与交易信号。提示中已包含实时行情和风险指标，直接使用。
+1. 动量因子评估（基于实际1月/3月收益判断方向与强度）
+2. 波动率因子（基于实际年化波动率判断风险水平）
+3. Sharpe比率评估（基于实际Sharpe值判断风险调整后收益质量）
 4. 多因子加权评分（动量20%+波动率15%+Sharpe25%+催化剂30%+Beta10%）
-5. 技术面态势（趋势方向、超买超卖、关键位置）
+5. 技术面态势（MA20/MA50位置关系、超买超卖、关键价格位）
 6. 最终评级：强烈看多/看多/中性/看空/强烈看空
-直接输出，每项≤3行。≤400字。"""
-    + _NO_FABRICATE,
+直接输出，每项≤3行。≤400字。""",
 
     "risk_management": """你是 OnionQuant 风险管理部。
-任务：风险评估与压力测试。
-1. VaR/CVaR 范围估计（用范围而非精确值）
-2. 最大回撤历史参考
+任务：风险评估与压力测试。提示中已包含 empyrical 计算的真实风险指标和 RTE 评分。
+1. VaR/CVaR / 最大回撤（基于实际数据解读）
+2. 风险调整收益评估（Sharpe/Calmar 实际值）
 3. 压力测试场景（暴跌/利率/地缘政治/行业特定）
-4. 持仓集中度风险
+4. 仓位建议（基于 RTE 市场状态和综合评分）
 5. 综合评级：低/中/高/极高 + 建议仓位上限
-直接输出，不打招呼，每项≤3行。≤400字。""",
+直接输出，每项≤3行。≤400字。""",
 
     "backtest_engine": """你是 OnionQuant 回测引擎部。
 任务：历史策略验证。
@@ -215,6 +219,153 @@ DEPT_NAMES = {
 }
 
 
+# ─── Real Market Data Tools ─────────────────────────────
+
+def _fetch_market_data(tickers: list[str]) -> dict[str, dict]:
+    """Fetch real market data via yfinance for each ticker.
+
+    Returns dict keyed by ticker with price, returns, and volatility stats.
+    Gracefully skips tickers that fail — never blocks the pipeline.
+    """
+    try:
+        import yfinance as yf
+    except ImportError:
+        return {"_error": "yfinance not installed"}
+
+    results = {}
+    for ticker in tickers:
+        try:
+            stock = yf.Ticker(ticker.upper())
+            hist = stock.history(period="6mo")
+            if hist.empty:
+                results[ticker] = {"error": f"no data for {ticker}"}
+                continue
+            closes = hist["Close"].values.astype(float)
+            log_returns = np.diff(np.log(np.maximum(closes, 1e-10)))
+            n = len(closes)
+            results[ticker] = {
+                "ticker": ticker.upper(),
+                "latest_price": round(float(closes[-1]), 2),
+                "ma20": round(float(np.mean(closes[-20:])), 2) if n >= 20 else None,
+                "ma50": round(float(np.mean(closes[-50:])), 2) if n >= 50 else None,
+                "volatility_ann_pct": round(float(np.std(log_returns) * np.sqrt(252)) * 100, 1),
+                "return_1m_pct": round(float((closes[-1] / closes[-21] - 1) * 100), 2) if n >= 21 else None,
+                "return_3m_pct": round(float((closes[-1] / closes[-63] - 1) * 100), 2) if n >= 63 else None,
+                "return_ytd_pct": round(float((closes[-1] / closes[0] - 1) * 100), 2),
+                "n_days": n,
+                "max_dd_pct": round(float(np.min(closes / np.maximum.accumulate(closes) - 1)) * 100, 2),
+            }
+        except Exception as e:
+            results[ticker] = {"error": str(e)[:200]}
+    return results
+
+
+def _compute_risk_metrics(market_data: dict[str, dict]) -> dict[str, dict]:
+    """Compute risk metrics from fetched market data using empyrical + risk_threshold_engine.
+
+    Returns dict keyed by ticker with Sharpe, VaR, Calmar, factor scores, and regime.
+    """
+    try:
+        import empyrical as ep
+    except ImportError:
+        import empyrical_reloaded as ep
+
+    from risk_threshold_engine import RiskThresholdEngine
+
+    results = {}
+    for ticker, data in market_data.items():
+        if "error" in data:
+            results[ticker] = data
+            continue
+        try:
+            # We need actual prices to compute returns — fetch again or reconstruct
+            # Use yfinance for a quick re-fetch to get full price series for metrics
+            import yfinance as yf
+            stock = yf.Ticker(ticker.upper())
+            hist = stock.history(period="6mo")
+            if hist.empty:
+                results[ticker] = {"error": f"no hist data for metrics"}
+                continue
+            closes = hist["Close"].values.astype(float)
+            returns = np.diff(np.log(np.maximum(closes, 1e-10)))
+
+            if len(returns) < 5:
+                results[ticker] = {"error": f"insufficient data ({len(returns)} days)"}
+                continue
+
+            sharpe = float(ep.sharpe_ratio(returns, risk_free=0.02 / 252, annualization=252))
+            max_dd = float(ep.max_drawdown(returns))
+            calmar = float(ep.calmar_ratio(returns, annualization=252)) if max_dd < 0 else 0.0
+            var_95 = float(ep.value_at_risk(returns, cutoff=0.05))
+            ann_vol = float(ep.annual_volatility(returns, annualization=252))
+
+            # Risk threshold engine
+            engine = RiskThresholdEngine()
+            scores, rte_result = RiskThresholdEngine.from_returns(returns)
+
+            results[ticker] = {
+                "sharpe": round(sharpe, 3),
+                "max_dd_pct": round(max_dd * 100, 2),
+                "calmar": round(calmar, 3),
+                "var_95_pct": round(var_95 * 100, 2),
+                "ann_vol_pct": round(ann_vol * 100, 1),
+                "rte_composite": rte_result.composite_score,
+                "rte_regime": rte_result.regime.value,
+                "rte_decision": rte_result.decision.value,
+                "factor_scores": {
+                    "volatility": scores.volatility_score,
+                    "momentum": scores.momentum_score,
+                    "breadth": scores.breadth_score,
+                    "macro": scores.macro_score,
+                    "drawdown": scores.drawdown_score,
+                },
+            }
+        except Exception as e:
+            results[ticker] = {"error": f"risk metrics failed: {e}"}
+    return results
+
+
+def _format_market_data_for_prompt(market_data: dict[str, dict]) -> str:
+    """Format market data dict as a compact text block for LLM prompt injection."""
+    if not market_data:
+        return "（无实时市场数据）"
+    lines = []
+    for ticker, data in market_data.items():
+        if "error" in data:
+            lines.append(f"  {ticker}: 数据获取失败 ({data['error']})")
+        else:
+            parts = [f"  {ticker}: 最新价${data.get('latest_price','N/A')}"]
+            if data.get("return_1m_pct") is not None:
+                parts.append(f"1月收益{data['return_1m_pct']:+.1f}%")
+            if data.get("return_3m_pct") is not None:
+                parts.append(f"3月收益{data['return_3m_pct']:+.1f}%")
+            parts.append(f"年化波动{data.get('volatility_ann_pct','N/A')}%")
+            parts.append(f"最大回撤{data.get('max_dd_pct','N/A')}%")
+            lines.append("，".join(parts))
+    return "\n".join(lines)
+
+
+def _format_risk_for_prompt(risk_metrics: dict[str, dict]) -> str:
+    """Format risk metrics dict as a compact text block for LLM prompt injection."""
+    if not risk_metrics:
+        return "（无风险评估数据）"
+    lines = []
+    for ticker, data in risk_metrics.items():
+        if "error" in data:
+            lines.append(f"  {ticker}: 风险评估失败 ({data['error']})")
+        else:
+            lines.append(
+                f"  {ticker}: Sharpe={data.get('sharpe','N/A')}, "
+                f"MaxDD={data.get('max_dd_pct','N/A')}%, "
+                f"VaR95={data.get('var_95_pct','N/A')}%, "
+                f"Calmar={data.get('calmar','N/A')}, "
+                f"波动率={data.get('ann_vol_pct','N/A')}%, "
+                f"RTE评分={data.get('rte_composite','N/A')}, "
+                f"市场状态={data.get('rte_regime','N/A')}"
+            )
+    return "\n".join(lines) if lines else "（无风险评估数据）"
+
+
 # ─── LLM Call ────────────────────────────────────────────
 
 def _call_llm(prompt: str, system: str, temperature: float = 0.3, max_tokens: int = 800,
@@ -264,7 +415,8 @@ def _make_dept_node(dept_key: str):
     def node_fn(state: FullResearchState) -> dict:
         tickers = state.get("tickers", [])
         request = state.get("user_request", "")
-        existing_errors = state.get("errors", [])
+        market_data = state.get("market_data", {})
+        risk_metrics = state.get("risk_metrics", {})
 
         # Build context from all completed departments (dynamic — handles parallel topology)
         context_parts = [f"标的: {', '.join(tickers)}", f"用户需求: {request}"]
@@ -283,6 +435,16 @@ def _make_dept_node(dept_key: str):
         if skipped_deps:
             context_parts.insert(1, f"⚠ 上游部门分析失败/跳过: {', '.join(skipped_deps)}。请在缺失信息的情况下独立完成分析。")
 
+        # Inject real market data for data-dependent departments
+        if dept_key in ("strategy_research", "sentiment_intel") and market_data:
+            context_parts.append(f"\n📊 实时行情数据（yfinance）:\n{_format_market_data_for_prompt(market_data)}")
+        if dept_key == "risk_management" and risk_metrics:
+            context_parts.append(f"\n📉 风险评估数据（empyrical + risk_threshold_engine）:\n{_format_risk_for_prompt(risk_metrics)}")
+        if dept_key == "risk_management" and not risk_metrics and market_data:
+            context_parts.append(f"\n📊 行情数据:\n{_format_market_data_for_prompt(market_data)}")
+        if dept_key == "backtest_engine" and market_data:
+            context_parts.append(f"\n📊 行情参考:\n{_format_market_data_for_prompt(market_data)}")
+
         prompt = "\n".join(context_parts)
         max_tok = DEPT_MAX_TOKENS.get(dept_key, 600)
         try:
@@ -292,6 +454,62 @@ def _make_dept_node(dept_key: str):
             skip_msg = f"[SKIPPED] {dept_key}: {e} (retried 2x, pipeline continues)"
             return {result_field: skip_msg, "steps_completed": [dept_key], "errors": [f"{dept_key}: {e}"],
                     "skipped": [dept_key]}
+
+    return node_fn
+
+
+def _make_data_engineering_node():
+    """Specialized data_engineering node: fetches real market data via yfinance
+    and computes risk metrics via empyrical + risk_threshold_engine before LLM analysis."""
+    result_field = "data_engineering_result"
+
+    def node_fn(state: FullResearchState) -> dict:
+        tickers = state.get("tickers", [])
+        request = state.get("user_request", "")
+
+        # Step 1: Fetch real market data via yfinance
+        market_data = _fetch_market_data(tickers)
+
+        # Step 2: Compute risk metrics via empyrical + risk_threshold_engine
+        risk_metrics = {}
+        risk_engine_error = None
+        try:
+            risk_metrics = _compute_risk_metrics(market_data)
+        except Exception as e:
+            risk_engine_error = str(e)[:200]
+
+        # Step 3: Build prompt with real data
+        context_parts = [
+            f"标的: {', '.join(tickers)}",
+            f"用户需求: {request}",
+            f"\n📊 实时行情数据（yfinance）:\n{_format_market_data_for_prompt(market_data)}",
+        ]
+        if risk_metrics:
+            context_parts.append(f"\n📉 风险指标（empyrical + risk_threshold_engine）:\n{_format_risk_for_prompt(risk_metrics)}")
+        if risk_engine_error:
+            context_parts.append(f"\n⚠ 风险引擎部分失败: {risk_engine_error}")
+
+        prompt = "\n".join(context_parts)
+        max_tok = DEPT_MAX_TOKENS.get("data_engineering", 500)
+
+        try:
+            result = _call_llm(prompt, DEPT_PROMPTS["data_engineering"], max_tokens=max_tok)
+            return {
+                result_field: result,
+                "steps_completed": ["data_engineering"],
+                "market_data": market_data,
+                "risk_metrics": risk_metrics,
+            }
+        except Exception as e:
+            skip_msg = f"[SKIPPED] data_engineering: {e} (retried 2x)"
+            return {
+                result_field: skip_msg,
+                "steps_completed": ["data_engineering"],
+                "errors": [f"data_engineering: {e}"],
+                "skipped": ["data_engineering"],
+                "market_data": market_data,
+                "risk_metrics": risk_metrics,
+            }
 
     return node_fn
 
@@ -313,8 +531,9 @@ class FullResearchGraph:
     def _build(self):
         workflow = StateGraph(FullResearchState)
 
-        # Add all 11 department nodes
-        for dept in DEPT_ORDER:
+        # Add all 11 department nodes (data_engineering uses specialized node with real tools)
+        workflow.add_node("data_engineering", _make_data_engineering_node())
+        for dept in DEPT_ORDER[1:]:
             workflow.add_node(dept, _make_dept_node(dept))
 
         # Set entry point
@@ -360,7 +579,7 @@ class FullResearchGraph:
             initial = {
                 "user_request": user_request, "tickers": tickers, "urgent": urgent,
                 "route": DEPT_ORDER[0], "steps_completed": [], "errors": [], "skipped": [],
-                "final_report": "",
+                "final_report": "", "market_data": {}, "risk_metrics": {},
                 **{f"{d}_result": "" for d in DEPT_ORDER},
                 "data_engineering_result": "", "strategy_research_result": "",
                 "risk_management_result": "", "backtest_engine_result": "",
