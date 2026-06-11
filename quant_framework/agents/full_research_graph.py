@@ -19,10 +19,12 @@ import json
 import operator
 import os
 import re
+import sqlite3
 from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Any, TypedDict
 
+from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, StateGraph
 
 
@@ -252,6 +254,8 @@ class FullResearchGraph:
         if db_path is None:
             db_path = str(Path(__file__).resolve().parent.parent.parent / "company" / "full_research_checkpoints.db")
         self.db_path = db_path
+        self._db_conn = sqlite3.connect(db_path, check_same_thread=False)
+        self.checkpointer = SqliteSaver(self._db_conn)
         self.graph = self._build()
         self.token_usage = {"total_input": 0, "total_output": 0}
 
@@ -282,25 +286,39 @@ class FullResearchGraph:
             workflow.add_edge(dept, sequential[i + 1])
         workflow.add_edge("chairman_secretariat", END)
 
-        return workflow.compile()
+        return workflow.compile(checkpointer=self.checkpointer)
 
-    def run_sync(self, user_request: str, tickers: list[str] = None, urgent: bool = False) -> dict:
+    def run_sync(self, user_request: str, tickers: list[str] = None, urgent: bool = False,
+                 resume: bool = False) -> dict:
         if tickers is None:
             tickers = self._extract_tickers(user_request)
 
-        initial: FullResearchState = {
-            "user_request": user_request, "tickers": tickers, "urgent": urgent,
-            "route": DEPT_ORDER[0], "steps_completed": [], "errors": [], "skipped": [],
-            "final_report": "",
-            **{f"{d}_result": "" for d in DEPT_ORDER},
-            "data_engineering_result": "", "strategy_research_result": "",
-            "risk_management_result": "", "backtest_engine_result": "",
-            "sentiment_intel_result": "", "knowledge_management_result": "",
-            "academic_research_result": "", "extreme_drive_result": "",
-            "reporting_result": "", "ceo_office_result": "", "chairman_secretariat_result": "",
-        }
+        # Deterministic thread_id per ticker set — enables checkpoint resume across restarts
+        ticker_key = "_".join(sorted(tickers)) if tickers else "SPY"
+        thread_id = f"full_{ticker_key}"
 
-        config = {"configurable": {"thread_id": f"full_{datetime.now().strftime('%Y%m%d_%H%M%S')}"}}
+        # Check for existing checkpoint
+        existing_state = None
+        if resume:
+            existing_state = self._load_checkpoint(thread_id)
+
+        if existing_state and existing_state.get("steps_completed"):
+            # Resume from checkpoint — skip already-completed nodes
+            initial = existing_state
+        else:
+            initial = {
+                "user_request": user_request, "tickers": tickers, "urgent": urgent,
+                "route": DEPT_ORDER[0], "steps_completed": [], "errors": [], "skipped": [],
+                "final_report": "",
+                **{f"{d}_result": "" for d in DEPT_ORDER},
+                "data_engineering_result": "", "strategy_research_result": "",
+                "risk_management_result": "", "backtest_engine_result": "",
+                "sentiment_intel_result": "", "knowledge_management_result": "",
+                "academic_research_result": "", "extreme_drive_result": "",
+                "reporting_result": "", "ceo_office_result": "", "chairman_secretariat_result": "",
+            }
+
+        config = {"configurable": {"thread_id": thread_id}}
         result = self.graph.invoke(initial, config)
 
         # Extract final report from reporting + ceo_office
@@ -315,6 +333,17 @@ class FullResearchGraph:
 
         return {"final_report": final, "steps_completed": result.get("steps_completed", []),
                 "errors": result.get("errors", []), "token_usage": self.token_usage}
+
+    def _load_checkpoint(self, thread_id: str) -> dict | None:
+        """Load most recent checkpoint state for a given thread_id. Returns None if no checkpoint exists."""
+        try:
+            config = {"configurable": {"thread_id": thread_id}}
+            state = self.graph.get_state(config)
+            if state and state.values:
+                return {**state.values}
+        except Exception:
+            pass
+        return None
 
     def _extract_tickers(self, text: str) -> list[str]:
         ticker_map = {
