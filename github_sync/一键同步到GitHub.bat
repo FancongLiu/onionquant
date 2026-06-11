@@ -1,22 +1,23 @@
 @echo off
 chcp 65001 >nul
-title 🔄 正在同步代码到 GitHub...
+title 🔒 安全提交到 GitHub...
 cls
 echo ====================================
-echo   🔄 正在同步代码到 GitHub...
+echo   🔒 安全提交代码到 GitHub
+echo   （只提交非敏感文件，不会泄露个人信息）
 echo ====================================
 echo.
 
-cd /d "%~dp0"
+cd /d "e:\2026_AgentStudy\Python_code"
 
-python scripts/auto_git_sync.py
+.venv\Scripts\python.exe scripts/auto_git_commit.py
 
 echo.
 echo ====================================
 if %errorlevel% equ 0 (
-    echo   ✅ 同步完成！
+    echo   ✅ 安全提交完成！
 ) else (
-    echo   ❌ 同步时遇到问题，请看上面的提示
+    echo   ❌ 提交时遇到问题，请看上面的提示
 )
 echo ====================================
 echo.

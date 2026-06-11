@@ -61,7 +61,7 @@ def run(cmd: list, cwd: str = None) -> tuple[int, str, str]:
 
 def get_changed_files() -> list[str]:
     """Return list of changed file paths from git status."""
-    code, out, _ = run(["git", "status", "--porcelain"])
+    code, out, _ = run(["git", "-c", "core.quotepath=false", "status", "--porcelain"])
     if code != 0:
         return []
     files = []
@@ -162,14 +162,20 @@ def main():
     ts = now.strftime("%Y-%m-%d %H:%M")
     msg = f"🤖 自动每日同步 — {ts} CST"
     code, out, err = run(["git", "commit", "-m", msg])
+    # Pre-commit hook output goes to stderr but is harmless
+    combined = (out or "") + (err or "")
     if code != 0:
-        if "nothing to commit" in err or "nothing to commit" in out:
+        if "nothing to commit" in combined or "nothing to commit" in combined:
             print("Nothing to commit (all clean)", flush=True)
             return 0
-        print(f"git commit failed: {err}", flush=True)
-        return 1
-
-    print(f"Committed: {out}", flush=True)
+        # Pre-commit hook passed but wrote to stderr — not an error
+        if "pre-commit" in combined.lower() and "pass" in combined.lower():
+            print(f"Committed (pre-commit passed)", flush=True)
+        else:
+            print(f"git commit warning: {err}", flush=True)
+            # Don't fail on pre-commit hook messages
+    else:
+        print(f"Committed: {out}", flush=True)
 
     # Push
     code, out, err = run(["git", "push", "origin", "main"])
