@@ -13,6 +13,9 @@ import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
+# Fix Windows GBK encoding for emoji in commit messages
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 BEIJING_TZ = timezone(timedelta(hours=8))
 
@@ -42,9 +45,6 @@ def run(cmd: list, cwd: str = None) -> tuple[int, str, str]:
             cmd,
             cwd=cwd or str(PROJECT_ROOT),
             capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
             timeout=120,
             env={
                 **__import__("os").environ,
@@ -52,7 +52,10 @@ def run(cmd: list, cwd: str = None) -> tuple[int, str, str]:
                 "GIT_ASKPASS": "echo",
             },
         )
-        return r.returncode, (r.stdout or "").strip(), (r.stderr or "").strip()
+        # Decode manually — git outputs UTF-8 on all platforms
+        out = r.stdout.decode("utf-8", errors="replace") if r.stdout else ""
+        err = r.stderr.decode("utf-8", errors="replace") if r.stderr else ""
+        return r.returncode, out.strip(), err.strip()
     except subprocess.TimeoutExpired:
         return -1, "", "timeout"
     except Exception as e:
@@ -69,7 +72,6 @@ def get_changed_files() -> list[str]:
         if not line:
             continue
         # git status --porcelain format: "XY PATH" (2 status chars + space + path)
-        # Leading char may be space for unstaged files. Do NOT .strip() the whole line.
         if len(line) < 4:
             continue
         fpath = line[3:].strip().strip('"')
