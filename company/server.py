@@ -430,6 +430,34 @@ def _smart_add_to_queue(message_id: str, text: str, preview: str):
     return best_match is not None and best_sim > 0.5
 
 
+STOCK_REQUEST_KEYWORDS = [
+    "分析", "目标价", "走势", "趋势", "风险", "回撤",
+    "持仓", "交易", "买入", "卖出", "止损", "因子",
+    "财报", "催化剂", "评级", "估值", "期权", "波动",
+    "NVDA", "AMD", "MU", "INTC", "TSLA", "AAPL", "DXYZ",
+    "股票", "标的", "行情", "技术面", "基本面",
+]
+
+
+def _is_stock_request(text: str) -> bool:
+    """Detect if message is a stock analysis request → route through LangGraph."""
+    upper = text.upper()
+    return any(kw.upper() in upper for kw in STOCK_REQUEST_KEYWORDS)
+
+
+def _process_with_research_graph(text: str) -> str | None:
+    """Process stock analysis through LangGraph multi-agent pipeline."""
+    try:
+        from quant_framework.agents.research_graph import run_research
+        return run_research(text)
+    except ImportError as e:
+        print(f"  LangGraph not available: {e}", flush=True)
+        return _call_deepseek(text)  # Fallback to direct DeepSeek
+    except Exception as e:
+        print(f"  Research graph error: {e}", flush=True)
+        return _call_deepseek(text)
+
+
 def _call_deepseek(message: str) -> str | None:
     """Call DeepSeek API. Costs tokens — only for urgent messages."""
     if not DEEPSEEK_API_KEY:
@@ -496,7 +524,7 @@ async def _process_inbox_message(filepath: Path, text: str, urgent_flag: bool = 
             f"紧急处理完成后自动恢复 | "
             f"预计15秒内完成紧急响应。")
 
-        reply = _call_deepseek(text)
+        reply = _process_with_research_graph(text) if _is_stock_request(text) else _call_deepseek(text)
         if reply:
             _write_outbox("URGENT_REPLY", "[URGENT] CEO Agent 紧急回复", reply)
             # Clear interrupt, mark resume point
