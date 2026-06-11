@@ -55,7 +55,8 @@ def run(cmd: list, cwd: str = None) -> tuple[int, str, str]:
         # Decode manually — git outputs UTF-8 on all platforms
         out = r.stdout.decode("utf-8", errors="replace") if r.stdout else ""
         err = r.stderr.decode("utf-8", errors="replace") if r.stderr else ""
-        return r.returncode, out.strip(), err.strip()
+        # Only rstrip — leading whitespace in git status output is meaningful
+        return r.returncode, out.rstrip(), err.rstrip()
     except subprocess.TimeoutExpired:
         return -1, "", "timeout"
     except Exception as e:
@@ -76,9 +77,6 @@ def get_changed_files() -> list[str]:
         fpath = line[3:].strip().strip('"')
         if fpath:
             files.append(fpath)
-    # DEBUG
-    for f in files:
-        print(f"  [DEBUG] found: {repr(f)} first_char={repr(f[0]) if f else 'EMPTY'}", flush=True)
     return files
 
 

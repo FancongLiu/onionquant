@@ -307,6 +307,12 @@ body::before {
 }
 .command-bar textarea:focus { border-color: var(--gold); box-shadow: 0 0 12px rgba(240,185,11,0.15); }
 .command-bar textarea::placeholder { color: #555; }
+.send-row { display:flex; align-items:center; gap:10px; margin-top:10px; }
+.urgent-toggle { display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; padding:8px 14px; border-radius:8px; border:1.5px solid #444; background:#1a1a2e; transition:all 0.2s; }
+.urgent-toggle:hover { border-color:var(--gold); }
+.urgent-toggle input[type=checkbox] { width:18px; height:18px; accent-color:var(--red); cursor:pointer; }
+.urgent-toggle input[type=checkbox]:checked + .urgent-label { color:var(--red); font-weight:700; }
+.urgent-label { font-size:0.9em; color:#999; transition:color 0.2s; }
 .command-bar button {
   background: linear-gradient(135deg, #f0b90b, #d4a30b);
   border: none; border-radius: 8px; padding: 12px 24px;
@@ -568,7 +574,13 @@ body::before {
       </div>
       <textarea id="cmdInput" placeholder="📝 输入指令给 Agent，Enter 发送 / Shift+Enter 换行..."
              rows="2"></textarea>
-      <button onclick="sendCommand()" id="sendBtn">📨 Send</button>
+      <div class="send-row">
+        <label class="urgent-toggle" title="勾选后 CEO 立即处理（≤5分钟），不勾选则在半小时内定时处理">
+          <input type="checkbox" id="urgentMode">
+          <span class="urgent-label">⚡ 紧急</span>
+        </label>
+        <button onclick="sendCommand()" id="sendBtn">📨 Send</button>
+      </div>
       <span id="sendStatus" class="send-status"></span>
     </div>
 
@@ -975,17 +987,20 @@ function sendCommand() {
   }
 
   const token = window.DASHBOARD_TOKEN || '';
+  const urgent = document.getElementById('urgentMode').checked;
   fetch('/api/inbox?token=' + encodeURIComponent(token), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ text: body, source: 'chairman_office' })
+    body: JSON.stringify({ text: body, source: 'chairman_office', urgent: urgent })
   }).then(r => r.json()).then(d => {
     var st = document.getElementById('sendStatus');
     if (d.ok) {
       addLog('Command sent: ' + (d.file || ''));
       if (_currentLetter) { markProcessed(_currentLetter.file); }
-      secretaryMsg.textContent = 'Command sent. Agent will process on next scan.';
-      if (st) { st.textContent = '✓ 发送成功'; st.className = 'send-status ok'; setTimeout(function(){ st.textContent = ''; }, 3000); }
+      var mode = d.urgent ? '⚡紧急模式·CEO立即处理' : '⏰定时处理';
+      secretaryMsg.textContent = mode + (d.urgent ? '' : '（30分钟内）');
+      document.getElementById('urgentMode').checked = false;
+      if (st) { st.textContent = (d.urgent ? '⚡ ' : '') + '✓ 发送成功'; st.className = 'send-status ok'; setTimeout(function(){ st.textContent = ''; }, 3000); }
       clearLetter();
       setTimeout(fetchMessages, 2000);
     } else {
