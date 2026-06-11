@@ -43,6 +43,8 @@ def run(cmd: list, cwd: str = None) -> tuple[int, str, str]:
             cwd=cwd or str(PROJECT_ROOT),
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=120,
             env={
                 **__import__("os").environ,
@@ -50,7 +52,7 @@ def run(cmd: list, cwd: str = None) -> tuple[int, str, str]:
                 "GIT_ASKPASS": "echo",
             },
         )
-        return r.returncode, r.stdout.strip(), r.stderr.strip()
+        return r.returncode, (r.stdout or "").strip(), (r.stderr or "").strip()
     except subprocess.TimeoutExpired:
         return -1, "", "timeout"
     except Exception as e:
