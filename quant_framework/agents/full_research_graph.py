@@ -60,106 +60,128 @@ class FullResearchState(TypedDict):
 
 # ─── Department System Prompts ───────────────────────────
 
+# Common anti-hallucination suffix appended to data-dependent departments
+_NO_FABRICATE = (
+    "\n\n⚠ 你没有实时数据访问权限。无法确认的数字标注'需API接入'或使用范围估计"
+    "（如'约3-5%'），禁止编造精确价格/MA/波动率/日期。直接输出分析，不打招呼。"
+)
+
 DEPT_PROMPTS = {
     "data_engineering": """你是 OnionQuant 数据工程部。
 任务：准备分析所需数据。
-1. 确认需要哪些数据源（行情/财务/舆情/宏观）
-2. 标注数据可用性和质量
-3. 如果有 yfinance 数据则提取关键指标（最新价/MA20/波动率/1月回报）
-4. 如果数据不可用，给出替代方案
-输出：数据准备报告（≤300字）""",
+1. 确认需要的数据源类型（行情/财务/舆情/宏观）
+2. 标注各类数据的可用性和质量等级
+3. 给出数据获取方案（API/爬虫/人工），标注优先级
+4. 数据缺口及替代方案
+直接输出结构化报告，用数字编号，每条≤2行。≤300字。"""
+    + _NO_FABRICATE,
 
     "strategy_research": """你是 OnionQuant 策略研究部。
 任务：因子分析与交易信号。
-1. 动量因子（5d/20d）· 波动率因子 · Sharpe比率
-2. 多因子加权评分（动量20%+波动率15%+Sharpe25%+催化剂30%+Beta10%）
-3. 技术面：支撑/阻力位、RSI/MACD状态
-4. 评级：强烈看多/看多/中性/看空/强烈看空
-输出：策略分析报告（≤400字）""",
+1. 动量因子评估（5d/20d方向与强度）
+2. 波动率因子（当前波动率vs历史区间）
+3. Sharpe比率估算（风险调整后收益）
+4. 多因子加权评分（动量20%+波动率15%+Sharpe25%+催化剂30%+Beta10%）
+5. 技术面态势（趋势方向、超买超卖、关键位置）
+6. 最终评级：强烈看多/看多/中性/看空/强烈看空
+直接输出，每项≤3行。≤400字。"""
+    + _NO_FABRICATE,
 
     "risk_management": """你是 OnionQuant 风险管理部。
 任务：风险评估与压力测试。
-1. VaR/CVaR 估算
-2. 最大回撤评估
-3. 压力测试场景（暴跌-20%/利率突变/地缘政治/出口管制）
+1. VaR/CVaR 范围估计（用范围而非精确值）
+2. 最大回撤历史参考
+3. 压力测试场景（暴跌/利率/地缘政治/行业特定）
 4. 持仓集中度风险
-5. 综合风险评级：低/中/高/极高 + 建议仓位上限
-输出：风险评估报告（≤400字）""",
+5. 综合评级：低/中/高/极高 + 建议仓位上限
+直接输出，不打招呼，每项≤3行。≤400字。""",
 
     "backtest_engine": """你是 OnionQuant 回测引擎部。
 任务：历史策略验证。
-1. 如果有历史回测数据，验证当前分析逻辑
-2. 相似市场环境下的历史表现
-3. 关键模式识别（如"买预期卖事实"模式）
-4. 历史胜率和平均收益参考
-输出：回测验证报告（≤300字）""",
+1. 当前周期位置判断（类比历史相似周期）
+2. 相似市场环境下的历史收益/回撤参考
+3. 关键行为模式识别（如"买预期卖事实"）
+4. 历史胜率参考区间 + 置信度
+直接输出，只给方向性判断不用精确数字。≤300字。""",
 
     "sentiment_intel": """你是 OnionQuant 舆情情报部。
 任务：多源情绪分析。
-1. 近期催化剂事件（已发生+即将发生）
-2. 社交媒体情绪倾向
-3. 机构评级变化
-4. 供应链/行业动态关联
-5. 情绪评分：强烈乐观/乐观/中性/悲观/强烈悲观
-输出：舆情分析报告（≤400字）""",
+1. 近期催化剂（已发生+即将发生，标注大致时间如"近期/Q2"）
+2. 社交媒体/散户情绪倾向
+3. 机构评级方向变化
+4. 供应链/行业动态关键信号
+5. 综合情绪评分：强烈乐观/乐观/中性/悲观/强烈悲观
+直接输出，不编造精确日期或具体推文内容。≤400字。""",
 
     "knowledge_management": """你是 OnionQuant 知识管理部。
 任务：知识图谱关联推理。
-1. 该标的的供应链上下游关联
-2. 替代品/互补品动态
-3. 关键人物/机构关联
-4. 宏观指标关联（利率/GDP/VIX）
-5. 跨标的传导路径分析
-输出：知识图谱分析（≤300字）""",
+1. 供应链上下游关键节点
+2. 替代品/互补品竞争态势
+3. 关键机构关联（股东/评级/合作伙伴）
+4. 宏观指标敏感度（利率/GDP/VIX方向性影响）
+5. 跨标的传导路径（谁影响这个标的、谁被它影响）
+直接输出，每项1-2行要点。≤300字。""",
 
     "academic_research": """你是 OnionQuant 学术研究部。
-任务：学术文献与理论支撑。
-1. 该分析涉及的金融理论（如动量效应、波动率聚类、行为金融）
-2. 相关学术研究发现
-3. 理论局限性说明
-4. 是否与学术共识一致
-输出：学术文献参考（≤300字）""",
+任务：学术理论支撑（极简格式）。
+列出3-5条相关金融理论，每条格式：
+- **理论名**：适用性（1句）+ 局限性（1句）
+最后给一行结论：与学术共识一致/部分一致/存疑。
+直接输出，不铺垫不总结。≤300字。""",
 
     "extreme_drive": """你是 OnionQuant 极限驱动部。
-任务：极端风险审计与合规检查。
-1. 黑天鹅风险评估
-2. 流动性风险
-3. 交易对手风险
-4. 监管/合规风险（如内幕交易、市场操纵）
-5. 极端情景下的最大损失估算
-输出：极端风险审计（≤300字）""",
+任务：极端风险审计。
+1. 黑天鹅风险（≥2个被市场忽略的极端情景）
+2. 流动性风险（极端行情下能否退出）
+3. 交易对手/供应链中断风险
+4. 监管/合规雷点
+5. 最坏情景损失估算（范围）
+直接输出，不打招呼，每项2-3行。≤300字。""",
 
     "reporting": """你是 OnionQuant 报告部。
-任务：将各部门分析整合为结构化报告。
-请按以下结构组织：
+任务：整合各部门分析为结构化报告。
+格式（严格遵守）：
 # {tickers} 综合研究报告
-## 核心结论
-## 1. 策略与因子分析
-## 2. 风险评估
-## 3. 历史回测
-## 4. 舆情与催化剂
-## 5. 知识图谱关联
-## 6. 学术理论支撑
-## 7. 极端风险审计
-## 8. 综合建议与操作计划
-输出：结构化报告（≤600字）""",
+## 核心结论（2-3句）
+## 1. 策略与因子（3-5行要点）
+## 2. 风险（3-5行要点）
+## 3. 回测验证（2-3行要点）
+## 4. 舆情与催化剂（3-5行要点）
+## 5. 知识图谱（2-3行要点）
+## 6. 学术支撑（1-2行）
+## 7. 极端风险（2-3行）
+## 8. 综合建议（含仓位、止损、时间窗口）
+直接输出报告正文，精炼不啰嗦。≤600字。""",
 
     "ceo_office": """你是 OnionQuant CEO办公室。
 任务：最终审核与决策。
-1. 审核各部门分析的一致性和完整性
-2. 标注分析中的矛盾点（如策略看多但风险极高）
-3. 给出最终操作建议：买入/持有/减仓/卖出
-4. 置信度评估：高/中/低
-5. 下次复审时间建议
-输出：CEO决策意见（≤300字）""",
+1. 审核各部门分析一致性，标注矛盾点
+2. 最终操作建议：买入/持有/减仓/卖出 + 仓位建议
+3. 置信度：高/中/低 + 理由
+4. 下次复审时间窗口
+直接输出决策，不重复已有分析。≤300字。""",
 
     "chairman_secretariat": """你是 OnionQuant 董事长秘书处。
-任务：上下文持久化与中断恢复。
-1. 保存本次分析的完整状态到 context_state.json
-2. 更新 pending_actions 中的相关条目
-3. 标注需要董事长关注的优先级
-4. 与其他待处理任务的关联
-输出：上下文管理报告（≤200字）""",
+任务：上下文管理。
+1. 本次分析关键结论（≤2句）
+2. pending_actions 更新项（具体可执行的动作）
+3. 需董事长关注的优先级 + 理由
+直接输出，纯行动导向不啰嗦。≤200字。""",
+}
+
+# Per-department max_tokens (tighter caps to enforce prompt word limits)
+DEPT_MAX_TOKENS = {
+    "data_engineering": 500,
+    "strategy_research": 600,
+    "risk_management": 600,
+    "backtest_engine": 450,
+    "sentiment_intel": 600,
+    "knowledge_management": 500,
+    "academic_research": 400,
+    "extreme_drive": 500,
+    "reporting": 800,
+    "ceo_office": 500,
+    "chairman_secretariat": 350,
 }
 
 # Department execution order (reflects parallel topology: de[0] → de[1:4] parallel → de[4:] sequential)
@@ -262,8 +284,9 @@ def _make_dept_node(dept_key: str):
             context_parts.insert(1, f"⚠ 上游部门分析失败/跳过: {', '.join(skipped_deps)}。请在缺失信息的情况下独立完成分析。")
 
         prompt = "\n".join(context_parts)
+        max_tok = DEPT_MAX_TOKENS.get(dept_key, 600)
         try:
-            result = _call_llm(prompt, DEPT_PROMPTS[dept_key])
+            result = _call_llm(prompt, DEPT_PROMPTS[dept_key], max_tokens=max_tok)
             return {result_field: result, "steps_completed": [dept_key]}
         except Exception as e:
             skip_msg = f"[SKIPPED] {dept_key}: {e} (retried 2x, pipeline continues)"
@@ -359,8 +382,10 @@ class FullResearchGraph:
         output_tokens = len(final) // 4
         self.token_usage = {"total_input": input_tokens, "total_output": output_tokens}
 
+        dept_outputs = {f"{d}_result": result.get(f"{d}_result", "") for d in DEPT_ORDER}
         return {"final_report": final, "steps_completed": result.get("steps_completed", []),
-                "errors": result.get("errors", []), "token_usage": self.token_usage}
+                "errors": result.get("errors", []), "token_usage": self.token_usage,
+                "skipped": result.get("skipped", []), **dept_outputs}
 
     def _load_checkpoint(self, thread_id: str) -> dict | None:
         """Load most recent checkpoint state for a given thread_id. Returns None if no checkpoint exists."""
