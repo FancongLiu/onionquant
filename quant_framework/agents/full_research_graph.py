@@ -664,15 +664,17 @@ def _make_data_engineering_node(progress_callback=None):
 class FullResearchGraph:
     """Complete 11-department LangGraph pipeline for stock research."""
 
-    def __init__(self, db_path: str = None, progress_callback=None):
+    def __init__(self, db_path: str = None, progress_callback=None, reports_dir: str = None):
         if db_path is None:
             db_path = str(Path(__file__).resolve().parent.parent.parent / "company" / "full_research_checkpoints.db")
         self.db_path = db_path
         self._db_conn = sqlite3.connect(db_path, check_same_thread=False)
         self.checkpointer = SqliteSaver(self._db_conn)
         self.progress_callback = progress_callback
+        self.reports_dir = Path(reports_dir) if reports_dir else None
         self.graph = self._build()
         self.token_usage = {"total_input": 0, "total_output": 0}
+        self._cache_ttl_minutes = 30
 
     def _build(self):
         workflow = StateGraph(FullResearchState)
@@ -704,6 +706,39 @@ class FullResearchGraph:
 
         return workflow.compile(checkpointer=self.checkpointer)
 
+    def _check_result_cache(self, ticker_key: str) -> dict | None:
+        """Return cached result dict if same ticker was researched < 30 min ago. None on miss."""
+        if not self.reports_dir:
+            return None
+        try:
+            candidates = sorted(
+                self.reports_dir.glob(f"lg_*_{ticker_key}.json"),
+                key=lambda p: p.stat().st_mtime, reverse=True)
+            if not candidates:
+                return None
+            latest = json.loads(candidates[0].read_text(encoding="utf-8"))
+            ts_str = latest.get("timestamp", "")
+            if not ts_str:
+                return None
+            ts = datetime.fromisoformat(ts_str)
+            age = (datetime.now() - ts).total_seconds() / 60
+            if age > self._cache_ttl_minutes:
+                return None
+            # Reconstruct result dict in same shape as run_sync() return
+            dept_outputs = {f"{d}_result": latest.get(f"{d}_result", "") for d in DEPT_ORDER}
+            return {
+                "final_report": latest.get("final_report", ""),
+                "steps_completed": latest.get("steps_completed", []),
+                "errors": latest.get("errors", []),
+                "token_usage": latest.get("token_usage", {}),
+                "skipped": latest.get("skipped", []),
+                "confidence_scores": latest.get("confidence_scores", {}),
+                "from_cache": True,
+                **dept_outputs,
+            }
+        except Exception:
+            return None
+
     def run_sync(self, user_request: str, tickers: list[str] = None, urgent: bool = False,
                  resume: bool = False) -> dict:
         if tickers is None:
@@ -712,6 +747,12 @@ class FullResearchGraph:
         # Deterministic thread_id per ticker set — enables checkpoint resume across restarts
         ticker_key = "_".join(sorted(tickers)) if tickers else "SPY"
         thread_id = f"full_{ticker_key}"
+
+        # ── Cache check: same ticker within 30 min → return cached ──
+        if not resume:
+            cached = self._check_result_cache(ticker_key)
+            if cached:
+                return cached
 
         # Classify irrelevant departments (zero-token heuristic)
         irrelevant = _classify_irrelevant_departments(user_request, tickers)
@@ -791,7 +832,7 @@ class FullResearchGraph:
 
 
 def run_full_research(user_request: str, tickers: list[str] = None, urgent: bool = False,
-                     progress_callback=None) -> str:
-    graph = FullResearchGraph(progress_callback=progress_callback)
+                     progress_callback=None, reports_dir: str = None) -> str:
+    graph = FullResearchGraph(progress_callback=progress_callback, reports_dir=reports_dir)
     result = graph.run_sync(user_request, tickers=tickers, urgent=urgent)
     return result.get("final_report", "[ERROR]")

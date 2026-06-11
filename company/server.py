@@ -451,7 +451,7 @@ def _process_with_research_graph(text: str) -> str | None:
     """Process stock analysis through Full LangGraph (11 departments + DeepSeek each)."""
     try:
         from quant_framework.agents.full_research_graph import run_full_research
-        return run_full_research(text)
+        return run_full_research(text, reports_dir=str(LANGGRAPH_REPORTS_DIR))
     except ImportError:
         try:
             from quant_framework.agents.research_graph import run_research
@@ -1606,42 +1606,44 @@ async def api_research_stream(request: Request, tickers: str = "", query: str = 
         """Run the LangGraph pipeline in a thread pool and push results."""
         try:
             from quant_framework.agents.full_research_graph import FullResearchGraph
-            graph = FullResearchGraph(progress_callback=_make_threadsafe_callback())
+            graph = FullResearchGraph(progress_callback=_make_threadsafe_callback(),
+                                      reports_dir=str(LANGGRAPH_REPORTS_DIR))
             result = await asyncio.to_thread(
                 graph.run_sync, user_query, tickers=ticker_list, urgent=False)
 
-            # ── Save to LangGraph history ──
-            try:
-                ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-                ticker_tag = "_".join(ticker_list)[:60] if ticker_list else "market"
-                fname = f"lg_{ts}_{ticker_tag}.json"
-                report_data = {
-                    "tickers": ticker_list,
-                    "query": user_query,
-                    "timestamp": datetime.now().isoformat(),
-                    "final_report": result.get("final_report", ""),
-                    "steps_completed": result.get("steps_completed", []),
-                    "errors": result.get("errors", []),
-                    "skipped": result.get("skipped", []),
-                    "confidence_scores": result.get("confidence_scores", {}),
-                    "token_usage": result.get("token_usage", {}),
-                    "data_engineering_result": result.get("data_engineering_result", ""),
-                    "strategy_research_result": result.get("strategy_research_result", ""),
-                    "risk_management_result": result.get("risk_management_result", ""),
-                    "sentiment_intel_result": result.get("sentiment_intel_result", ""),
-                    "backtest_engine_result": result.get("backtest_engine_result", ""),
-                    "knowledge_management_result": result.get("knowledge_management_result", ""),
-                    "academic_research_result": result.get("academic_research_result", ""),
-                    "extreme_drive_result": result.get("extreme_drive_result", ""),
-                    "reporting_result": result.get("reporting_result", ""),
-                    "ceo_office_result": result.get("ceo_office_result", ""),
-                    "chairman_secretariat_result": result.get("chairman_secretariat_result", ""),
-                }
-                (LANGGRAPH_REPORTS_DIR / fname).write_text(
-                    json.dumps(report_data, ensure_ascii=False, indent=2), encoding="utf-8")
-                logger.info(f"LangGraph report saved: {fname}")
-            except Exception:
-                logger.exception("Failed to save LangGraph report")
+            # ── Save to LangGraph history (skip for cache hits) ──
+            if not result.get("from_cache"):
+                try:
+                    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    ticker_tag = "_".join(ticker_list)[:60] if ticker_list else "market"
+                    fname = f"lg_{ts}_{ticker_tag}.json"
+                    report_data = {
+                        "tickers": ticker_list,
+                        "query": user_query,
+                        "timestamp": datetime.now().isoformat(),
+                        "final_report": result.get("final_report", ""),
+                        "steps_completed": result.get("steps_completed", []),
+                        "errors": result.get("errors", []),
+                        "skipped": result.get("skipped", []),
+                        "confidence_scores": result.get("confidence_scores", {}),
+                        "token_usage": result.get("token_usage", {}),
+                        "data_engineering_result": result.get("data_engineering_result", ""),
+                        "strategy_research_result": result.get("strategy_research_result", ""),
+                        "risk_management_result": result.get("risk_management_result", ""),
+                        "sentiment_intel_result": result.get("sentiment_intel_result", ""),
+                        "backtest_engine_result": result.get("backtest_engine_result", ""),
+                        "knowledge_management_result": result.get("knowledge_management_result", ""),
+                        "academic_research_result": result.get("academic_research_result", ""),
+                        "extreme_drive_result": result.get("extreme_drive_result", ""),
+                        "reporting_result": result.get("reporting_result", ""),
+                        "ceo_office_result": result.get("ceo_office_result", ""),
+                        "chairman_secretariat_result": result.get("chairman_secretariat_result", ""),
+                    }
+                    (LANGGRAPH_REPORTS_DIR / fname).write_text(
+                        json.dumps(report_data, ensure_ascii=False, indent=2), encoding="utf-8")
+                    logger.info(f"LangGraph report saved: {fname}")
+                except Exception:
+                    logger.exception("Failed to save LangGraph report")
 
             await event_queue.put({
                 "event": "done",
@@ -1652,6 +1654,7 @@ async def api_research_stream(request: Request, tickers: str = "", query: str = 
                     "skipped": result.get("skipped", []),
                     "confidence_scores": result.get("confidence_scores", {}),
                     "token_usage": result.get("token_usage", {}),
+                    "from_cache": result.get("from_cache", False),
                 }, ensure_ascii=False),
             })
         except Exception as e:
