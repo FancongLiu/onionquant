@@ -15,6 +15,7 @@ Each node is a dedicated LLM call with department-specific system prompt.
 State is persisted via SqliteSaver for crash recovery.
 """
 
+import asyncio
 import json
 import operator
 import os
@@ -28,6 +29,12 @@ from typing import Annotated, Any, TypedDict
 import numpy as np
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, StateGraph
+
+try:
+    from stigmergy import StigmergyScheduler, TaskSpec, DispatchResult
+    _STIGMERGY_AVAILABLE = True
+except ImportError:
+    _STIGMERGY_AVAILABLE = False
 
 
 def _merge_dicts(left: dict, right: dict) -> dict:
@@ -286,6 +293,9 @@ def _classify_irrelevant_departments(user_request: str, tickers: list[str]) -> l
     return sorted(irrelevant)
 
 
+# Non-critical departments parallelized via StigmergyScheduler (P3-14)
+_STIGMERGY_BATCH_DEPTS = ["knowledge_management", "academic_research", "extreme_drive"]
+
 # Department execution order (reflects parallel topology: de[0] → de[1:4] parallel → de[4:] sequential)
 DEPT_ORDER = [
     "data_engineering",
@@ -499,6 +509,135 @@ def _call_llm(prompt: str, system: str, temperature: float = 0.3, max_tokens: in
     raise last_error
 
 
+# ─── Stigmergy Parallel Batch Node ───────────────────────
+
+def _make_stigmergy_batch_node(progress_callback=None):
+    """Run knowledge_management + academic_research + extreme_drive in parallel
+    using StigmergyScheduler pressure-field-based dispatch.
+
+    Replaces the previous sequential chain (KM→AR→ED) with auto-parallelized
+    execution. Each department receives the same upstream context and runs
+    independently — no cross-department dependencies within the batch.
+    """
+    def node_fn(state: FullResearchState) -> dict:
+        if progress_callback:
+            progress_callback("start", "stigmergy_batch", "Stigmergy 并行批处理 (3部门)")
+
+        tickers = state.get("tickers", [])
+        request = state.get("user_request", "")
+        irrelevant = state.get("irrelevant_depts", [])
+
+        # Build shared upstream context for all 3 batch departments
+        context_parts = [f"标的: {', '.join(tickers)}", f"用户需求: {request}"]
+        skipped_deps = []
+        for d in DEPT_ORDER:
+            prev_result = state.get(f"{d}_result", "")
+            if not prev_result:
+                continue
+            if "ERROR" in prev_result or "[SKIPPED]" in prev_result:
+                skipped_deps.append(DEPT_NAMES.get(d, d))
+                continue
+            context_parts.append(f"\n{DEPT_NAMES[d]}输出: {prev_result[:300]}")
+        if skipped_deps:
+            context_parts.insert(1, f"⚠ 上游部门分析失败/跳过: {', '.join(skipped_deps)}。请在缺失信息的情况下独立完成分析。")
+        shared_context = "\n".join(context_parts)
+
+        results: dict[str, dict] = {}
+
+        async def dispatch(agent_id: str, task):
+            dept_key = task.id
+            if dept_key in irrelevant:
+                results[dept_key] = {"output": f"[SKIPPED] {dept_key}: 智能跳过", "score": None}
+                return DispatchResult(success=True, output=results[dept_key]["output"])
+
+            if progress_callback:
+                progress_callback("start", dept_key, DEPT_NAMES.get(dept_key, dept_key))
+
+            system = DEPT_PROMPTS[dept_key] + _CONFIDENCE_INSTRUCTION
+            max_tok = DEPT_MAX_TOKENS.get(dept_key, 300)
+
+            loop = asyncio.get_running_loop()
+            try:
+                llm_result = await loop.run_in_executor(
+                    None, _call_llm, shared_context, system, 0.3, max_tok)
+                cleaned, score = _parse_confidence(llm_result)
+                results[dept_key] = {"output": cleaned, "score": score}
+                if progress_callback:
+                    progress_callback("complete", dept_key, DEPT_NAMES.get(dept_key, dept_key),
+                                      {"score": score, "summary": cleaned[:120]})
+                return DispatchResult(success=True, output=cleaned)
+            except Exception as e:
+                if progress_callback:
+                    progress_callback("error", dept_key, DEPT_NAMES.get(dept_key, dept_key),
+                                      {"error": str(e)[:150]})
+                results[dept_key] = {"output": f"[ERROR] {dept_key}: {e}", "score": None}
+                return DispatchResult(success=False, error=str(e))
+
+        if not _STIGMERGY_AVAILABLE:
+            # Fallback: sequential execution if stigmergy not installed
+            if progress_callback:
+                progress_callback("start", "stigmergy_batch", "Stigmergy 不可用，回退顺序执行")
+            for dept in _STIGMERGY_BATCH_DEPTS:
+                node = _make_dept_node(dept, progress_callback)
+                updates = node(state)
+                state = {**state, **updates}
+                result_key = f"{dept}_result"
+                score = updates.get("confidence_scores", {}).get(dept)
+                results[dept] = {"output": updates.get(result_key, ""), "score": score}
+        else:
+            scheduler = StigmergyScheduler(
+                tick_interval=0.01,
+                wake_threshold=0.3,
+            )
+            scheduler.set_dispatcher(dispatch)
+
+            async def _run():
+                for dept in _STIGMERGY_BATCH_DEPTS:
+                    if dept in irrelevant:
+                        continue
+                    await scheduler.add_task(TaskSpec(
+                        id=dept,
+                        description=DEPT_NAMES.get(dept, dept),
+                        agent_id=dept,
+                        priority=0.5,
+                        dependencies=[],
+                    ))
+                if scheduler._tasks:
+                    await scheduler.run()
+
+            asyncio.run(_run())
+
+        # Build return dict
+        updates: dict = {"steps_completed": [], "skipped": [], "errors": []}
+        conf_updates: dict[str, float] = {}
+        for dept in _STIGMERGY_BATCH_DEPTS:
+            updates["steps_completed"].append(dept)
+            if dept in irrelevant:
+                updates[f"{dept}_result"] = f"[SKIPPED] {dept}: 智能跳过 — 与当前查询类型不相关"
+                updates["skipped"].append(dept)
+            elif dept in results:
+                updates[f"{dept}_result"] = results[dept]["output"]
+                score = results[dept].get("score")
+                if score is not None:
+                    conf_updates[dept] = score
+            else:
+                updates[f"{dept}_result"] = f"[ERROR] {dept}: 执行失败"
+                updates["errors"].append(f"{dept}: execution failed")
+                updates["skipped"].append(dept)
+
+        if conf_updates:
+            updates["confidence_scores"] = conf_updates
+
+        if progress_callback:
+            completed = len([d for d in _STIGMERGY_BATCH_DEPTS if d not in irrelevant and d in results])
+            progress_callback("complete", "stigmergy_batch", "Stigmergy 并行批处理",
+                              {"batch_completed": completed, "total_batch": 3})
+
+        return updates
+
+    return node_fn
+
+
 # ─── Node Factory ─────────────────────────────────────────
 
 def _make_dept_node(dept_key: str, progress_callback=None):
@@ -684,10 +823,14 @@ class FullResearchGraph:
         for dept in DEPT_ORDER[1:]:
             workflow.add_node(dept, _make_dept_node(dept, self.progress_callback))
 
+        # Stigmergy-powered parallel batch node (P3-14):
+        # knowledge_management + academic_research + extreme_drive run in parallel
+        workflow.add_node("stigmergy_batch", _make_stigmergy_batch_node(self.progress_callback))
+
         # Set entry point
         workflow.set_entry_point("data_engineering")
 
-        # Fan-out: data_engineering → 3 parallel depts
+        # Fan-out: data_engineering → 3 parallel depts (strategy, risk, sentiment)
         workflow.add_edge("data_engineering", "strategy_research")
         workflow.add_edge("data_engineering", "risk_management")
         workflow.add_edge("data_engineering", "sentiment_intel")
@@ -697,11 +840,12 @@ class FullResearchGraph:
         workflow.add_edge("risk_management", "backtest_engine")
         workflow.add_edge("sentiment_intel", "backtest_engine")
 
-        # Sequential chain: backtest_engine → ... → chairman_secretariat → END
-        sequential = ["backtest_engine", "knowledge_management", "academic_research",
-                      "extreme_drive", "reporting", "ceo_office", "chairman_secretariat"]
-        for i, dept in enumerate(sequential[:-1]):
-            workflow.add_edge(dept, sequential[i + 1])
+        # Stigmergy batch: backtest_engine → 3 non-critical depts in parallel → reporting
+        workflow.add_edge("backtest_engine", "stigmergy_batch")
+        workflow.add_edge("stigmergy_batch", "reporting")
+        # Final chain: reporting → ceo_office → chairman_secretariat → END
+        workflow.add_edge("reporting", "ceo_office")
+        workflow.add_edge("ceo_office", "chairman_secretariat")
         workflow.add_edge("chairman_secretariat", END)
 
         return workflow.compile(checkpointer=self.checkpointer)
