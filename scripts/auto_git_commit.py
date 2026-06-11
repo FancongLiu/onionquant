@@ -71,12 +71,14 @@ def get_changed_files() -> list[str]:
     for line in out.split("\n"):
         if not line:
             continue
-        # git status --porcelain format: "XY PATH" (2 status chars + space + path)
         if len(line) < 4:
             continue
         fpath = line[3:].strip().strip('"')
         if fpath:
             files.append(fpath)
+    # DEBUG
+    for f in files:
+        print(f"  [DEBUG] found: {repr(f)} first_char={repr(f[0]) if f else 'EMPTY'}", flush=True)
     return files
 
 
