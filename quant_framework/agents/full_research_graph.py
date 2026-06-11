@@ -3,9 +3,13 @@
 OnionQuant FULL Research Graph — all 11 departments in a LangGraph pipeline.
 
 Pipeline:
-  data_engineering → strategy_research → risk_management → backtest_engine
-  → sentiment_intel → knowledge_management → academic_research → extreme_drive
-  → reporting → ceo_office → chairman_secretariat
+  data_engineering
+    ├── strategy_research ──┐
+    ├── risk_management ────┤  (parallel)
+    └── sentiment_intel ────┘
+            ↓
+  backtest_engine → knowledge_management → academic_research
+  → extreme_drive → reporting → ceo_office → chairman_secretariat
 
 Each node is a dedicated LLM call with department-specific system prompt.
 State is persisted via SqliteSaver for crash recovery.
@@ -155,13 +159,13 @@ DEPT_PROMPTS = {
 输出：上下文管理报告（≤200字）""",
 }
 
-# Department execution order
+# Department execution order (reflects parallel topology: de[0] → de[1:4] parallel → de[4:] sequential)
 DEPT_ORDER = [
     "data_engineering",
     "strategy_research",
     "risk_management",
-    "backtest_engine",
     "sentiment_intel",
+    "backtest_engine",
     "knowledge_management",
     "academic_research",
     "extreme_drive",
@@ -220,12 +224,14 @@ def _make_dept_node(dept_key: str):
         request = state.get("user_request", "")
         error_field = f"{dept_key}_error"
 
-        # Build context from previous departments
+        # Build context from all completed departments (dynamic — handles parallel topology)
         context_parts = [f"标的: {', '.join(tickers)}", f"用户需求: {request}"]
-        for prev_dept in DEPT_ORDER[:DEPT_ORDER.index(dept_key)]:
-            prev_result = state.get(f"{prev_dept}_result", "")
+        for d in DEPT_ORDER:
+            if d == dept_key:
+                continue
+            prev_result = state.get(f"{d}_result", "")
             if prev_result and "ERROR" not in prev_result:
-                context_parts.append(f"\n{DEPT_NAMES[prev_dept]}输出: {prev_result[:300]}")
+                context_parts.append(f"\n{DEPT_NAMES[d]}输出: {prev_result[:300]}")
 
         prompt = "\n".join(context_parts)
         try:
@@ -235,17 +241,6 @@ def _make_dept_node(dept_key: str):
             return {result_field: f"[ERROR] {e}", "steps_completed": [dept_key], "errors": [f"{dept_key}: {e}"]}
 
     return node_fn
-
-
-# ─── Route Function ───────────────────────────────────────
-
-def _route_next(state: FullResearchState) -> str:
-    """Determine next department to execute."""
-    completed = set(state.get("steps_completed", []))
-    for dept in DEPT_ORDER:
-        if dept not in completed:
-            return dept
-    return END
 
 
 # ─── Full Graph Builder ───────────────────────────────────
@@ -268,15 +263,24 @@ class FullResearchGraph:
             workflow.add_node(dept, _make_dept_node(dept))
 
         # Set entry point
-        workflow.set_entry_point(DEPT_ORDER[0])
+        workflow.set_entry_point("data_engineering")
 
-        # Chain: dept_i → dept_{i+1}
-        for i, dept in enumerate(DEPT_ORDER[:-1]):
-            next_dept = DEPT_ORDER[i + 1]
-            workflow.add_edge(dept, next_dept)
+        # Fan-out: data_engineering → 3 parallel depts
+        workflow.add_edge("data_engineering", "strategy_research")
+        workflow.add_edge("data_engineering", "risk_management")
+        workflow.add_edge("data_engineering", "sentiment_intel")
 
-        # Last dept → END
-        workflow.add_edge(DEPT_ORDER[-1], END)
+        # Fan-in: all 3 converge at backtest_engine
+        workflow.add_edge("strategy_research", "backtest_engine")
+        workflow.add_edge("risk_management", "backtest_engine")
+        workflow.add_edge("sentiment_intel", "backtest_engine")
+
+        # Sequential chain: backtest_engine → ... → chairman_secretariat → END
+        sequential = ["backtest_engine", "knowledge_management", "academic_research",
+                      "extreme_drive", "reporting", "ceo_office", "chairman_secretariat"]
+        for i, dept in enumerate(sequential[:-1]):
+            workflow.add_edge(dept, sequential[i + 1])
+        workflow.add_edge("chairman_secretariat", END)
 
         return workflow.compile()
 
