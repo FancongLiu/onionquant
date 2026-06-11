@@ -102,7 +102,7 @@ Python 脚本用 `background_scheduler.py`（零 AI token）。
 11. ✅ 减少非关键部门的 token 消耗 (2026-06-12: 5 depts prompts→≤150字, max_tokens -40%, saves 900 tok/run)
 12. ✅ 智能跳过不相关的部门 (2026-06-12: zero-token keyword classifier, 快速查询跳过3部门节省~27% token, 核心4部门永不被跳过)
 13. ✅ 30分钟内同标的 → 复用缓存分析 (2026-06-12: FullResearchGraph._check_result_cache(), 30min TTL, from_cache SSE flag)
-14. 引入 stigmergy-langgraph 替代顺序执行 (9.5x 提速)
+14. ✅ 引入 stigmergy-langgraph 替代顺序执行 (2026-06-12: StigmergyScheduler并行批处理knowledge_management+academic_research+extreme_drive, wake_threshold=0.3同tick调度, fallback顺序执行)
 
 ### 自检清单
 - [x] 代码能无错运行? ✅ 2026-06-12: 11/11 nodes, 0 errors
