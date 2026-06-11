@@ -30,6 +30,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CTX_STATE_PATH = (
     PROJECT_ROOT / "company" / "departments" / "execution" / "context_state.json"
 )
+LANGGRAPH_REPORTS_DIR = PROJECT_ROOT / "company" / "reports" / "langgraph"
+LANGGRAPH_REPORTS_DIR.mkdir(parents=True, exist_ok=True)
 sys.path.insert(0, str(PROJECT_ROOT))
 load_dotenv(PROJECT_ROOT / ".env")
 
@@ -1607,6 +1609,40 @@ async def api_research_stream(request: Request, tickers: str = "", query: str = 
             graph = FullResearchGraph(progress_callback=_make_threadsafe_callback())
             result = await asyncio.to_thread(
                 graph.run_sync, user_query, tickers=ticker_list, urgent=False)
+
+            # ── Save to LangGraph history ──
+            try:
+                ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+                ticker_tag = "_".join(ticker_list)[:60] if ticker_list else "market"
+                fname = f"lg_{ts}_{ticker_tag}.json"
+                report_data = {
+                    "tickers": ticker_list,
+                    "query": user_query,
+                    "timestamp": datetime.now().isoformat(),
+                    "final_report": result.get("final_report", ""),
+                    "steps_completed": result.get("steps_completed", []),
+                    "errors": result.get("errors", []),
+                    "skipped": result.get("skipped", []),
+                    "confidence_scores": result.get("confidence_scores", {}),
+                    "token_usage": result.get("token_usage", {}),
+                    "data_engineering_result": result.get("data_engineering_result", ""),
+                    "strategy_research_result": result.get("strategy_research_result", ""),
+                    "risk_management_result": result.get("risk_management_result", ""),
+                    "sentiment_intel_result": result.get("sentiment_intel_result", ""),
+                    "backtest_engine_result": result.get("backtest_engine_result", ""),
+                    "knowledge_management_result": result.get("knowledge_management_result", ""),
+                    "academic_research_result": result.get("academic_research_result", ""),
+                    "extreme_drive_result": result.get("extreme_drive_result", ""),
+                    "reporting_result": result.get("reporting_result", ""),
+                    "ceo_office_result": result.get("ceo_office_result", ""),
+                    "chairman_secretariat_result": result.get("chairman_secretariat_result", ""),
+                }
+                (LANGGRAPH_REPORTS_DIR / fname).write_text(
+                    json.dumps(report_data, ensure_ascii=False, indent=2), encoding="utf-8")
+                logger.info(f"LangGraph report saved: {fname}")
+            except Exception:
+                logger.exception("Failed to save LangGraph report")
+
             await event_queue.put({
                 "event": "done",
                 "data": json.dumps({
@@ -1646,6 +1682,53 @@ async def api_research_stream(request: Request, tickers: str = "", query: str = 
         await task  # Ensure background task completes
 
     return EventSourceResponse(event_generator())
+
+
+# ── LangGraph Report History API ────────────────────────────────
+
+@app.get("/api/research/history")
+async def api_research_history(limit: int = 20):
+    """List saved LangGraph research reports (newest first)."""
+    if not LANGGRAPH_REPORTS_DIR.exists():
+        return {"reports": []}
+    files = sorted(LANGGRAPH_REPORTS_DIR.glob("lg_*.json"), key=lambda f: f.stat().st_mtime, reverse=True)
+    result = []
+    for f in files[:limit]:
+        try:
+            data = json.loads(f.read_text(encoding="utf-8"))
+            result.append({
+                "filename": f.name,
+                "tickers": data.get("tickers", []),
+                "query": data.get("query", ""),
+                "timestamp": data.get("timestamp", ""),
+                "steps_completed": len(data.get("steps_completed", [])),
+                "errors": len(data.get("errors", [])),
+                "confidence_scores": data.get("confidence_scores", {}),
+                "token_usage": data.get("token_usage", {}),
+            })
+        except Exception:
+            result.append({
+                "filename": f.name,
+                "tickers": [],
+                "query": "",
+                "timestamp": datetime.fromtimestamp(f.stat().st_mtime).isoformat(),
+                "steps_completed": 0,
+                "errors": 0,
+                "confidence_scores": {},
+            })
+    return {"reports": result}
+
+
+@app.get("/api/research/history/{filename}")
+async def api_research_history_detail(filename: str):
+    """Get full data for a saved LangGraph research report."""
+    fpath = LANGGRAPH_REPORTS_DIR / filename
+    if not fpath.exists() or not fpath.is_relative_to(LANGGRAPH_REPORTS_DIR):
+        return JSONResponse({"error": "Not found"}, status_code=404)
+    try:
+        return json.loads(fpath.read_text(encoding="utf-8"))
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
 
 
 @app.get("/api/research/dxyz")
