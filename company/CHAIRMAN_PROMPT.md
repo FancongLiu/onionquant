@@ -90,8 +90,8 @@ Python 脚本用 `background_scheduler.py`（零 AI token）。
 
 **P1 — 部门质量**
 5. ✅ 根据实际输出质量优化各部门 system prompt (2026-06-12: anti-hallucination, remove filler, per-dept max_tokens)
-6. 给部门添加真实 tool 调用 (yfinance, risk_threshold_engine, empyrical)
-7. 添加置信度评分
+6. ✅ 给部门添加真实 tool 调用 (yfinance, risk_threshold_engine, empyrical) (2026-06-12: data_engineering fetches yfinance data + computes empyrical/risk_threshold_engine metrics, injects into strategy/risk/sentiment prompts)
+7. ✅ 添加置信度评分 (2026-06-12: 每部门输出 [置信度: X.X/10], 基于数据质量+信号强度+推理链, CEO办公室聚合所有部门评分)
 
 **P2 — 服务器集成**
 8. 添加 /api/research SSE 流式进度推送

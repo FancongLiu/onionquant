@@ -49,6 +49,9 @@ class FullResearchState(TypedDict):
     ceo_office_result: str
     chairman_secretariat_result: str
 
+    # Per-department confidence scores (0.0-10.0, parsed from LLM output)
+    confidence_scores: dict[str, float]
+
     # Progress tracking
     route: str
     steps_completed: Annotated[list[str], operator.add]
@@ -187,6 +190,40 @@ DEPT_MAX_TOKENS = {
     "ceo_office": 500,
     "chairman_secretariat": 350,
 }
+
+# Confidence scoring instruction appended to every department prompt
+_CONFIDENCE_INSTRUCTION = (
+    "\n\n最后一行必须输出置信度评分：`[置信度: X.X/10]`。"
+    "评判标准：数据质量(0-3分)+信号强度(0-3分)+推理链稳健性(0-4分)。"
+)
+
+# Regex to parse confidence score from LLM output
+_CONFIDENCE_RE = re.compile(r'置信度[：:]\s*(-?\d+(?:\.\d+)?)\s*/\s*10')
+
+
+def _parse_confidence(text: str) -> tuple[str, float | None]:
+    """Extract confidence score from department output.
+
+    Returns (cleaned_text, score). score is a float 0-10 or None if unparseable.
+    The confidence line is stripped from cleaned_text.
+    """
+    if not text:
+        return text, None
+    m = list(_CONFIDENCE_RE.finditer(text))
+    if not m:
+        return text, None
+    last_match = m[-1]
+    try:
+        score = float(last_match.group(1))
+        score = max(0.0, min(10.0, score))
+    except (ValueError, IndexError):
+        return text, None
+    # Strip the confidence line(s) from output
+    cleaned = _CONFIDENCE_RE.sub("", text)
+    # Remove trailing blank lines
+    cleaned = cleaned.rstrip()
+    return cleaned, score
+
 
 # Department execution order (reflects parallel topology: de[0] → de[1:4] parallel → de[4:] sequential)
 DEPT_ORDER = [
@@ -445,11 +482,29 @@ def _make_dept_node(dept_key: str):
         if dept_key == "backtest_engine" and market_data:
             context_parts.append(f"\n📊 行情参考:\n{_format_market_data_for_prompt(market_data)}")
 
+        # Inject confidence scores for ceo_office aggregation
+        if dept_key == "ceo_office":
+            conf = state.get("confidence_scores", {})
+            if conf:
+                conf_lines = [f"  {DEPT_NAMES.get(d, d)}: {conf[d]:.2f}/10"
+                              for d in DEPT_ORDER[:-2] if d in conf]  # exclude ceo_office + chairman
+                if conf_lines:
+                    context_parts.append(f"\n🎯 各部门置信度:\n" + "\n".join(conf_lines))
+                    valid_scores = [conf[d] for d in DEPT_ORDER[:-2] if d in conf]
+                    if valid_scores:
+                        avg = sum(valid_scores) / len(valid_scores)
+                        context_parts.append(f"综合平均置信度: {avg:.2f}/10")
+
         prompt = "\n".join(context_parts)
         max_tok = DEPT_MAX_TOKENS.get(dept_key, 600)
+        system = DEPT_PROMPTS[dept_key] + _CONFIDENCE_INSTRUCTION
         try:
-            result = _call_llm(prompt, DEPT_PROMPTS[dept_key], max_tokens=max_tok)
-            return {result_field: result, "steps_completed": [dept_key]}
+            result = _call_llm(prompt, system, max_tokens=max_tok)
+            cleaned, score = _parse_confidence(result)
+            updates: dict = {result_field: cleaned, "steps_completed": [dept_key]}
+            if score is not None:
+                updates["confidence_scores"] = {dept_key: score}
+            return updates
         except Exception as e:
             skip_msg = f"[SKIPPED] {dept_key}: {e} (retried 2x, pipeline continues)"
             return {result_field: skip_msg, "steps_completed": [dept_key], "errors": [f"{dept_key}: {e}"],
@@ -491,15 +546,20 @@ def _make_data_engineering_node():
 
         prompt = "\n".join(context_parts)
         max_tok = DEPT_MAX_TOKENS.get("data_engineering", 500)
+        system = DEPT_PROMPTS["data_engineering"] + _CONFIDENCE_INSTRUCTION
 
         try:
-            result = _call_llm(prompt, DEPT_PROMPTS["data_engineering"], max_tokens=max_tok)
-            return {
-                result_field: result,
+            result = _call_llm(prompt, system, max_tokens=max_tok)
+            cleaned, score = _parse_confidence(result)
+            resp = {
+                result_field: cleaned,
                 "steps_completed": ["data_engineering"],
                 "market_data": market_data,
                 "risk_metrics": risk_metrics,
             }
+            if score is not None:
+                resp["confidence_scores"] = {"data_engineering": score}
+            return resp
         except Exception as e:
             skip_msg = f"[SKIPPED] data_engineering: {e} (retried 2x)"
             return {
@@ -580,6 +640,7 @@ class FullResearchGraph:
                 "user_request": user_request, "tickers": tickers, "urgent": urgent,
                 "route": DEPT_ORDER[0], "steps_completed": [], "errors": [], "skipped": [],
                 "final_report": "", "market_data": {}, "risk_metrics": {},
+                "confidence_scores": {},
                 **{f"{d}_result": "" for d in DEPT_ORDER},
                 "data_engineering_result": "", "strategy_research_result": "",
                 "risk_management_result": "", "backtest_engine_result": "",
@@ -604,7 +665,9 @@ class FullResearchGraph:
         dept_outputs = {f"{d}_result": result.get(f"{d}_result", "") for d in DEPT_ORDER}
         return {"final_report": final, "steps_completed": result.get("steps_completed", []),
                 "errors": result.get("errors", []), "token_usage": self.token_usage,
-                "skipped": result.get("skipped", []), **dept_outputs}
+                "skipped": result.get("skipped", []),
+                "confidence_scores": result.get("confidence_scores", {}),
+                **dept_outputs}
 
     def _load_checkpoint(self, thread_id: str) -> dict | None:
         """Load most recent checkpoint state for a given thread_id. Returns None if no checkpoint exists."""
