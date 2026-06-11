@@ -288,19 +288,21 @@ async def get_departments():
 async def post_inbox(request: Request):
     body = await request.json()
     text = body.get("text", "").strip()
+    urgent = body.get("urgent", False)
     if not text:
         return JSONResponse({"ok": False, "error": "empty text"}, status_code=400)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    filename = f"MSG_{timestamp}.md"
+    prefix = "URGENT_" if urgent else "MSG_"
+    filename = f"{prefix}{timestamp}.md"
     filepath = INBOX_DIR / filename
 
-    content = f"# 董事长来信\n\n**时间**：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n{text}\n"
+    content = f"# 董事长来信{' ⚡紧急' if urgent else ''}\n\n**时间**：{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n{text}\n"
     filepath.write_text(content, encoding="utf-8")
 
-    await notify_all("inbox_new", {"file": filename, "preview": text[:100]})
+    await notify_all("inbox_new", {"file": filename, "preview": text[:100], "urgent": urgent})
 
-    return {"ok": True, "file": filename}
+    return {"ok": True, "file": filename, "urgent": urgent}
 
 
 def _parse_msg_metadata(filename: str, text: str | None = None) -> dict:

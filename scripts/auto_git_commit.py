@@ -28,6 +28,11 @@ SENSITIVE_PATTERNS = [
     # Never auto-commit files that might contain personal data
     "company/departments/execution/",
     "company/.server_", "company/.watcher_", "company/.wechat_",
+    # Chairman growth personal data (salary, skill gaps, job hunt plans)
+    "chairman_growth/skill_inventory",
+    "chairman_growth/learning_roadmap",
+    "chairman_growth/market_intel",
+    "chairman_growth/_INDEX",
 ]
 
 
@@ -59,11 +64,15 @@ def get_changed_files() -> list[str]:
         return []
     files = []
     for line in out.split("\n"):
-        line = line.strip()
-        if not line or len(line) < 4:
+        if not line:
+            continue
+        # git status --porcelain format: "XY PATH" (2 status chars + space + path)
+        # Leading char may be space for unstaged files. Do NOT .strip() the whole line.
+        if len(line) < 4:
             continue
         fpath = line[3:].strip().strip('"')
-        files.append(fpath)
+        if fpath:
+            files.append(fpath)
     return files
 
 

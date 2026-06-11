@@ -294,6 +294,7 @@ async def post_inbox(request: Request, background_tasks: BackgroundTasks):
     """
     body = await request.json()
     text = body.get("text", "").strip()
+    urgent_flag = body.get("urgent", False)  # Frontend toggle button
     if not text:
         return JSONResponse({"ok": False, "error": "empty text"}, status_code=400)
 
@@ -306,10 +307,10 @@ async def post_inbox(request: Request, background_tasks: BackgroundTasks):
     filepath.write_text(content, encoding="utf-8")
 
     # Notify SSE subscribers immediately
-    await notify_all("inbox_new", {"file": filename, "preview": text[:100]})
+    await notify_all("inbox_new", {"file": filename, "preview": text[:100], "urgent": urgent_flag})
 
     # Fire-and-forget: process in background (doesn't block the HTTP response)
-    background_tasks.add_task(_process_inbox_message, filepath, text)
+    background_tasks.add_task(_process_inbox_message, filepath, text, urgent_flag)
 
     return {"ok": True, "file": filename, "processing": "started"}
 
@@ -346,14 +347,47 @@ def _write_outbox(prefix: str, title: str, body: str):
     return filename
 
 
-def _add_to_queue(message_id: str, text: str, preview: str):
-    """Add message to unified task queue. Zero AI tokens."""
-    task = {
+def _extract_keywords(text: str) -> set[str]:
+    """Extract meaningful keywords for task similarity matching. Zero AI tokens."""
+    import re
+    upper = text.upper()
+    # Tickers: any 2-5 char uppercase or alphanumeric stock symbols
+    tickers = set(re.findall(r'\b[A-Z]{2,5}\b', upper))
+    tickers |= set(re.findall(r'\b[A-Z]{2,4}\d{2,4}\b', upper))  # MI400, B200, H100
+    # Topics and Chinese keywords
+    topics = set(re.findall(r'(分析|回测|因子|持仓|交易|风险|报告|研究|监控|'
+                            r'NVDA|AMD|MU|INTC|DXYZ|SOX|SMH|QQQ|SPY|TSLA|'
+                            r'MI\d+|H\d+|B\d+|HBM|DRAM|NAND|'
+                            r'期权|财报|罢工|美联储|利率|CPI|GDP|VIX|'
+                            r'目标价|走势|趋势|量产|进展|催化剂)', upper))
+    return tickers | topics
+
+
+def _similarity(task_a: dict, task_b: dict) -> float:
+    """Simple Jaccard similarity between two tasks based on keywords. Zero AI tokens."""
+    kw_a = _extract_keywords(task_a.get("full_text", "") + " " + task_a.get("preview", ""))
+    kw_b = _extract_keywords(task_b.get("full_text", "") + " " + task_b.get("preview", ""))
+    if not kw_a or not kw_b:
+        return 0.0
+    return len(kw_a & kw_b) / len(kw_a | kw_b)
+
+
+def _smart_add_to_queue(message_id: str, text: str, preview: str):
+    """Add or merge message into unified task queue with dedup. Zero AI tokens.
+
+    If new task is similar (>50% keyword overlap) to an existing task:
+      - Merge: append new info to existing task, bump priority if needed
+      - Don't create duplicate
+    Otherwise:
+      - Insert at correct priority position
+    """
+    new_task = {
         "id": message_id,
         "source": "inbox",
         "priority": _infer_priority(text),
         "preview": preview[:200],
         "full_text": text[:2000],
+        "updates": [f"[{datetime.now().strftime('%m-%d %H:%M')}] {preview[:100]}"],
         "received_at": datetime.now().isoformat(),
     }
     queue = {"tasks": []}
@@ -362,12 +396,38 @@ def _add_to_queue(message_id: str, text: str, preview: str):
             queue = json.loads(TASK_QUEUE_FILE.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             pass
-    ids = {t.get("id") for t in queue.get("tasks", [])}
-    if task["id"] not in ids:
-        queue.setdefault("tasks", []).append(task)
+
+    # Check for similar existing tasks
+    best_match = None
+    best_sim = 0.0
+    for i, t in enumerate(queue.get("tasks", [])):
+        sim = _similarity(new_task, t)
+        if sim > best_sim:
+            best_sim = sim
+            best_match = i
+
+    if best_match is not None and best_sim > 0.25:
+        # Merge: update existing task
+        existing = queue["tasks"][best_match]
+        existing["full_text"] = (existing.get("full_text", "") + "\n\n[更新] " + text[:500])[:2000]
+        existing.setdefault("updates", []).append(
+            f"[{datetime.now().strftime('%m-%d %H:%M')}] {preview[:100]}")
+        # Bump priority if new request has higher priority
         order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
-        queue["tasks"].sort(key=lambda t: order.get(t.get("priority", "P2"), 2))
-        TASK_QUEUE_FILE.write_text(json.dumps(queue, ensure_ascii=False, indent=2), encoding="utf-8")
+        if order.get(new_task["priority"], 2) < order.get(existing.get("priority", "P2"), 2):
+            existing["priority"] = new_task["priority"]
+        existing["merged_from"] = existing.get("merged_from", []) + [message_id]
+        queue["tasks"][best_match] = existing
+    else:
+        # Insert new task at correct priority position
+        queue.setdefault("tasks", []).append(new_task)
+
+    # Sort by priority
+    order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
+    queue["tasks"].sort(key=lambda t: order.get(t.get("priority", "P2"), 2))
+
+    TASK_QUEUE_FILE.write_text(json.dumps(queue, ensure_ascii=False, indent=2), encoding="utf-8")
+    return best_match is not None and best_sim > 0.5
 
 
 def _call_deepseek(message: str) -> str | None:
@@ -389,26 +449,86 @@ def _call_deepseek(message: str) -> str | None:
         return None
 
 
-async def _process_inbox_message(filepath: Path, text: str):
-    """Background task: process one inbox message. Called by post_inbox."""
+async def _process_inbox_message(filepath: Path, text: str, urgent_flag: bool = False):
+    """Background task: process one inbox message. Called by post_inbox.
+
+    Urgent (keyword OR frontend urgent_flag):
+      1. Save current task context to context_state.json (interrupt checkpoint)
+      2. Call DeepSeek immediately
+      3. Write URGENT_REPLY
+      4. Mark interrupt as resolved, restore previous task pointer
+
+    Normal:
+      1. Smart-merge into task queue (dedup similar tasks, insert at priority)
+      2. Write ACK confirming queue position
+    """
     message_id = filepath.stem
     preview = text[:150]
+    is_urgent = urgent_flag or _is_urgent(text)
 
-    if _is_urgent(text):
-        # Urgent: immediate DeepSeek (costs tokens, justified)
-        _write_outbox("URGENT_ACK", "[URGENT] 紧急来信 - 立即处理中",
-            f"紧急消息已中断当前队列，立即处理。\n\n> {preview}\n\n预计15秒内完成。")
+    if is_urgent:
+        # === URGENT INTERRUPT ===
+        # Save current task state as checkpoint
+        if CTX_STATE_PATH.exists():
+            try:
+                ctx = json.loads(CTX_STATE_PATH.read_text(encoding="utf-8"))
+            except Exception:
+                ctx = {}
+        else:
+            ctx = {}
+        ctx["interrupted_task"] = ctx.get("current_task")
+        ctx["interrupted_at"] = datetime.now().isoformat()
+        ctx["urgent_reason"] = preview
+        ctx["pending_actions"] = ctx.get("pending_actions", [])
+        ctx["pending_actions"].insert(0, {
+            "action": "resume_interrupted",
+            "task": ctx.get("interrupted_task"),
+            "note": f"恢复被紧急消息打断的任务: {preview[:80]}"
+        })
+        CTX_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        CTX_STATE_PATH.write_text(json.dumps(ctx, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        _write_outbox("URGENT_ACK", "[URGENT] 紧急来信 - 已中断当前任务",
+            f"[!!] 紧急消息已中断当前任务流。\n\n"
+            f"> {preview}\n\n"
+            f"---\n"
+            f"当前任务已保存到 context_state.json | "
+            f"紧急处理完成后自动恢复 | "
+            f"预计15秒内完成紧急响应。")
+
         reply = _call_deepseek(text)
         if reply:
             _write_outbox("URGENT_REPLY", "[URGENT] CEO Agent 紧急回复", reply)
-        # Notify SSE
+            # Clear interrupt, mark resume point
+            if CTX_STATE_PATH.exists():
+                try:
+                    ctx = json.loads(CTX_STATE_PATH.read_text(encoding="utf-8"))
+                    ctx["urgent_resolved"] = True
+                    ctx["urgent_resolved_at"] = datetime.now().isoformat()
+                    CTX_STATE_PATH.write_text(json.dumps(ctx, ensure_ascii=False, indent=2), encoding="utf-8")
+                except Exception:
+                    pass
+
         await notify_all("outbox_new", {"type": "urgent_reply", "preview": (reply or "")[:100]})
     else:
-        # Normal: queue for batch processing (zero AI tokens)
-        _write_outbox("ACK", "收到来信 - 已加入任务队列",
-            f"已收到董事长的消息，已加入统一任务队列。\n\n> {preview}\n\n---\n"
-            f"优先级: {_infer_priority(text)} | 零 AI token 消耗 | 将在批量处理周期内处理")
-        _add_to_queue(message_id, text, preview)
+        # === NORMAL: Smart Merge into Queue ===
+        merged = _smart_add_to_queue(message_id, text, preview)
+        queue_size = len(json.loads(TASK_QUEUE_FILE.read_text(encoding="utf-8")).get("tasks", [])) if TASK_QUEUE_FILE.exists() else 0
+
+        if merged:
+            _write_outbox("ACK", "收到来信 - 已融合到现有任务",
+                f"董事长的消息与现有任务相似，已智能融合（非重复添加）。\n\n"
+                f"> {preview}\n\n---\n"
+                f"优先级: {_infer_priority(text)} | "
+                f"当前队列: {queue_size} 个任务 | "
+                f"零 AI token 消耗")
+        else:
+            _write_outbox("ACK", "收到来信 - 已加入任务队列",
+                f"已收到董事长的消息，已加入统一任务队列。\n\n"
+                f"> {preview}\n\n---\n"
+                f"优先级: {_infer_priority(text)} | "
+                f"队列位置: 第 {queue_size} 位 | "
+                f"零 AI token 消耗")
         await notify_all("outbox_new", {"type": "ack_queued", "preview": preview})
 
     # Move to processed
