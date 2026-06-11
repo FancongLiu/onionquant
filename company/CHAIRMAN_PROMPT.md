@@ -95,7 +95,7 @@ Python 脚本用 `background_scheduler.py`（零 AI token）。
 
 **P2 — 服务器集成**
 8. ✅ 添加 /api/research SSE 流式进度推送 (2026-06-12: SSE endpoint streams per-dept start/complete/error, thread-safe callback bridge)
-9. 前端展示部门分析进度
+9. ✅ 前端展示部门分析进度 (2026-06-12: research_panel.html — trigger form + 11-dept SSE progress cards + confidence scores + final report)
 10. 研究报告历史存储
 
 **P3 — 优化**
