@@ -446,13 +446,16 @@ def _is_stock_request(text: str) -> bool:
 
 
 def _process_with_research_graph(text: str) -> str | None:
-    """Process stock analysis through LangGraph multi-agent pipeline."""
+    """Process stock analysis through Full LangGraph (11 departments + DeepSeek each)."""
     try:
-        from quant_framework.agents.research_graph import run_research
-        return run_research(text)
-    except ImportError as e:
-        print(f"  LangGraph not available: {e}", flush=True)
-        return _call_deepseek(text)  # Fallback to direct DeepSeek
+        from quant_framework.agents.full_research_graph import run_full_research
+        return run_full_research(text)
+    except ImportError:
+        try:
+            from quant_framework.agents.research_graph import run_research
+            return run_research(text)
+        except Exception:
+            return _call_deepseek(text)
     except Exception as e:
         print(f"  Research graph error: {e}", flush=True)
         return _call_deepseek(text)

@@ -69,3 +69,51 @@ Python 脚本用 `background_scheduler.py`（零 AI token）。
 - Python 调度器：`scripts/background_scheduler.py`（零 token 定时任务）
 - 微信推送：`scripts/wechat_sync_push.py`
 - Dashboard：cloudflared tunnel → 见 context_state.json
+
+## 🔬 LangGraph 持续迭代任务 (2026-06-12 启动)
+
+### 使命
+持续完善 OnionQuant LangGraph 多 Agent 研究管道，将全部 15+ 部门编排进自动化分析流程。
+
+### Token 预算 (严格)
+- 每轮迭代: max 50K tokens
+- 同会话执行，利用缓存 (99% 命中率)
+- 每完成一个有意义的改进 → commit + push
+
+### 迭代优先级
+
+**P0 — 管道完整性**
+1. 验证 full_research_graph.py 中全部 11 个部门节点正确执行
+2. 添加错误恢复: 节点失败 → 跳过继续
+3. 添加并行执行 (strategy+risk+sentiment 可并行)
+4. 添加 SqliteSaver checkpoint 断点恢复
+
+**P1 — 部门质量**
+5. 根据实际输出质量优化各部门 system prompt
+6. 给部门添加真实 tool 调用 (yfinance, risk_threshold_engine, empyrical)
+7. 添加置信度评分
+
+**P2 — 服务器集成**
+8. 添加 /api/research SSE 流式进度推送
+9. 前端展示部门分析进度
+10. 研究报告历史存储
+
+**P3 — 优化**
+11. 减少非关键部门的 token 消耗
+12. 智能跳过不相关的部门
+13. 30分钟内同标的 → 复用缓存分析
+14. 引入 stigmergy-langgraph 替代顺序执行 (9.5x 提速)
+
+### 自检清单
+- [ ] 代码能无错运行?
+- [ ] 所有部门节点都被调用?
+- [ ] Token 在预算内?
+- [ ] 输出质量比之前好?
+- [ ] onionoffice.xyz 正常?
+
+### 环境 (WSL)
+- 项目: /mnt/e/2026_AgentStudy/Python_code
+- Python: .venv-linux/bin/python3
+- Server: python company/server.py (port 8765)
+- API Key: .env (DEEPSEEK_API_KEY)
+- Git: https://github.com/FancongLiu/onionquant.git
