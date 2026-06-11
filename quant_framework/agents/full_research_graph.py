@@ -20,6 +20,7 @@ import operator
 import os
 import re
 import sqlite3
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Annotated, Any, TypedDict
@@ -194,7 +195,9 @@ DEPT_NAMES = {
 
 # ─── LLM Call ────────────────────────────────────────────
 
-def _call_llm(prompt: str, system: str, temperature: float = 0.3, max_tokens: int = 800) -> str:
+def _call_llm(prompt: str, system: str, temperature: float = 0.3, max_tokens: int = 800,
+              max_retries: int = 2, timeout: float = 60.0) -> str:
+    """Call DeepSeek LLM with retry on transient failures. Max 2 retries, exponential backoff."""
     api_key = os.getenv("DEEPSEEK_API_KEY", "")
     if not api_key:
         env_file = Path(__file__).resolve().parent.parent.parent / ".env"
@@ -207,40 +210,65 @@ def _call_llm(prompt: str, system: str, temperature: float = 0.3, max_tokens: in
         return "[ERROR] No DEEPSEEK_API_KEY"
 
     from openai import OpenAI
-    client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
-    resp = client.chat.completions.create(
-        model="deepseek-chat",
-        messages=[{"role": "system", "content": system}, {"role": "user", "content": prompt}],
-        max_tokens=max_tokens, temperature=temperature)
-    return resp.choices[0].message.content.strip()
+    client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com", timeout=timeout)
+
+    last_error = None
+    for attempt in range(max_retries + 1):
+        try:
+            resp = client.chat.completions.create(
+                model="deepseek-chat",
+                messages=[{"role": "system", "content": system}, {"role": "user", "content": prompt}],
+                max_tokens=max_tokens, temperature=temperature)
+            return resp.choices[0].message.content.strip()
+        except Exception as e:
+            last_error = e
+            if attempt < max_retries:
+                wait = 2 ** attempt  # 1s, 2s backoff
+                time.sleep(wait)
+    raise last_error
 
 
 # ─── Node Factory ─────────────────────────────────────────
 
 def _make_dept_node(dept_key: str):
-    """Create a node function for a given department."""
+    """Create a node function for a given department with error recovery.
+
+    Node failures are recorded in state.errors but never crash the pipeline.
+    Downstream nodes receive 'upstream failed' context so they can adapt.
+    LLM calls get up to 2 retries with exponential backoff before giving up.
+    """
     result_field = f"{dept_key}_result"
 
     def node_fn(state: FullResearchState) -> dict:
         tickers = state.get("tickers", [])
         request = state.get("user_request", "")
-        error_field = f"{dept_key}_error"
+        existing_errors = state.get("errors", [])
 
         # Build context from all completed departments (dynamic — handles parallel topology)
         context_parts = [f"标的: {', '.join(tickers)}", f"用户需求: {request}"]
+        skipped_deps = []
         for d in DEPT_ORDER:
             if d == dept_key:
                 continue
             prev_result = state.get(f"{d}_result", "")
-            if prev_result and "ERROR" not in prev_result:
-                context_parts.append(f"\n{DEPT_NAMES[d]}输出: {prev_result[:300]}")
+            if not prev_result:
+                continue
+            if "ERROR" in prev_result or "[SKIPPED]" in prev_result:
+                skipped_deps.append(DEPT_NAMES.get(d, d))
+                continue
+            context_parts.append(f"\n{DEPT_NAMES[d]}输出: {prev_result[:300]}")
+
+        if skipped_deps:
+            context_parts.insert(1, f"⚠ 上游部门分析失败/跳过: {', '.join(skipped_deps)}。请在缺失信息的情况下独立完成分析。")
 
         prompt = "\n".join(context_parts)
         try:
             result = _call_llm(prompt, DEPT_PROMPTS[dept_key])
             return {result_field: result, "steps_completed": [dept_key]}
         except Exception as e:
-            return {result_field: f"[ERROR] {e}", "steps_completed": [dept_key], "errors": [f"{dept_key}: {e}"]}
+            skip_msg = f"[SKIPPED] {dept_key}: {e} (retried 2x, pipeline continues)"
+            return {result_field: skip_msg, "steps_completed": [dept_key], "errors": [f"{dept_key}: {e}"],
+                    "skipped": [dept_key]}
 
     return node_fn
 
