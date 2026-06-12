@@ -109,7 +109,7 @@ Python 脚本用 `background_scheduler.py`（零 AI token）。
 - [x] 所有部门节点都被调用? ✅ all 11 verified
 - [x] Token 在预算内? ✅ ~2300 tokens/run
 - [x] 输出质量比之前好? ✅ anti-hallucination + filler removed + tighter caps
-- [ ] onionoffice.xyz 正常?
+- [x] onionoffice.xyz 正常? ✅ 2026-06-12: HTTPS 200
 
 ### 环境 (WSL)
 - 项目: /mnt/e/2026_AgentStudy/Python_code

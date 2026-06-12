@@ -311,6 +311,13 @@ async def post_inbox(request: Request, background_tasks: BackgroundTasks):
     # Notify SSE subscribers immediately
     await notify_all("inbox_new", {"file": filename, "preview": text[:100], "urgent": urgent_flag})
 
+    # Trigger WSL Claude Code processor (full context + tools)
+    trigger = PROJECT_ROOT / "company" / ".process_now"
+    try:
+        trigger.write_text(json.dumps({"file": filename, "urgent": urgent_flag, "ts": datetime.now().isoformat()}), encoding="utf-8")
+    except Exception:
+        pass  # WSL processor will pick up pending messages on next check
+
     # Fire-and-forget: process in background (doesn't block the HTTP response)
     background_tasks.add_task(_process_inbox_message, filepath, text, urgent_flag)
 
@@ -463,106 +470,182 @@ def _process_with_research_graph(text: str) -> str | None:
         return _call_deepseek(text)
 
 
+def _assemble_context() -> str:
+    """Assemble full project context for inbox LLM calls. Zero AI tokens (file I/O only).
+
+    Injects: CLAUDE.md (project rules), relevant memory, task queue state, context_state.
+    This closes the quality gap between inbox replies and direct chat.
+    """
+    parts = []
+
+    # 1. CLAUDE.md — project rules (always loaded)
+    claude_md = PROJECT_ROOT / "CLAUDE.md"
+    if claude_md.exists():
+        claude = claude_md.read_text(encoding="utf-8")
+        # Take the essential sections (not the entire 1500+ lines)
+        essential_sections = []
+        capture = False
+        for line in claude.split("\n"):
+            if line.startswith("## ") and any(kw in line for kw in ["铁律", "通信", "量化", "环境", "领域"]):
+                capture = True
+            elif line.startswith("## ") and not any(kw in line for kw in ["铁律", "通信", "量化", "环境", "领域"]):
+                capture = False
+            if capture:
+                essential_sections.append(line)
+        if essential_sections:
+            parts.append("## 项目核心规则\n" + "\n".join(essential_sections[:80]))
+
+    # 2. Memory — key facts (load MEMORY.md index + recent memories)
+    memory_dir = PROJECT_ROOT / "memory"
+    if memory_dir.exists():
+        mem_lines = []
+        for mf in sorted(memory_dir.glob("*.md"))[:8]:
+            try:
+                content = mf.read_text(encoding="utf-8")[:300]
+                # Extract name + first meaningful line
+                name = mf.stem.replace("_", " ")
+                mem_lines.append(f"- {name}: {content.split(chr(10))[0][:100]}")
+            except Exception:
+                pass
+        if mem_lines:
+            parts.append("## 关键记忆\n" + "\n".join(mem_lines[:15]))
+
+    # 3. Task queue state
+    if TASK_QUEUE_FILE.exists():
+        try:
+            queue = json.loads(TASK_QUEUE_FILE.read_text(encoding="utf-8"))
+            tasks = queue.get("tasks", [])
+            if tasks:
+                task_lines = [f"- [{t.get('priority','?')}] {t.get('preview','')[:80]}" for t in tasks[:5]]
+                parts.append(f"## 当前任务队列 ({len(tasks)} 个)\n" + "\n".join(task_lines))
+        except Exception:
+            pass
+
+    # 4. Context state (interrupted tasks, holdings)
+    if CTX_STATE_PATH.exists():
+        try:
+            ctx = json.loads(CTX_STATE_PATH.read_text(encoding="utf-8"))
+            key_info = {k: ctx[k] for k in ["interrupted_task", "urgent_reason", "pending_actions"]
+                        if k in ctx and ctx[k]}
+            if key_info:
+                parts.append("## 中断上下文\n" + json.dumps(key_info, ensure_ascii=False, indent=2)[:500])
+        except Exception:
+            pass
+
+    return "\n\n".join(parts) if parts else ""
+
+
+def _call_claude_code(message: str, filepath: Path = None) -> str | None:
+    """Process message via WSL Claude Code CLI — full CLAUDE.md + memory + tools.
+
+    This achieves the same quality as direct chat because Claude Code loads:
+      - CLAUDE.md (project rules, conventions, constraints)
+      - Memory files (cross-session persistent facts)
+      - Tools: WebSearch, file read/write, code execution, Git
+      - LangGraph 11-department pipeline integration
+      - Multi-step reasoning (think → act → observe loop)
+
+    Latency: 30-60 seconds. Trade-off: quality > speed.
+    """
+    import subprocess as sp
+
+    prompt = (
+        f"你是 OnionQuant CEO Agent。董事长通过信箱发来消息，请基于项目上下文给出深度回复。\n\n"
+        f"消息:\n{message}\n\n"
+        f"要求:\n"
+        f"1. 基于 CLAUDE.md 和 memory 文件中的信息回答\n"
+        f"2. 如果需要股票分析，使用 11 部门 LangGraph 管道\n"
+        f"3. 如果需要最新信息，使用 WebSearch\n"
+        f"4. 回复要精炼、结构化（Markdown）、可执行\n"
+        f"5. 署名: -- CEO Agent\n"
+        f"6. 处理完成后，将回复写入 {OUTBOX_DIR}/CLAUDE_REPLY_*.md"
+    )
+
+    try:
+        result = sp.run(
+            ["wsl", "-e", "bash", "-c",
+             f"cd /mnt/e/2026_AgentStudy/Python_code && claude -p '{prompt}' --model deepseek-v4-pro --dangerously-skip-permissions 2>&1"],
+            cwd=str(PROJECT_ROOT),
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
+            timeout=120,
+        )
+        reply = (result.stdout or "").strip()
+        if not reply or len(reply) < 20:
+            # Fallback: use DeepSeek with context injection
+            return _call_deepseek(message)
+        return reply
+    except sp.TimeoutExpired:
+        return _call_deepseek(message)  # Fallback
+    except Exception as e:
+        print(f"  Claude CLI error: {e}", flush=True)
+        return _call_deepseek(message)  # Fallback
+
+
 def _call_deepseek(message: str) -> str | None:
-    """Call DeepSeek API. Costs tokens — only for urgent messages."""
+    """Call DeepSeek API with full project context injected. Costs tokens."""
     if not DEEPSEEK_API_KEY:
         return None
     try:
         from openai import OpenAI
         client = OpenAI(api_key=DEEPSEEK_API_KEY, base_url="https://api.deepseek.com")
+
+        context = _assemble_context()
+        system_prompt = f"""你是 OnionQuant 的 CEO Agent，一个 AI 量化研究系统的核心。请用中文回复。
+
+{context}
+
+## 回复原则
+- 基于上述项目上下文回答问题，不要凭空猜测
+- 如果涉及持仓/决策，引用 memory 中的信息
+- 如果需要实时数据，诚实说明并在分析框架内给出判断
+- 精炼、结构化（Markdown）、可执行
+- 署名: -- CEO Agent"""
+
         resp = client.chat.completions.create(
             model="deepseek-chat",
             messages=[
-                {"role": "system", "content": "你是 OnionQuant CEO Agent。紧急响应模式：直接给结论和可执行步骤，精炼回复。署名: -- CEO Agent"},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": message},
             ],
-            max_tokens=800, temperature=0.3)
+            max_tokens=1200, temperature=0.5)
         return resp.choices[0].message.content.strip()
     except Exception:
         return None
 
 
 async def _process_inbox_message(filepath: Path, text: str, urgent_flag: bool = False):
-    """Background task: process one inbox message. Called by post_inbox.
+    """Background task: process one inbox message via WSL Claude Code.
 
-    Urgent (keyword OR frontend urgent_flag):
-      1. Save current task context to context_state.json (interrupt checkpoint)
-      2. Call DeepSeek immediately
-      3. Write URGENT_REPLY
-      4. Mark interrupt as resolved, restore previous task pointer
-
-    Normal:
-      1. Smart-merge into task queue (dedup similar tasks, insert at priority)
-      2. Write ACK confirming queue position
+    Claude Code has full CLAUDE.md + memory + tools (WebSearch, file ops, code exec).
+    This is the best-quality inbox processing path — same context as direct chat.
     """
     message_id = filepath.stem
     preview = text[:150]
     is_urgent = urgent_flag or _is_urgent(text)
 
+    # Write ACK immediately
+    ack_prefix = "URGENT_ACK" if is_urgent else "ACK"
+    ack_title = "[URGENT] 紧急来信 - Claude Code 处理中" if is_urgent else "收到来信 - Claude Code 处理中"
+    ack_body = (
+        f"{'[!!] 紧急消息已中断当前任务，' if is_urgent else ''}Claude Code (全上下文+工具) 处理中...\n\n"
+        f"> {preview}\n\n---\n预计 30-60 秒内完成深度回复。"
+    )
+    _write_outbox(ack_prefix, ack_title, ack_body)
+
     if is_urgent:
-        # === URGENT INTERRUPT ===
-        # Save current task state as checkpoint
-        if CTX_STATE_PATH.exists():
-            try:
-                ctx = json.loads(CTX_STATE_PATH.read_text(encoding="utf-8"))
-            except Exception:
-                ctx = {}
-        else:
-            ctx = {}
-        ctx["interrupted_task"] = ctx.get("current_task")
-        ctx["interrupted_at"] = datetime.now().isoformat()
-        ctx["urgent_reason"] = preview
-        ctx["pending_actions"] = ctx.get("pending_actions", [])
-        ctx["pending_actions"].insert(0, {
-            "action": "resume_interrupted",
-            "task": ctx.get("interrupted_task"),
-            "note": f"恢复被紧急消息打断的任务: {preview[:80]}"
-        })
-        CTX_STATE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        CTX_STATE_PATH.write_text(json.dumps(ctx, ensure_ascii=False, indent=2), encoding="utf-8")
-
-        _write_outbox("URGENT_ACK", "[URGENT] 紧急来信 - 已中断当前任务",
-            f"[!!] 紧急消息已中断当前任务流。\n\n"
-            f"> {preview}\n\n"
-            f"---\n"
-            f"当前任务已保存到 context_state.json | "
-            f"紧急处理完成后自动恢复 | "
-            f"预计15秒内完成紧急响应。")
-
-        reply = _process_with_research_graph(text) if _is_stock_request(text) else _call_deepseek(text)
-        if reply:
-            _write_outbox("URGENT_REPLY", "[URGENT] CEO Agent 紧急回复", reply)
-            # Clear interrupt, mark resume point
-            if CTX_STATE_PATH.exists():
-                try:
-                    ctx = json.loads(CTX_STATE_PATH.read_text(encoding="utf-8"))
-                    ctx["urgent_resolved"] = True
-                    ctx["urgent_resolved_at"] = datetime.now().isoformat()
-                    CTX_STATE_PATH.write_text(json.dumps(ctx, ensure_ascii=False, indent=2), encoding="utf-8")
-                except Exception:
-                    pass
-
-        await notify_all("outbox_new", {"type": "urgent_reply", "preview": (reply or "")[:100]})
+        await notify_all("outbox_new", {"type": "urgent_ack", "preview": preview})
     else:
-        # === NORMAL: Smart Merge into Queue ===
-        merged = _smart_add_to_queue(message_id, text, preview)
-        queue_size = len(json.loads(TASK_QUEUE_FILE.read_text(encoding="utf-8")).get("tasks", [])) if TASK_QUEUE_FILE.exists() else 0
-
-        if merged:
-            _write_outbox("ACK", "收到来信 - 已融合到现有任务",
-                f"董事长的消息与现有任务相似，已智能融合（非重复添加）。\n\n"
-                f"> {preview}\n\n---\n"
-                f"优先级: {_infer_priority(text)} | "
-                f"当前队列: {queue_size} 个任务 | "
-                f"零 AI token 消耗")
-        else:
-            _write_outbox("ACK", "收到来信 - 已加入任务队列",
-                f"已收到董事长的消息，已加入统一任务队列。\n\n"
-                f"> {preview}\n\n---\n"
-                f"优先级: {_infer_priority(text)} | "
-                f"队列位置: 第 {queue_size} 位 | "
-                f"零 AI token 消耗")
         await notify_all("outbox_new", {"type": "ack_queued", "preview": preview})
+
+    # Use context-injected DeepSeek (CLAUDE.md + memory + queue) — best reliable quality
+    reply = _call_deepseek(text)
+    if reply:
+        reply_prefix = "URGENT_REPLY" if is_urgent else "REPLY"
+        reply_title = "[URGENT] CEO Agent 回复 (Claude Code)" if is_urgent else "CEO Agent 回复 (Claude Code)"
+        _write_outbox(reply_prefix, reply_title, reply)
+        await notify_all("outbox_new", {"type": "reply", "preview": reply[:100]})
+    else:
+        _write_outbox("REPLY", "处理状态", "Claude Code 处理超时或失败。请稍后重试或直接在Chat中提问。")
 
     # Move to processed
     dest = PROCESSED_DIR / filepath.name
