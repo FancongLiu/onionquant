@@ -535,52 +535,80 @@ def _assemble_context() -> str:
     return "\n\n".join(parts) if parts else ""
 
 
-def _call_claude_code(message: str, filepath: Path = None) -> str | None:
-    """Process via WSL Claude Code CLI — 100% chat quality (CLAUDE.md + memory + WebSearch + LangGraph).
+# Persistent Claude session ID — same session across all inbox messages
+# Session persists in ~/.claude/projects/<project>/<session-id>.jsonl
+# First call: --session-id creates the session
+# Subsequent calls: --resume continues the same conversation
+_CLAUDE_SESSION_ID = "854a758c-1c16-499a-ad9a-7a2d9e5f5284"
+_SESSION_INITIALIZED = PROJECT_ROOT / "company" / ".claude_session_ready"
 
-    Uses a temp file for the prompt to avoid shell encoding issues with Chinese text.
-    Claude Code loads full project context from /mnt/e/2026_AgentStudy/Python_code/.
+
+def _call_claude_code(message: str, filepath: Path = None) -> str | None:
+    """Process via WSL Claude Code persistent session — 100% chat quality.
+
+    Architecture:
+      - First call: claude -p --session-id <fixed-id> → creates persistent session
+      - All subsequent calls: claude -p --resume <fixed-id> → same session, full memory
+      - Session file: ~/.claude/projects/<project>/<session-id>.jsonl
+      - Claude Code loads full context (CLAUDE.md + memory + WebSearch + LangGraph)
+      - Multi-turn memory: messages accumulate in the same session → better context
+
+    Fallback: context-injected DeepSeek if Claude Code fails/times out.
     """
     import subprocess as sp
-    import tempfile
 
     prompt = (
         f"你是 OnionQuant CEO Agent。董事长通过信箱发来消息。请基于项目上下文给出深度回复。\n\n"
         f"消息:\n{message}\n\n"
-        f"要求:\n"
-        f"1. 基于 CLAUDE.md 和 memory 文件中的项目信息回答\n"
-        f"2. 如果涉及股票/标的需要分析，使用 11 部门 LangGraph 管道\n"
-        f"3. 如果需要最新信息，直接使用 WebSearch\n"
-        f"4. 直接执行搜索和分析，不要写'我会去搜索'然后停下\n"
-        f"5. 回复精炼、结构化（Markdown）、可执行\n"
-        f"6. 署名: -- CEO Agent"
+        f"要求: 1.基于CLAUDE.md和memory文件的项目信息回答 2.如涉及股票分析使用11部门LangGraph管道 "
+        f"3.如需最新信息直接使用WebSearch 4.直接执行搜索和分析不要写'我会去搜索'然后停下 "
+        f"5.回复精炼结构化(Markdown)可执行 6.署名:-- CEO Agent"
     )
 
     try:
-        # Write prompt to a temp file (avoids shell escaping issues with Chinese)
+        # Write prompt to file (avoids shell escaping issues with Chinese)
         prompt_file = PROJECT_ROOT / "company" / ".claude_prompt.txt"
         prompt_file.write_text(prompt, encoding="utf-8")
 
-        # Call via WSL — reads prompt from file, avoids encoding corruption
         wsl_prompt_path = "/mnt/e/2026_AgentStudy/Python_code/company/.claude_prompt.txt"
+
+        # Use persistent session: first call creates with --session-id, rest use --resume
+        if _SESSION_INITIALIZED.exists():
+            session_flag = f"--resume {_CLAUDE_SESSION_ID}"
+        else:
+            session_flag = f"--session-id {_CLAUDE_SESSION_ID}"
+            _SESSION_INITIALIZED.write_text(datetime.now().isoformat())
+
+        cmd = (
+            f"cd /mnt/e/2026_AgentStudy/Python_code && "
+            f'claude -p "$(cat {wsl_prompt_path})" {session_flag} '
+            f"--model deepseek-v4-pro --dangerously-skip-permissions 2>&1"
+        )
+
         result = sp.run(
-            ["wsl", "-e", "bash", "-c",
-             f'cd /mnt/e/2026_AgentStudy/Python_code && claude -p "$(cat {wsl_prompt_path})" --model deepseek-v4-pro --dangerously-skip-permissions 2>&1'],
+            ["wsl", "-e", "bash", "-c", cmd],
             cwd=str(PROJECT_ROOT),
             capture_output=True, encoding="utf-8", errors="replace",
-            timeout=120,
+            timeout=180,  # 3 min for complex analysis
         )
         reply = (result.stdout or "").strip()
-        # Clean up prompt file
+
+        # Clean up
         try:
             prompt_file.unlink()
         except Exception:
             pass
 
-        if not reply or len(reply) < 20:
-            return _call_deepseek(message)
+        # If session was lost (e.g. file deleted), recreate it
+        if not reply or "[ERROR]" in reply:
+            _SESSION_INITIALIZED.unlink(missing_ok=True)
+            if len(reply) < 20:
+                return _call_deepseek(message)
+
         return reply
+
     except sp.TimeoutExpired:
+        _SESSION_INITIALIZED.unlink(missing_ok=True)
         return _call_deepseek(message)
     except Exception as e:
         print(f"  Claude CLI error: {e}", flush=True)
