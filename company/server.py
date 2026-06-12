@@ -536,49 +536,55 @@ def _assemble_context() -> str:
 
 
 def _call_claude_code(message: str, filepath: Path = None) -> str | None:
-    """Process message via WSL Claude Code CLI — full CLAUDE.md + memory + tools.
+    """Process via WSL Claude Code CLI — 100% chat quality (CLAUDE.md + memory + WebSearch + LangGraph).
 
-    This achieves the same quality as direct chat because Claude Code loads:
-      - CLAUDE.md (project rules, conventions, constraints)
-      - Memory files (cross-session persistent facts)
-      - Tools: WebSearch, file read/write, code execution, Git
-      - LangGraph 11-department pipeline integration
-      - Multi-step reasoning (think → act → observe loop)
-
-    Latency: 30-60 seconds. Trade-off: quality > speed.
+    Uses a temp file for the prompt to avoid shell encoding issues with Chinese text.
+    Claude Code loads full project context from /mnt/e/2026_AgentStudy/Python_code/.
     """
     import subprocess as sp
+    import tempfile
 
     prompt = (
-        f"你是 OnionQuant CEO Agent。董事长通过信箱发来消息，请基于项目上下文给出深度回复。\n\n"
+        f"你是 OnionQuant CEO Agent。董事长通过信箱发来消息。请基于项目上下文给出深度回复。\n\n"
         f"消息:\n{message}\n\n"
         f"要求:\n"
-        f"1. 基于 CLAUDE.md 和 memory 文件中的信息回答\n"
-        f"2. 如果需要股票分析，使用 11 部门 LangGraph 管道\n"
-        f"3. 如果需要最新信息，使用 WebSearch\n"
-        f"4. 回复要精炼、结构化（Markdown）、可执行\n"
-        f"5. 署名: -- CEO Agent\n"
-        f"6. 处理完成后，将回复写入 {OUTBOX_DIR}/CLAUDE_REPLY_*.md"
+        f"1. 基于 CLAUDE.md 和 memory 文件中的项目信息回答\n"
+        f"2. 如果涉及股票/标的需要分析，使用 11 部门 LangGraph 管道\n"
+        f"3. 如果需要最新信息，直接使用 WebSearch\n"
+        f"4. 直接执行搜索和分析，不要写'我会去搜索'然后停下\n"
+        f"5. 回复精炼、结构化（Markdown）、可执行\n"
+        f"6. 署名: -- CEO Agent"
     )
 
     try:
+        # Write prompt to a temp file (avoids shell escaping issues with Chinese)
+        prompt_file = PROJECT_ROOT / "company" / ".claude_prompt.txt"
+        prompt_file.write_text(prompt, encoding="utf-8")
+
+        # Call via WSL — reads prompt from file, avoids encoding corruption
+        wsl_prompt_path = "/mnt/e/2026_AgentStudy/Python_code/company/.claude_prompt.txt"
         result = sp.run(
             ["wsl", "-e", "bash", "-c",
-             f"cd /mnt/e/2026_AgentStudy/Python_code && claude -p '{prompt}' --model deepseek-v4-pro --dangerously-skip-permissions 2>&1"],
+             f'cd /mnt/e/2026_AgentStudy/Python_code && claude -p "$(cat {wsl_prompt_path})" --model deepseek-v4-pro --dangerously-skip-permissions 2>&1'],
             cwd=str(PROJECT_ROOT),
-            capture_output=True, text=True, encoding="utf-8", errors="replace",
+            capture_output=True, encoding="utf-8", errors="replace",
             timeout=120,
         )
         reply = (result.stdout or "").strip()
+        # Clean up prompt file
+        try:
+            prompt_file.unlink()
+        except Exception:
+            pass
+
         if not reply or len(reply) < 20:
-            # Fallback: use DeepSeek with context injection
             return _call_deepseek(message)
         return reply
     except sp.TimeoutExpired:
-        return _call_deepseek(message)  # Fallback
+        return _call_deepseek(message)
     except Exception as e:
         print(f"  Claude CLI error: {e}", flush=True)
-        return _call_deepseek(message)  # Fallback
+        return _call_deepseek(message)
 
 
 def _call_deepseek(message: str) -> str | None:
@@ -637,10 +643,18 @@ async def _process_inbox_message(filepath: Path, text: str, urgent_flag: bool = 
     else:
         await notify_all("outbox_new", {"type": "ack_queued", "preview": preview})
 
-    # AI processing is handled by WSL Claude Code relay (claude_inbox_relay.sh)
-    # The relay watches for .process_now trigger → invokes claude -p → writes CLAUDE_REPLY_*.md
-    # This gives 100% chat quality (CLAUDE.md + memory + WebSearch + LangGraph)
-    # Server only writes ACK + trigger; Claude Code writes the actual reply.
+    # Primary: Claude Code via WSL (100% chat quality)
+    # Fallback: context-injected DeepSeek (if Claude Code fails/times out)
+    reply = _call_claude_code(text, filepath)
+    if not reply:
+        reply = _call_deepseek(text)
+
+    # Write reply to outbox
+    if reply:
+        reply_prefix = "URGENT_REPLY" if is_urgent else "REPLY"
+        reply_title = "[URGENT] CEO Agent 回复 (Claude Code)" if is_urgent else "CEO Agent 回复 (Claude Code)"
+        _write_outbox(reply_prefix, reply_title, reply)
+        await notify_all("outbox_new", {"type": "reply", "preview": reply[:100]})
 
     # Move to processed
     dest = PROCESSED_DIR / filepath.name
