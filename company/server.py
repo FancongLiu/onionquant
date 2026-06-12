@@ -637,15 +637,10 @@ async def _process_inbox_message(filepath: Path, text: str, urgent_flag: bool = 
     else:
         await notify_all("outbox_new", {"type": "ack_queued", "preview": preview})
 
-    # Use context-injected DeepSeek (CLAUDE.md + memory + queue) — best reliable quality
-    reply = _call_deepseek(text)
-    if reply:
-        reply_prefix = "URGENT_REPLY" if is_urgent else "REPLY"
-        reply_title = "[URGENT] CEO Agent 回复 (Claude Code)" if is_urgent else "CEO Agent 回复 (Claude Code)"
-        _write_outbox(reply_prefix, reply_title, reply)
-        await notify_all("outbox_new", {"type": "reply", "preview": reply[:100]})
-    else:
-        _write_outbox("REPLY", "处理状态", "Claude Code 处理超时或失败。请稍后重试或直接在Chat中提问。")
+    # AI processing is handled by WSL Claude Code relay (claude_inbox_relay.sh)
+    # The relay watches for .process_now trigger → invokes claude -p → writes CLAUDE_REPLY_*.md
+    # This gives 100% chat quality (CLAUDE.md + memory + WebSearch + LangGraph)
+    # Server only writes ACK + trigger; Claude Code writes the actual reply.
 
     # Move to processed
     dest = PROCESSED_DIR / filepath.name
