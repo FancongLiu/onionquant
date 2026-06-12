@@ -539,7 +539,7 @@ def _assemble_context() -> str:
 # Session persists in ~/.claude/projects/<project>/<session-id>.jsonl
 # First call: --session-id creates the session
 # Subsequent calls: --resume continues the same conversation
-_CLAUDE_SESSION_ID = "854a758c-1c16-499a-ad9a-7a2d9e5f5284"
+_CLAUDE_SESSION_ID = str(__import__("uuid").uuid4())  # Fresh UUID per server restart
 _SESSION_INITIALIZED = PROJECT_ROOT / "company" / ".claude_session_ready"
 
 
@@ -572,11 +572,10 @@ def _call_claude_code(message: str, filepath: Path = None) -> str | None:
 
         wsl_prompt_path = "/mnt/e/2026_AgentStudy/Python_code/company/.claude_prompt.txt"
 
-        # Use persistent session: first call creates with --session-id, rest use --resume
-        if _SESSION_INITIALIZED.exists():
-            session_flag = f"--resume {_CLAUDE_SESSION_ID}"
-        else:
-            session_flag = f"--session-id {_CLAUDE_SESSION_ID}"
+        # Always use --session-id with fixed UUID for conversation continuity
+        # NOT --resume (which can get stuck on deferred tool calls from prior session)
+        session_flag = f"--session-id {_CLAUDE_SESSION_ID}"
+        if not _SESSION_INITIALIZED.exists():
             _SESSION_INITIALIZED.write_text(datetime.now().isoformat())
 
         cmd = (
@@ -599,11 +598,9 @@ def _call_claude_code(message: str, filepath: Path = None) -> str | None:
         except Exception:
             pass
 
-        # If session was lost (e.g. file deleted), recreate it
-        if not reply or "[ERROR]" in reply:
-            _SESSION_INITIALIZED.unlink(missing_ok=True)
-            if len(reply) < 20:
-                return _call_deepseek(message)
+        # Fallback
+        if not reply or len(reply) < 20:
+            return _call_deepseek(message)
 
         return reply
 
@@ -683,6 +680,22 @@ async def _process_inbox_message(filepath: Path, text: str, urgent_flag: bool = 
         reply_title = "[URGENT] CEO Agent 回复 (Claude Code)" if is_urgent else "CEO Agent 回复 (Claude Code)"
         _write_outbox(reply_prefix, reply_title, reply)
         await notify_all("outbox_new", {"type": "reply", "preview": reply[:100]})
+
+        # Harness Engine quality gates (non-blocking — reply already sent)
+        try:
+            from scripts.harness_engine import HarnessEngine
+            engine = HarnessEngine()
+            tid = engine.start_task(preview[:80])
+            result = engine.complete_task(reply, preview, tool_count=1, task_id=tid)
+            # If evaluator found issues, write findings to outbox as a follow-up note
+            if result["verdict"] == "NEEDS_WORK" and result["findings"]:
+                _write_outbox("EVAL", "质量审查发现",
+                    f"Fresh Evaluator 对上一个回复的审查结果:\n"
+                    f"评分: {result['score']}/10\n"
+                    f"问题:\n" + "\n".join(f"- {f}" for f in result["findings"]))
+                await notify_all("outbox_new", {"type": "eval", "preview": f"Quality: {result['score']}/10"})
+        except Exception:
+            pass  # Harness is optional — reply already delivered
 
     # Move to processed
     dest = PROCESSED_DIR / filepath.name

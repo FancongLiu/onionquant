@@ -1,0 +1,191 @@
+{
+  "schema_version": "1.0",
+  "description": "Default-FAIL contract. All criteria start false. Agent must open evidence files before claiming success.",
+  "contracts": [
+    {
+      "task_id": null,
+      "criteria": [
+        {
+          "name": "reply_written",
+          "passes": false,
+          "evidence_required": "outbox file path"
+        },
+        {
+          "name": "analysis_departments_used",
+          "passes": false,
+          "evidence_required": "number of LangGraph nodes executed"
+        },
+        {
+          "name": "no_hallucination",
+          "passes": false,
+          "evidence_required": "evaluator review passed"
+        },
+        {
+          "name": "progress_updated",
+          "passes": false,
+          "evidence_required": "PROGRESS.md updated with this task"
+        }
+      ],
+      "evaluator_verdict": null,
+      "evaluator_findings": [],
+      "created_at": null,
+      "resolved_at": null
+    },
+    {
+      "task_id": "task-20260613_024904",
+      "criteria": [
+        {
+          "name": "task_completed",
+          "passes": true,
+          "evidence_required": "task output exists",
+          "evidence": "reply 76 chars"
+        },
+        {
+          "name": "progress_updated",
+          "passes": false,
+          "evidence_required": "PROGRESS.md updated"
+        },
+        {
+          "name": "evaluator_passed",
+          "passes": true,
+          "evidence_required": "fresh evaluator review",
+          "evidence": "score 8.0/10"
+        }
+      ],
+      "evaluator_verdict": null,
+      "evaluator_findings": [],
+      "created_at": "2026-06-13 02:49:04",
+      "resolved_at": "2026-06-13 02:49:19"
+    },
+    {
+      "task_id": "task-20260613_025004",
+      "criteria": [
+        {
+          "name": "task_completed",
+          "passes": false,
+          "evidence_required": "task output exists",
+          "evidence": "reply 73 chars"
+        },
+        {
+          "name": "progress_updated",
+          "passes": false,
+          "evidence_required": "PROGRESS.md updated"
+        },
+        {
+          "name": "evaluator_passed",
+          "passes": false,
+          "evidence_required": "fresh evaluator review",
+          "evidence": "score 0.0/10"
+        }
+      ],
+      "evaluator_verdict": null,
+      "evaluator_findings": [],
+      "created_at": "2026-06-13 02:50:04",
+      "resolved_at": "2026-06-13 02:50:15"
+    },
+    {
+      "task_id": "task-20260613_025112",
+      "criteria": [
+        {
+          "name": "task_completed",
+          "passes": false,
+          "evidence_required": "task output exists",
+          "evidence": "reply 73 chars"
+        },
+        {
+          "name": "progress_updated",
+          "passes": false,
+          "evidence_required": "PROGRESS.md updated"
+        },
+        {
+          "name": "evaluator_passed",
+          "passes": false,
+          "evidence_required": "fresh evaluator review",
+          "evidence": "score 0.0/10"
+        }
+      ],
+      "evaluator_verdict": null,
+      "evaluator_findings": [],
+      "created_at": "2026-06-13 02:51:12",
+      "resolved_at": "2026-06-13 02:51:23"
+    },
+    {
+      "task_id": "task-20260613_025320",
+      "criteria": [
+        {
+          "name": "task_completed",
+          "passes": false,
+          "evidence_required": "task output exists",
+          "evidence": "reply 220 chars"
+        },
+        {
+          "name": "progress_updated",
+          "passes": false,
+          "evidence_required": "PROGRESS.md updated"
+        },
+        {
+          "name": "evaluator_passed",
+          "passes": false,
+          "evidence_required": "fresh evaluator review",
+          "evidence": "score 0.0/10"
+        }
+      ],
+      "evaluator_verdict": null,
+      "evaluator_findings": [],
+      "created_at": "2026-06-13 02:53:20",
+      "resolved_at": "2026-06-13 02:53:31"
+    },
+    {
+      "task_id": "task-20260613_025539",
+      "criteria": [
+        {
+          "name": "task_completed",
+          "passes": false,
+          "evidence_required": "task output exists",
+          "evidence": "reply 73 chars"
+        },
+        {
+          "name": "progress_updated",
+          "passes": false,
+          "evidence_required": "PROGRESS.md updated"
+        },
+        {
+          "name": "evaluator_passed",
+          "passes": false,
+          "evidence_required": "fresh evaluator review",
+          "evidence": "score 0.0/10"
+        }
+      ],
+      "evaluator_verdict": null,
+      "evaluator_findings": [],
+      "created_at": "2026-06-13 02:55:39",
+      "resolved_at": "2026-06-13 02:55:50"
+    },
+    {
+      "task_id": "task-20260613_025821",
+      "criteria": [
+        {
+          "name": "task_completed",
+          "passes": true,
+          "evidence_required": "task output exists",
+          "evidence": "reply 846 chars"
+        },
+        {
+          "name": "progress_updated",
+          "passes": false,
+          "evidence_required": "PROGRESS.md updated"
+        },
+        {
+          "name": "evaluator_passed",
+          "passes": true,
+          "evidence_required": "fresh evaluator review",
+          "evidence": "score 9.0/10"
+        }
+      ],
+      "evaluator_verdict": null,
+      "evaluator_findings": [],
+      "created_at": "2026-06-13 02:58:21",
+      "resolved_at": "2026-06-13 02:58:33"
+    }
+  ]
+}
