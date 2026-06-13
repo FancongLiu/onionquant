@@ -1,13 +1,8 @@
-name: Smoke Tests
+name: CI
 
 on:
   push:
     branches: [main]
-    paths:
-      - 'quant_framework/**'
-      - 'infrastructure/**'
-      - 'tests/**'
-      - '.github/workflows/smoke_test.yml'
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -31,19 +26,24 @@ jobs:
           pip install --upgrade pip
           pip install pytest pytest-cov
           pip install numpy pandas scipy scikit-learn statsmodels matplotlib seaborn pyyaml python-dotenv
-          pip install riskfolio-lib empyrical-reloaded alphalens-reloaded pyqlib pandas-ta pandera
+          pip install empyrical-reloaded
           pip install fastapi uvicorn aiohttp
-          # core quant deps only — skip yfinance/openbb/docker/dagster (need network/services)
+          pip install langchain langgraph
+
+      - name: Lint (ruff)
+        run: |
+          pip install ruff
+          ruff check . --select E,F,I,N,W,UP --ignore E501
 
       - name: Run smoke tests
-        run: pytest tests/test_smoke.py -q -k "not yfinance" --tb=short --cov=quant_framework --cov-report=term-missing
+        run: pytest tests/ -q --tb=short --timeout=120
 
       - name: Generate badge
         if: always()
         run: |
           mkdir -p badges
           if [ "${{ job.status }}" = "success" ]; then
-            echo "{\"schemaVersion\":1,\"label\":\"tests\",\"message\":\"passing\",\"color\":\"green\"}" > badges/tests.json
+            echo '{"schemaVersion":1,"label":"tests","message":"passing","color":"green"}' > badges/tests.json
           else
-            echo "{\"schemaVersion\":1,\"label\":\"tests\",\"message\":\"failing\",\"color\":\"red\"}" > badges/tests.json
+            echo '{"schemaVersion":1,"label":"tests","message":"failing","color":"red"}' > badges/tests.json
           fi
