@@ -127,6 +127,22 @@ def setup(project_root: Path, task_queue_file: Path, outbox_dir: Path,
     globals()["_LANGGRAPH_REPORTS_DIR"] = langgraph_reports_dir
     globals()["_CLAUDE_SESSION_ID"] = str(__import__("uuid").uuid4())
     globals()["_SESSION_INITIALIZED"] = project_root / "company" / ".claude_session_ready"
+    globals()["_TOKEN_LOG"] = project_root / "logs" / "token_usage.jsonl"
+    globals()["_TOKEN_LOG"].parent.mkdir(parents=True, exist_ok=True)
+
+
+def _log_token_usage(source: str, input_tokens: int, output_tokens: int, cost_est: float):
+    """Log token usage for observability. Appends JSON line to token log."""
+    import json as _json
+    from datetime import datetime as _dt
+    entry = {"ts": _dt.now().isoformat(), "source": source,
+             "input_tokens": input_tokens, "output_tokens": output_tokens,
+             "cost_est": cost_est}
+    try:
+        with open(globals().get("_TOKEN_LOG"), "a", encoding="utf-8") as f:
+            f.write(_json.dumps(entry, ensure_ascii=False) + "\n")
+    except Exception:
+        pass
 
 
 def _write_outbox(prefix: str, title: str, body: str):
@@ -196,7 +212,14 @@ def _call_deepseek(message: str) -> str | None:
 - 署名: -- CEO Agent"""},
                 {"role": "user", "content": message},
             ], max_tokens=1200, temperature=0.5)
-        return resp.choices[0].message.content.strip()
+        reply = resp.choices[0].message.content.strip()
+        usage = resp.usage
+        if usage:
+            input_tok = usage.prompt_tokens or 0
+            output_tok = usage.completion_tokens or 0
+            cost = (input_tok * 0.025 + output_tok * 3) / 1_000_000  # DeepSeek pricing
+            _log_token_usage("deepseek", input_tok, output_tok, cost)
+        return reply
     except Exception:
         return None
 
@@ -233,6 +256,11 @@ def _call_claude_code(message: str) -> str | None:
         except: pass
         if not reply or len(reply) < 20:
             return _call_deepseek(message)
+        # Estimate token usage (Claude Code via subprocess doesn't return usage)
+        est_input = len(prompt) // 3  # rough: 3 chars ≈ 1 token
+        est_output = len(reply) // 3
+        est_cost = (est_input * 0.025 + est_output * 3) / 1_000_000
+        _log_token_usage("claude_code", est_input, est_output, est_cost)
         return reply
     except sp.TimeoutExpired:
         sinit.unlink(missing_ok=True)
