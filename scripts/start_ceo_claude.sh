@@ -1,6 +1,6 @@
 #!/bin/bash
-# Start 24/7 OnionQuant Backend in WSL tmux
-# Pane 0: background_scheduler (10 tasks incl. self-evolve every 6h)
+# Start 24/7 OnionQuant Backend in WSL tmux (WSL-native: better I/O performance)
+# Pane 0: continuous_evolve.py (linear loop, finish one -> next, no timers)
 # Pane 1: Claude Code CLI (manual use)
 
 PROJECT="/mnt/e/2026_AgentStudy/Python_code"
@@ -13,16 +13,19 @@ fi
 tmux kill-session -t "$SESSION" 2>/dev/null
 sleep 1
 cd "$PROJECT"
-rm -f company/.process_now
+rm -f company/.process_now company/.stop_evolve
 
 tmux new-session -d -s "$SESSION" \
-  "echo '=== Scheduler (10 tasks, self-evolve every 6h) ===';
-   $PYTHON scripts/background_scheduler.py;
-   echo 'STOPPED - shell alive';
+  "echo '=== Continuous Evolution Daemon (WSL-native Linux) ===';
+   echo 'Mode: linear loop, no timers, no interrupts';
+   echo 'Python: $PYTHON';
+   echo '';
+   $PYTHON scripts/continuous_evolve.py;
+   echo 'STOPPED - keeping shell alive';
    exec bash"
 
 tmux split-window -h -t "$SESSION" \
-  "echo '=== Claude Code CLI ===';
+  "echo '=== Claude Code CLI (Manual) ===';
    echo 'claude -p prompt  # one-shot';
    exec bash"
 
