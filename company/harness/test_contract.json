@@ -186,6 +186,32 @@
       "evaluator_findings": [],
       "created_at": "2026-06-13 02:58:21",
       "resolved_at": "2026-06-13 02:58:33"
+    },
+    {
+      "task_id": "task-20260613_142043",
+      "criteria": [
+        {
+          "name": "task_completed",
+          "passes": true,
+          "evidence_required": "task output exists",
+          "evidence": "reply 122 chars"
+        },
+        {
+          "name": "progress_updated",
+          "passes": false,
+          "evidence_required": "PROGRESS.md updated"
+        },
+        {
+          "name": "evaluator_passed",
+          "passes": true,
+          "evidence_required": "fresh evaluator review",
+          "evidence": "score 10.0/10"
+        }
+      ],
+      "evaluator_verdict": null,
+      "evaluator_findings": [],
+      "created_at": "2026-06-13 14:20:43",
+      "resolved_at": "2026-06-13 14:21:05"
     }
   ]
 }
