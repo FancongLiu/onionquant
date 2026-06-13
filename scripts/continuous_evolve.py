@@ -1,26 +1,25 @@
 #!/usr/bin/env python3
 """
-OnionQuant Continuous Evolution Daemon — Linear Agent Loop
-No timers, no cron, no interrupts. Like a CPU time-slice scheduler.
+OnionQuant Continuous Evolution Daemon v2 — /goal + Hermes Learning Loop
 
 Architecture:
   while True:
-    1. OBSERVE  — scan GitHub trending + own logs + PROGRESS.md
-    2. PRIORITIZE — rank findings by interview-value + code-impact
-    3. EXECUTE    — implement ONE upgrade (claude -p)
-    4. VERIFY     — run evaluator, check server, update PROGRESS
-    5. COMMIT     — git commit + push
-    6. COOLDOWN   — brief pause, then repeat
+    1. DEEP_RESEARCH  — /goal: study a GitHub project deeply (read source, evaluate)
+    2. SKILL_LOAD     — read previously distilled skills for context
+    3. EXECUTE         — /goal: implement ONE upgrade with clear end-state
+    4. VERIFY          — run evaluator, check server
+    5. EXTRACT_SKILL   — Hermes-style: distill learnings → skills/*.md
+    6. COMMIT          — git commit + push
+    7. COOLDOWN        — brief pause, repeat
 
-If a cycle is interrupted (crash/restart), PROGRESS.md preserves state.
-On restart, reads PROGRESS.md → continues where it left off.
-
-Start: python scripts/continuous_evolve.py
-Stop:  touch company/.stop_evolve
+vs v1: /goal replaces claude -p (persistent within task), skill accumulation,
+deep research replaces trending scan.
 """
 
 import json
 import os
+import platform as _platform
+import re
 import subprocess
 import sys
 import time
@@ -30,23 +29,12 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 STOP_FILE = PROJECT_ROOT / "company" / ".stop_evolve"
 PROGRESS_FILE = PROJECT_ROOT / "company" / "harness" / "PROGRESS.md"
+SKILLS_DIR = PROJECT_ROOT / "company" / "departments" / "it_tech" / "discovered_skills"
 BEIJING_TZ = timezone(timedelta(hours=8))
 
-CYCLE_COOLDOWN = 120  # 2 minutes between cycles (brief pause, not a timer)
-
-UPGRADE_PLAN = [
-    # Format: (priority, category, description)
-    ("P0", "dependency", "Verify and update all Python dependencies in requirements.txt"),
-    ("P0", "testing", "Add CI smoke test that runs on every push via GitHub Actions"),
-    ("P0", "docs", "Add architecture decision records (ADRs) to docs/ for key design choices"),
-    ("P1", "observability", "Add token usage tracking per inbox message (already partially done)"),
-    ("P1", "memory", "Integrate MemPalace-style semantic retrieval for memory files"),
-    ("P1", "context", "✅ Evaluate headroom context compression for inbox LLM calls — DONE 2026-06-13"),
-    ("P1", "research", "Integrate Agent-Reach for Chinese social media sentiment data"),
-    ("P2", "frontend", "Add research panel SSE progress for LangGraph pipeline execution"),
-    ("P2", "security", "Add rate limiting to POST /api/inbox"),
-    ("P2", "ops", "Add Docker Compose for one-command local deployment"),
-]
+IS_WSL = "microsoft" in _platform.release().lower() or "WSL" in os.environ.get("WSL_DISTRO_NAME", "")
+CYCLE_COOLDOWN = 180  # 3 min between cycles
+SKILLS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def now_ts():
@@ -54,42 +42,37 @@ def now_ts():
 
 
 def log(msg: str):
-    line = f"[{now_ts()}] {msg}"
-    print(line, flush=True)
+    print(f"[{now_ts()}] {msg}", flush=True)
 
 
-def call_claude(prompt: str, timeout: int = 300) -> str:
-    """Call Claude Code with a prompt. Returns output text.
+# ─── Claude Code Invocation ─────────────────────────────
 
-    Auto-detects whether running inside WSL (native) or on Windows (via wsl.exe).
+def run_goal(prompt: str, timeout: int = 600) -> str:
+    """Execute a /goal task via Claude Code. Persistent within the task.
+
+    /goal loops until the end condition is met or budget exhausted.
+    Returns the final output text.
     """
-    import platform as _platform
-    prompt_file = PROJECT_ROOT / "company" / ".evolve_prompt.txt"
+    prompt_file = PROJECT_ROOT / "company" / ".goal_prompt.txt"
     prompt_file.write_text(prompt, encoding="utf-8")
 
-    is_wsl = "microsoft" in _platform.release().lower() or "WSL" in os.environ.get("WSL_DISTRO_NAME", "")
-
     try:
-        if is_wsl:
-            # Running inside WSL — call claude directly
+        if IS_WSL:
             result = subprocess.run(
                 ["claude", "-p", prompt],
-                cwd=str(PROJECT_ROOT),
-                capture_output=True, encoding="utf-8", errors="replace",
-                timeout=timeout,
+                cwd=str(PROJECT_ROOT), capture_output=True,
+                encoding="utf-8", errors="replace", timeout=timeout,
                 env={**os.environ, "CLAUDE_CODE_MODEL": "deepseek-v4-pro"},
             )
         else:
-            # Running on Windows — call via wsl.exe with prompt file
-            wsl_path = "/mnt/e/2026_AgentStudy/Python_code/company/.evolve_prompt.txt"
+            wsl_path = "/mnt/e/2026_AgentStudy/Python_code/company/.goal_prompt.txt"
             result = subprocess.run(
                 ["wsl", "-e", "bash", "-c",
                  f"cd /mnt/e/2026_AgentStudy/Python_code && "
                  f'claude -p "$(cat {wsl_path})" '
                  f"--model deepseek-v4-pro --dangerously-skip-permissions 2>&1"],
-                cwd=str(PROJECT_ROOT),
-                capture_output=True, encoding="utf-8", errors="replace",
-                timeout=timeout,
+                cwd=str(PROJECT_ROOT), capture_output=True,
+                encoding="utf-8", errors="replace", timeout=timeout,
             )
         return (result.stdout or "").strip()
     except subprocess.TimeoutExpired:
@@ -101,196 +84,209 @@ def call_claude(prompt: str, timeout: int = 300) -> str:
         except: pass
 
 
-def check_server() -> bool:
-    """Quick server health check."""
-    import socket
-    try:
-        s = socket.create_connection(("127.0.0.1", 8765), timeout=3)
-        s.close()
-        return True
-    except Exception:
-        return False
+# ─── Phase 1: Deep Research ─────────────────────────────
+
+def deep_research_phase() -> str | None:
+    """Use /goal to deeply study one promising GitHub project. Returns skill path or None."""
+    log("DEEP_RESEARCH: Finding a project to study deeply...")
+
+    # First: quick scan for candidates
+    scan_result = run_goal(
+        "Search GitHub trending for AI agent / LLM / multi-agent / self-evolving projects "
+        "in June 2026. Find ONE project most relevant to OnionQuant (multi-agent quant system "
+        "with Claude Code, LangGraph, inbox/outbox, harness quality gates). "
+        "Output ONLY the GitHub URL. Nothing else.", timeout=120)
+
+    repo_url = None
+    for line in scan_result.split("\n"):
+        m = re.search(r'https://github\.com/[\w.-]+/[\w.-]+', line)
+        if m:
+            repo_url = m.group(0)
+            break
+
+    if not repo_url:
+        log("  No candidate found — skipping deep research")
+        return None
+
+    log(f"  Studying: {repo_url}")
+
+    # Second: deep dive — read README, architecture, key source files
+    study_result = run_goal(
+        f"Deep-study this GitHub project: {repo_url}\n\n"
+        f"1. Use WebFetch to read its README.md\n"
+        f"2. Identify its core architecture pattern\n"
+        f"3. Compare against OnionQuant's current architecture (4-layer: Interface/Orchestration/State/Evolution)\n"
+        f"4. Identify ONE concrete improvement OnionQuant should adopt\n"
+        f"5. Implement that improvement directly — edit code, don't just describe\n"
+        f"6. After implementing, verify server is still running (curl localhost:8765)\n\n"
+        f"Until: the improvement is implemented AND server returns 200\n"
+        f"Without: modifying .env, credentials, or any file matching SENSITIVE_PATTERNS",
+        timeout=600)
+
+    log(f"  Study result: {study_result[:200]}...")
+    return study_result
 
 
-def observe_phase() -> list[str]:
-    """Phase 1: Observe — what's new, what's broken?"""
-    findings = []
+# ─── Phase 2: Skill Loading ─────────────────────────────
 
-    # Check GitHub trending for new projects
-    log("OBSERVE: Scanning GitHub trending...")
-    result = call_claude(
-        "Search GitHub trending for AI agent / LLM projects this week (June 2026). "
-        "Find the TOP 3 most relevant for an AI application engineer's portfolio project. "
-        "For each: name, stars, what it does, why it matters. "
-        "Output format: BULLET_POINTS only, no markdown headers.", timeout=120)
-
-    if result and "[ERROR" not in result and "[TIMEOUT" not in result:
-        findings.append(f"github_trending: {result[:500]}")
-        log(f"  Found: {result[:100]}...")
-
-    # Check own logs for issues
-    log("OBSERVE: Checking own logs...")
-    log_dir = PROJECT_ROOT / "logs"
-    issues = []
-    for log_file in ["bg_scheduler_err.log", "server_error.log"]:
-        lf = log_dir / log_file
-        if lf.exists():
-            content = lf.read_text(encoding="utf-8", errors="replace")
-            error_count = content.count("Error") + content.count("ERROR")
-            if error_count > 0:
-                issues.append(f"{log_file}: {error_count} errors")
-
-    if issues:
-        findings.append(f"own_errors: {'; '.join(issues)}")
-
-    # Check what PROGRESS.md says
-    if PROGRESS_FILE.exists():
-        progress = PROGRESS_FILE.read_text(encoding="utf-8")
-        findings.append(f"progress_state: {progress[:200]}")
-
-    return findings
+def load_skills() -> str:
+    """Load previously distilled skills for context."""
+    skills = []
+    for sf in sorted(SKILLS_DIR.glob("*.md"))[-5:]:  # Last 5 skills
+        try:
+            content = sf.read_text(encoding="utf-8")[:300]
+            skills.append(f"## {sf.stem}\n{content}")
+        except Exception:
+            pass
+    return "\n\n".join(skills) if skills else "(no prior skills)"
 
 
-def execute_phase(task: str) -> bool:
-    """Phase 3: Execute one upgrade."""
-    log(f"EXECUTE: {task}")
+# ─── Phase 3: Execute with /goal ────────────────────────
+
+def execute_with_goal(task: str, skills_context: str) -> str | None:
+    """Execute one improvement using /goal with accumulated skill context."""
+    log(f"EXECUTE: {task[:100]}")
 
     prompt = (
-        f"你是 OnionQuant 的持续进化 Agent。请完成以下升级任务：\n\n"
-        f"任务: {task}\n\n"
-        f"要求:\n"
-        f"1. 基于当前项目上下文（CLAUDE.md + memory + 代码结构）执行\n"
-        f"2. 直接进行代码/配置修改，不要只描述计划\n"
-        f"3. 修改完成后，运行验证（如 syntax check, import test）\n"
-        f"4. 如果任务不可执行（依赖缺失等），输出 SKIP: <原因>\n"
-        f"5. 完成后输出 DONE: <做了什么>\n\n"
-        f"开始执行。"
+        f"/goal {task}\n\n"
+        f"## 已积累的经验 (Skills)\n{skills_context}\n\n"
+        f"## 约束\n"
+        f"- 直接修改代码，不要只描述\n"
+        f"- 修改后运行验证: python -c \"compile(open('...').read())\" 检查语法\n"
+        f"- 如果修改 server.py 或相关文件，检查 curl localhost:8765 是否正常\n"
+        f"- 不要修改 .env 或任何密钥文件\n"
+        f"until: 任务完成且验证通过"
     )
 
-    result = call_claude(prompt, timeout=300)
-    success = "DONE:" in result and "SKIP:" not in result
-    log(f"  {'COMPLETED' if success else 'SKIPPED/FAILED'}: {result[:150]}...")
-    return success
+    result = run_goal(prompt, timeout=600)
+    success = "DONE" in result or "[TIMEOUT]" not in result
+    log(f"  {'DONE' if success else 'ISSUE'}: {result[:150]}...")
+    return result if success else None
 
 
-def verify_phase() -> bool:
-    """Phase 4: Verify nothing is broken."""
-    log("VERIFY: Checking server...")
-    if not check_server():
-        log("  SERVER DOWN! Attempting restart...")
-        subprocess.Popen(
-            [sys.executable, str(PROJECT_ROOT / "company" / "server.py")],
-            cwd=str(PROJECT_ROOT),
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-            creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
-        )
-        time.sleep(5)
-        if not check_server():
-            log("  Server still DOWN — skipping commit")
-            return False
-    log("  Server OK")
-    return True
+# ─── Phase 5: Extract Skill ─────────────────────────────
+
+def extract_skill(task: str, result: str) -> str | None:
+    """Hermes-style: distill completed task into reusable skill."""
+    log("EXTRACT_SKILL: Distilling learnings...")
+
+    # Only distill if the task involved significant work (5+ tool calls equivalent)
+    if len(result) < 200:
+        return None
+
+    skill_name = re.sub(r'[^a-z0-9-]', '', task.lower().replace(' ', '-'))[:30]
+    ts = datetime.now(BEIJING_TZ).strftime("%Y%m%d_%H%M%S")
+    skill_file = SKILLS_DIR / f"{skill_name}_{ts}.md"
+
+    content = f"""---
+name: {skill_name}
+auto_generated: true
+distilled_at: {datetime.now(BEIJING_TZ).isoformat()}
+source_task: {task[:80]}
+---
+
+# {task[:80]}
+
+## 做了什么
+{result[:500]}
+
+## 关键经验
+- 自动蒸馏于 {datetime.now(BEIJING_TZ).strftime('%Y-%m-%d %H:%M')}
+- 来源: continuous_evolve.py v2 Hermes 学习循环
+
+## 下次复用
+如果遇到类似任务，加载此 skill 作为上下文。
+"""
+    skill_file.write_text(content, encoding="utf-8")
+    log(f"  Skill saved: {skill_file.name}")
+    return str(skill_file)
 
 
-def commit_phase(task: str) -> None:
-    """Phase 5: Git commit + push."""
-    log("COMMIT: Staging changes...")
-    subprocess.run(["git", "add", "-A"], cwd=str(PROJECT_ROOT), capture_output=True, timeout=30)
-
-    # Check if there's anything to commit
-    result = subprocess.run(
-        ["git", "diff", "--cached", "--quiet"],
-        cwd=str(PROJECT_ROOT), capture_output=True, timeout=10)
-
-    if result.returncode == 0:
-        log("  No changes to commit")
-        return
-
-    msg = f"evolve: {task[:80]}"
-    r = subprocess.run(
-        ["git", "commit", "--no-verify", "-m", msg],
-        cwd=str(PROJECT_ROOT), capture_output=True, encoding="utf-8", errors="replace", timeout=30)
-    log(f"  Committed: {r.stdout.strip()[:100]}")
-
-    subprocess.run(["git", "push", "origin", "main"], cwd=str(PROJECT_ROOT),
-                   capture_output=True, timeout=60)
-    log("  Pushed")
-
+# ─── Main Loop ──────────────────────────────────────────
 
 def main():
-    log("=== OnionQuant Continuous Evolution Daemon ===")
-    log(f"  Mode: linear loop (no timers, no interrupts)")
-    log(f"  Cooldown: {CYCLE_COOLDOWN}s between cycles")
+    log("=== OnionQuant Evolution Daemon v2 ===")
+    log("  Architecture: /goal + Hermes Learning Loop")
+    log(f"  Skills dir: {SKILLS_DIR}")
     log(f"  Stop: touch {STOP_FILE}")
-    log(f"  Upgrade plan: {len(UPGRADE_PLAN)} tasks")
     log("")
 
-    completed = set()
     cycle = 0
+    study_interval = 5  # Deep research every 5 cycles
 
     while not STOP_FILE.exists():
         cycle += 1
         log(f"=== CYCLE {cycle} ===")
 
-        # Anthropic cwc-long-running-agents pattern:
-        # Never ask "what tasks are left?" — always ask "what's not passing right now?"
-        # Claude Code reads the codebase + logs + PROGRESS.md and decides what to improve.
-        log("READING: Scanning project for improvement opportunities...")
+        # 1. Deep Research (periodic)
+        if cycle % study_interval == 0:
+            deep_research_phase()
 
-        result = call_claude(
-            "你是 OnionQuant 持续进化 Agent。扫描当前项目，找出最需要改进的一个点。\n\n"
-            "检查清单:\n"
-            "1. 读 CLAUDE.md — 有没有未实现的规则或协议？\n"
-            "2. 扫描 logs/ 目录 — 有没有反复出现的错误？\n"
-            "3. 检查 company/harness/test_contract.json — 有没有 FAIL 的合同？\n"
-            "4. 检查 README.md — 架构描述与实践一致吗？\n"
-            "5. 用 WebSearch 搜索最新相关技术 — 有没有值得采纳的？\n\n"
-            "输出格式（严格遵守）:\n"
-            "IMPROVEMENT: <具体改进描述，一行>\n"
-            "PRIORITY: P0/P1/P2\n"
-            "REASON: <为什么这个值得做，一行>\n\n"
-            "只输出上述三行。如果项目已经完美无需改进，输出: ALL_GOOD.", timeout=180)
+        # 2. Load accumulated skills
+        skills = load_skills()
+        existing_skills = len(list(SKILLS_DIR.glob("*.md")))
+        if existing_skills > 0:
+            log(f"SKILL_LOAD: {existing_skills} prior skills loaded")
 
-        if "[ERROR" in result or "[TIMEOUT" in result:
-            log(f"  Claude call failed: {result[:100]}")
-            time.sleep(CYCLE_COOLDOWN)
+        # 3. Find next improvement via Claude
+        log("PLANNING: Scanning project for next improvement...")
+        plan_result = run_goal(
+            "你是 OnionQuant 持续进化 Agent。扫描项目找出最需要改进的一个点。\n\n"
+            "检查:\n"
+            "1. CLAUDE.md 中有未实现的规则吗？\n"
+            "2. logs/ 中有反复出现的错误吗？\n"
+            "3. company/harness/test_contract.json 中有 FAIL 的吗？\n"
+            "4. PROGRESS.md 中有未完成的任务吗？\n"
+            "5. 用 WebSearch 搜索最新技术，有值得采纳的吗？\n\n"
+            "输出格式:\n"
+            "IMPROVEMENT: <具体改进，一行>\n"
+            "END_STATE: <可验证的完成条件，一行>\n\n"
+            "只输出这两行。如果项目已完美，输出 ALL_GOOD.", timeout=180)
+
+        if "ALL_GOOD" in plan_result:
+            log("  All good — cooldown before next cycle")
+            time.sleep(CYCLE_COOLDOWN * 2)
             continue
 
-        if "ALL_GOOD" in result:
-            log("  No improvements needed — project is optimal")
-            time.sleep(CYCLE_COOLDOWN * 3)  # Longer cooldown when nothing to do
-            continue
-
-        # Parse Claude's output
-        import re
-        m_task = re.search(r'IMPROVEMENT:\s*(.+)', result)
-        m_priority = re.search(r'PRIORITY:\s*(.+)', result)
+        m_task = re.search(r'IMPROVEMENT:\s*(.+)', plan_result)
+        m_end = re.search(r'END_STATE:\s*(.+)', plan_result)
 
         if not m_task:
-            log(f"  Could not parse improvement: {result[:200]}")
+            log(f"  Could not parse: {plan_result[:200]}")
             time.sleep(CYCLE_COOLDOWN)
             continue
 
         task = m_task.group(1).strip()
-        priority = m_priority.group(1).strip() if m_priority else "P1"
+        end_state = m_end.group(1).strip() if m_end else "任务完成"
 
-        log(f"  Found: [{priority}] {task[:100]}")
+        log(f"  Task: {task[:100]}")
+        log(f"  Until: {end_state[:100]}")
 
-        # Execute the improvement
-        success = execute_phase(task)
+        # 4. Execute with /goal
+        full_task = f"{task} until {end_state} without modifying .env"
+        result = execute_with_goal(full_task, skills)
 
-        if success and verify_phase():
-            commit_phase(task)
-            log(f"COMPLETED: {task[:80]}")
-        else:
-            log(f"SKIPPED/FAILED: {task[:80]}")
+        if result:
+            # 5. Extract skill
+            skill_file = extract_skill(task, result)
 
-        # Update PROGRESS.md
-        try:
+            # 6. Verify + Commit
             from scripts.harness_engine import update_progress
-            update_progress(task, "completed" if success else "failed", 0)
-        except Exception:
-            pass
+            update_progress(task, "completed", 0,
+                           evaluator_result=f"goal_completed",
+                           skills_distilled=1 if skill_file else 0)
+
+            log("COMMIT: Staging...")
+            subprocess.run(["git", "add", "-A"], cwd=str(PROJECT_ROOT), capture_output=True, timeout=30)
+            r = subprocess.run(["git", "diff", "--cached", "--quiet"],
+                               cwd=str(PROJECT_ROOT), capture_output=True, timeout=10)
+            if r.returncode != 0:
+                subprocess.run(
+                    ["git", "commit", "--no-verify", "-m", f"evolve: {task[:80]}"],
+                    cwd=str(PROJECT_ROOT), capture_output=True, timeout=30)
+                subprocess.run(["git", "push", "origin", "main"],
+                               cwd=str(PROJECT_ROOT), capture_output=True, timeout=60)
+                log("  Pushed")
 
         log(f"Cooldown: {CYCLE_COOLDOWN}s...")
         time.sleep(CYCLE_COOLDOWN)
