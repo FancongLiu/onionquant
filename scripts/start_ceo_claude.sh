@@ -1,39 +1,30 @@
 #!/bin/bash
-# Start 24/7 Claude Code Inbox Relay in WSL tmux
-# Left pane:  claude_inbox_relay.sh (event-driven, detects trigger → claude -p)
-# Right pane: manual Claude Code shell
+# Start 24/7 OnionQuant Backend in WSL tmux
+# Pane 0: background_scheduler (10 tasks incl. self-evolve every 6h)
+# Pane 1: Claude Code CLI (manual use)
 
-PROJECT_DIR="/mnt/e/2026_AgentStudy/Python_code"
-SESSION_NAME="ceo-24x7"
+PROJECT="/mnt/e/2026_AgentStudy/Python_code"
+SESSION="ceo-24x7"
+PYTHON="$PROJECT/.venv-linux/bin/python3"
+if [ ! -x "$PYTHON" ]; then
+    PYTHON="$PROJECT/.venv/Scripts/python.exe"
+fi
 
-tmux kill-session -t "$SESSION_NAME" 2>/dev/null
+tmux kill-session -t "$SESSION" 2>/dev/null
 sleep 1
-
-cd "$PROJECT_DIR"
+cd "$PROJECT"
 rm -f company/.process_now
 
-# Left pane: Claude Code inbox relay
-tmux new-session -d -s "$SESSION_NAME" \
-  "echo '=== Claude Code Inbox Relay (24/7) ===';
-   echo 'Architecture: trigger file → claude -p → outbox';
-   echo 'Context: full CLAUDE.md + memory + WebSearch + LangGraph';
-   bash scripts/claude_inbox_relay.sh;
-   echo 'RELAY STOPPED - keeping shell';
+tmux new-session -d -s "$SESSION" \
+  "echo '=== Scheduler (10 tasks, self-evolve every 6h) ===';
+   $PYTHON scripts/background_scheduler.py;
+   echo 'STOPPED - shell alive';
    exec bash"
 
-# Right pane: Manual Claude Code shell
-tmux split-window -h -t "$SESSION_NAME" \
-  "echo '=============================================';
-   echo '  Claude Code CLI - Manual';
-   echo '  Left: inbox relay (auto)';
-   echo '  claude -p \\\"prompt\\\"  # one-shot';
-   echo '=============================================';
+tmux split-window -h -t "$SESSION" \
+  "echo '=== Claude Code CLI ===';
+   echo 'claude -p prompt  # one-shot';
    exec bash"
 
 sleep 3
-if tmux has-session -t "$SESSION_NAME" 2>/dev/null; then
-    echo "OK: $SESSION_NAME running"
-else
-    echo "FAIL"
-    exit 1
-fi
+tmux has-session -t "$SESSION" 2>/dev/null && echo "OK: $SESSION" || echo "FAIL"
