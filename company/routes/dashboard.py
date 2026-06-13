@@ -158,6 +158,35 @@ async def dashboard_snapshot():
     return snapshot
 
 
+@router.get("/api/token-usage")
+async def api_token_usage(hours: int = 24, message_id: str = ""):
+    """
+    Aggregate token usage per inbox message from the token log.
+    - hours: lookback window (0 = all time). Default 24h.
+    - message_id: filter to a single message ID. If empty, returns all.
+    Returns {message_id: {total_input, total_output, cost_est, calls, sources}}.
+    """
+    from company.harness.inbox_processor import get_token_usage_by_message
+
+    by_msg = get_token_usage_by_message(hours=hours)
+    if not by_msg:
+        return {"token_usage": {}, "summary": {"total_cost": 0, "total_calls": 0, "messages": 0}}
+
+    if message_id:
+        by_msg = {message_id: by_msg[message_id]} if message_id in by_msg else {}
+
+    total_cost = sum(v["cost_est"] for v in by_msg.values())
+    total_calls = sum(v["calls"] for v in by_msg.values())
+    return {
+        "token_usage": by_msg,
+        "summary": {
+            "total_cost": round(total_cost, 6),
+            "total_calls": total_calls,
+            "messages": len(by_msg),
+        },
+    }
+
+
 @router.get("/api/wechat/status")
 async def wechat_status_endpoint():
     return wechat_status

@@ -85,6 +85,7 @@ READ_ONLY_PATHS = {
     "/api/task-tracker/summary",
     "/api/milestones",
     "/api/logs",
+    "/api/token-usage",
     "/api/data/health",
     "/api/wechat/status",
     "/api/paper/portfolio",
@@ -335,6 +336,7 @@ from company.harness.inbox_processor import (
     _write_outbox,
     _smart_add_to_queue,
     _is_stock_request,
+    get_token_usage_by_message,
     URGENT_KEYWORDS,
 )
 

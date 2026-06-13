@@ -131,18 +131,80 @@ def setup(project_root: Path, task_queue_file: Path, outbox_dir: Path,
     globals()["_TOKEN_LOG"].parent.mkdir(parents=True, exist_ok=True)
 
 
-def _log_token_usage(source: str, input_tokens: int, output_tokens: int, cost_est: float):
-    """Log token usage for observability. Appends JSON line to token log."""
+def _log_token_usage(source: str, input_tokens: int, output_tokens: int, cost_est: float,
+                     message_id: str = ""):
+    """Log token usage per inbox message for observability. Appends JSON line to token log."""
     import json as _json
     from datetime import datetime as _dt
     entry = {"ts": _dt.now().isoformat(), "source": source,
              "input_tokens": input_tokens, "output_tokens": output_tokens,
-             "cost_est": cost_est}
+             "cost_est": cost_est, "message_id": message_id}
     try:
         with open(globals().get("_TOKEN_LOG"), "a", encoding="utf-8") as f:
             f.write(_json.dumps(entry, ensure_ascii=False) + "\n")
     except Exception:
         pass
+
+
+def _estimate_tokens(text: str) -> int:
+    """Estimate token count for mixed Chinese/English text.
+
+    BPE tokenizers (DeepSeek, GPT-4, Claude): CJK chars ≈ 1–1.5 tokens each,
+    non-CJK ≈ 4 chars/token. This is more accurate than a flat chars//3 heuristic.
+    """
+    import re as _re
+
+    cjk = len(_re.findall(r'[一-鿿㐀-䶿　-〿＀-￯]', text))
+    non_cjk = max(len(text) - cjk, 0)
+    # CJK: ~1.3 tokens/char (average for common BPE tokenizers on Chinese text)
+    # Non-CJK: ~4 chars/token (standard for English code/markdown)
+    return max(int(cjk / 1.3 + non_cjk / 4), 1)
+
+
+def get_token_usage_by_message(hours: int = 24) -> dict:
+    """Aggregate token usage per inbox message from the token log.
+
+    Returns {message_id: {total_input, total_output, cost_est, calls, sources}}.
+    If hours=0, returns all records.
+    """
+    import json as _json
+    from datetime import datetime as _dt, timedelta as _td
+    token_log = globals().get("_TOKEN_LOG")
+    if not token_log or not token_log.exists():
+        return {}
+    cutoff = _dt.now() - _td(hours=hours) if hours > 0 else None
+    by_msg = {}
+    try:
+        for line in token_log.read_text(encoding="utf-8").strip().split("\n"):
+            if not line:
+                continue
+            try:
+                entry = _json.loads(line)
+            except Exception:
+                continue
+            if cutoff:
+                try:
+                    ts = _dt.fromisoformat(entry.get("ts", ""))
+                    if ts < cutoff:
+                        continue
+                except Exception:
+                    pass
+            mid = entry.get("message_id", "") or "__unknown__"
+            if mid not in by_msg:
+                by_msg[mid] = {"total_input": 0, "total_output": 0, "cost_est": 0.0,
+                               "calls": 0, "sources": set()}
+            agg = by_msg[mid]
+            agg["total_input"] += entry.get("input_tokens", 0)
+            agg["total_output"] += entry.get("output_tokens", 0)
+            agg["cost_est"] += entry.get("cost_est", 0.0)
+            agg["calls"] += 1
+            agg["sources"].add(entry.get("source", ""))
+        # Convert sets to lists for JSON serialization
+        for v in by_msg.values():
+            v["sources"] = list(v["sources"])
+        return by_msg
+    except Exception:
+        return {}
 
 
 def _write_outbox(prefix: str, title: str, body: str):
@@ -189,7 +251,7 @@ def _smart_add_to_queue(message_id: str, text: str, preview: str):
     return best_match is not None and best_sim > 0.5
 
 
-def _call_deepseek(message: str) -> str | None:
+def _call_deepseek(message: str, message_id: str = "") -> str | None:
     api_key = globals().get("_DEEPSEEK_API_KEY", "")
     if not api_key:
         return None
@@ -218,13 +280,13 @@ def _call_deepseek(message: str) -> str | None:
             input_tok = usage.prompt_tokens or 0
             output_tok = usage.completion_tokens or 0
             cost = (input_tok * 0.025 + output_tok * 3) / 1_000_000  # DeepSeek pricing
-            _log_token_usage("deepseek", input_tok, output_tok, cost)
+            _log_token_usage("deepseek", input_tok, output_tok, cost, message_id)
         return reply
     except Exception:
         return None
 
 
-def _call_claude_code(message: str) -> str | None:
+def _call_claude_code(message: str, message_id: str = "") -> str | None:
     """Process via WSL Claude Code persistent session — 100% chat quality."""
     import subprocess as sp
     pr = globals().get("_PROJECT_ROOT")
@@ -255,18 +317,18 @@ def _call_claude_code(message: str) -> str | None:
         try: prompt_file.unlink()
         except: pass
         if not reply or len(reply) < 20:
-            return _call_deepseek(message)
+            return _call_deepseek(message, message_id)
         # Estimate token usage (Claude Code via subprocess doesn't return usage)
-        est_input = len(prompt) // 3  # rough: 3 chars ≈ 1 token
-        est_output = len(reply) // 3
+        est_input = _estimate_tokens(prompt)
+        est_output = _estimate_tokens(reply)
         est_cost = (est_input * 0.025 + est_output * 3) / 1_000_000
-        _log_token_usage("claude_code", est_input, est_output, est_cost)
+        _log_token_usage("claude_code", est_input, est_output, est_cost, message_id)
         return reply
     except sp.TimeoutExpired:
         sinit.unlink(missing_ok=True)
-        return _call_deepseek(message)
+        return _call_deepseek(message, message_id)
     except Exception:
-        return _call_deepseek(message)
+        return _call_deepseek(message, message_id)
 
 
 async def process_message(filepath: Path, text: str, urgent_flag: bool = False, notify_fn=None):
@@ -284,9 +346,10 @@ async def process_message(filepath: Path, text: str, urgent_flag: bool = False, 
     if notify_fn:
         await notify_fn("outbox_new", {"type": "urgent_ack" if is_urgent else "ack_queued", "preview": preview})
 
-    reply = _call_claude_code(text)
+    msg_id = filepath.stem  # e.g., "MSG_20260613_143021"
+    reply = _call_claude_code(text, msg_id)
     if not reply:
-        reply = _call_deepseek(text)
+        reply = _call_deepseek(text, msg_id)
 
     if reply:
         reply_prefix = "URGENT_REPLY" if is_urgent else "REPLY"
