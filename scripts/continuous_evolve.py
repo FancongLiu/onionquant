@@ -59,20 +59,38 @@ def log(msg: str):
 
 
 def call_claude(prompt: str, timeout: int = 300) -> str:
-    """Call Claude Code with a prompt. Returns output text."""
+    """Call Claude Code with a prompt. Returns output text.
+
+    Auto-detects whether running inside WSL (native) or on Windows (via wsl.exe).
+    """
+    import platform as _platform
     prompt_file = PROJECT_ROOT / "company" / ".evolve_prompt.txt"
     prompt_file.write_text(prompt, encoding="utf-8")
-    wsl_path = "/mnt/e/2026_AgentStudy/Python_code/company/.evolve_prompt.txt"
+
+    is_wsl = "microsoft" in _platform.release().lower() or "WSL" in os.environ.get("WSL_DISTRO_NAME", "")
+
     try:
-        result = subprocess.run(
-            ["wsl", "-e", "bash", "-c",
-             f"cd /mnt/e/2026_AgentStudy/Python_code && "
-             f'claude -p "$(cat {wsl_path})" '
-             f"--model deepseek-v4-pro --dangerously-skip-permissions 2>&1"],
-            cwd=str(PROJECT_ROOT),
-            capture_output=True, encoding="utf-8", errors="replace",
-            timeout=timeout,
-        )
+        if is_wsl:
+            # Running inside WSL — call claude directly
+            result = subprocess.run(
+                ["claude", "-p", prompt],
+                cwd=str(PROJECT_ROOT),
+                capture_output=True, encoding="utf-8", errors="replace",
+                timeout=timeout,
+                env={**os.environ, "CLAUDE_CODE_MODEL": "deepseek-v4-pro"},
+            )
+        else:
+            # Running on Windows — call via wsl.exe with prompt file
+            wsl_path = "/mnt/e/2026_AgentStudy/Python_code/company/.evolve_prompt.txt"
+            result = subprocess.run(
+                ["wsl", "-e", "bash", "-c",
+                 f"cd /mnt/e/2026_AgentStudy/Python_code && "
+                 f'claude -p "$(cat {wsl_path})" '
+                 f"--model deepseek-v4-pro --dangerously-skip-permissions 2>&1"],
+                cwd=str(PROJECT_ROOT),
+                capture_output=True, encoding="utf-8", errors="replace",
+                timeout=timeout,
+            )
         return (result.stdout or "").strip()
     except subprocess.TimeoutExpired:
         return "[TIMEOUT]"
@@ -214,45 +232,58 @@ def main():
         cycle += 1
         log(f"=== CYCLE {cycle} ===")
 
-        # Find next uncompleted task
-        next_task = None
-        for priority, category, task in UPGRADE_PLAN:
-            task_id = f"{priority}:{category}"
-            if task_id not in completed:
-                next_task = (priority, category, task)
-                break
+        # Anthropic cwc-long-running-agents pattern:
+        # Never ask "what tasks are left?" — always ask "what's not passing right now?"
+        # Claude Code reads the codebase + logs + PROGRESS.md and decides what to improve.
+        log("READING: Scanning project for improvement opportunities...")
 
-        if next_task is None:
-            log("All planned upgrades complete!")
-            log("Observing for new opportunities...")
-            findings = observe_phase()
-            if findings:
-                log(f"  New findings: {len(findings)} items")
-            log(f"Cooldown: {CYCLE_COOLDOWN}s...")
+        result = call_claude(
+            "你是 OnionQuant 持续进化 Agent。扫描当前项目，找出最需要改进的一个点。\n\n"
+            "检查清单:\n"
+            "1. 读 CLAUDE.md — 有没有未实现的规则或协议？\n"
+            "2. 扫描 logs/ 目录 — 有没有反复出现的错误？\n"
+            "3. 检查 company/harness/test_contract.json — 有没有 FAIL 的合同？\n"
+            "4. 检查 README.md — 架构描述与实践一致吗？\n"
+            "5. 用 WebSearch 搜索最新相关技术 — 有没有值得采纳的？\n\n"
+            "输出格式（严格遵守）:\n"
+            "IMPROVEMENT: <具体改进描述，一行>\n"
+            "PRIORITY: P0/P1/P2\n"
+            "REASON: <为什么这个值得做，一行>\n\n"
+            "只输出上述三行。如果项目已经完美无需改进，输出: ALL_GOOD.", timeout=180)
+
+        if "[ERROR" in result or "[TIMEOUT" in result:
+            log(f"  Claude call failed: {result[:100]}")
             time.sleep(CYCLE_COOLDOWN)
             continue
 
-        priority, category, task = next_task
-        task_id = f"{priority}:{category}"
+        if "ALL_GOOD" in result:
+            log("  No improvements needed — project is optimal")
+            time.sleep(CYCLE_COOLDOWN * 3)  # Longer cooldown when nothing to do
+            continue
 
-        log(f"Task: [{priority}] {task}")
-        log(f"Category: {category}")
+        # Parse Claude's output
+        import re
+        m_task = re.search(r'IMPROVEMENT:\s*(.+)', result)
+        m_priority = re.search(r'PRIORITY:\s*(.+)', result)
 
-        # Execute
+        if not m_task:
+            log(f"  Could not parse improvement: {result[:200]}")
+            time.sleep(CYCLE_COOLDOWN)
+            continue
+
+        task = m_task.group(1).strip()
+        priority = m_priority.group(1).strip() if m_priority else "P1"
+
+        log(f"  Found: [{priority}] {task[:100]}")
+
+        # Execute the improvement
         success = execute_phase(task)
 
-        if success:
-            # Verify
-            if verify_phase():
-                # Commit
-                commit_phase(task)
-                completed.add(task_id)
-                log(f"COMPLETED: {task_id}")
-            else:
-                log(f"VERIFY FAILED: {task_id} — will retry next cycle")
+        if success and verify_phase():
+            commit_phase(task)
+            log(f"COMPLETED: {task[:80]}")
         else:
-            log(f"SKIPPED: {task_id} — marking as done to avoid blocking")
-            completed.add(task_id)
+            log(f"SKIPPED/FAILED: {task[:80]}")
 
         # Update PROGRESS.md
         try:
@@ -261,7 +292,6 @@ def main():
         except Exception:
             pass
 
-        log(f"Completed: {len(completed)}/{len(UPGRADE_PLAN)}")
         log(f"Cooldown: {CYCLE_COOLDOWN}s...")
         time.sleep(CYCLE_COOLDOWN)
 
