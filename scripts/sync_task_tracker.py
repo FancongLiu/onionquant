@@ -40,7 +40,7 @@ PRIORITY_MAP = {"P0": 1, "P1": 2, "P2": 3}
 def run_kanban(*args: str, check: bool = True) -> subprocess.CompletedProcess:
     """Run hermes kanban command."""
     cmd = ["hermes", "kanban"] + list(args)
-    return subprocess.run(cmd, capture_output=True, text=True, check=check)
+    return subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", check=check)
 
 
 def get_existing_tasks() -> Dict[str, dict]:
@@ -53,6 +53,7 @@ def get_existing_tasks() -> Dict[str, dict]:
             ["hermes", "kanban", "ls", "--json"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
             check=True,
         )
         tasks = json.loads(result.stdout)
@@ -239,6 +240,7 @@ def sync_tasks(
                         ],
                         capture_output=True,
                         text=True,
+                        encoding="utf-8",
                         check=True,
                     )
                     # Extract kanban ID from output

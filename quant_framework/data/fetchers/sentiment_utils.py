@@ -9,6 +9,52 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+# 中文金融情感关键词词典（SnowNLP / FallBack 用）
+_CN_BULLISH = {
+    "涨", "涨停", "利好", "起飞", "梭哈", "满仓", "抄底", "看涨",
+    "突破", "新高", "翻倍", "暴拉", "拉升", "牛市", "吃肉", "稳",
+    "猛", "冲", "强势", "加仓", "持有", "拐点", "反转",
+    "业绩超预期", "分红", "回购", "增持", "净流入", "主力",
+}
+_CN_BEARISH = {
+    "跌", "跌停", "利空", "崩", "割肉", "空仓", "看跌", "爆仓",
+    "破位", "新低", "腰斩", "砸盘", "熊市", "套牢", "跳水",
+    "跑", "清仓", "减持", "净流出", "踩踏", "黑天鹅", "暴雷",
+    "退市", "亏损", "业绩不及预期", "监管", "调查", "停牌",
+}
+
+
+def has_chinese(text: str) -> bool:
+    """检测文本是否包含中文字符。"""
+    return any("一" <= ch <= "鿿" for ch in text)
+
+
+def score_chinese_text(text: str) -> Dict[str, float]:
+    """中文金融文本情绪评分 — SnowNLP 优先 + 金融关键词增强。
+
+    与 score_text() 互补：score_text() 走 FinBERT (英文优先)，
+    本函数专门处理中文金融文本，利用 SnowNLP + 金融领域关键词。
+    """
+    try:
+        from snownlp import SnowNLP
+        s = SnowNLP(text)
+        base_p = max(0.0, min(1.0, s.sentiments))
+    except ImportError:
+        base_p = 0.5
+
+    # 金融关键词增强：统计多空关键词出现次数，调整分数
+    pos_hits = sum(1 for w in _CN_BULLISH if w in text)
+    neg_hits = sum(1 for w in _CN_BEARISH if w in text)
+    total_hits = pos_hits + neg_hits
+    if total_hits > 0:
+        keyword_p = pos_hits / total_hits
+        # 加权融合：SnowNLP 权重 0.4 + 关键词 权重 0.6
+        p = round(base_p * 0.4 + keyword_p * 0.6, 4)
+    else:
+        p = round(base_p, 4)
+
+    return {"positive": p, "negative": round(1 - p, 4), "neutral": 0.0}
+
 
 @lru_cache(maxsize=1)
 def _get_finbert():
@@ -42,40 +88,15 @@ def score_text(text: str) -> Dict[str, float]:
 
 
 def _fallback(text: str) -> Dict[str, float]:
-    has_zh = any("一" <= ch <= "鿿" for ch in text)
-    if has_zh:
-        try:
-            from snownlp import SnowNLP
-
-            p = SnowNLP(text).sentiments
-            return {
-                "positive": round(p, 4),
-                "negative": round(1 - p, 4),
-                "neutral": 0.0,
-            }
-        except ImportError:
-            pass
+    if has_chinese(text):
+        return score_chinese_text(text)
     pos_w = {
-        "bullish",
-        "moon",
-        "rocket",
-        "profit",
-        "gain",
-        "green",
-        "up",
-        "moon",
-        "squeeze",
+        "bullish", "moon", "rocket", "profit", "gain", "green",
+        "up", "moon", "squeeze",
     }
     neg_w = {
-        "bearish",
-        "dump",
-        "loss",
-        "red",
-        "crash",
-        "shorts",
-        "drop",
-        "short",
-        "put",
+        "bearish", "dump", "loss", "red", "crash", "shorts",
+        "drop", "short", "put",
     }
     words = set(text.lower().split())
     hits = {"positive": len(words & pos_w), "negative": len(words & neg_w)}

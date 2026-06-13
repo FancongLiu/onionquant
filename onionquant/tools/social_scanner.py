@@ -5,14 +5,15 @@ social_scanner.py — OnionQuant 社交舆论扫描器 (Step 1-2 of 6-step pipel
 数据来源 (非编造):
   - HypeFinder (Reddit + Twitter/X, 开源CLI工具)
   - ApeWisdom (Reddit WSB 热门股票, 免费API)
-  - 长桥/雪球 (中文社区, 后续集成)
+  - Agent-Reach (微博/雪球/B站/小红书, 中文平台CLI)
 
 输出: 热度突变的股票列表 + 讨论量/情绪/平台交叉验证
 
 Usage:
-    python onionquant/tools/social_scanner.py                    # 单次扫描
-    python onionquant/tools/social_scanner.py --top 10 --explain # 详细top10
-    python onionquant/tools/social_scanner.py --schedule 60      # 每60分钟循环
+    python onionquant/tools/social_scanner.py                      # 单次扫描 (英文)
+    python onionquant/tools/social_scanner.py --cn                 # 包含中文平台
+    python onionquant/tools/social_scanner.py --top 10 --explain   # 详细top10
+    python onionquant/tools/social_scanner.py --schedule 60        # 每60分钟循环
 """
 
 import csv
@@ -52,7 +53,7 @@ def run_hypefinder_scan(
     ]
     try:
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=120, cwd=str(HYPEFINDER_DIR)
+            cmd, capture_output=True, text=True, encoding="utf-8", timeout=120, cwd=str(HYPEFINDER_DIR)
         )
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
         print(f"[warn] HypeFinder failed: {e}")
@@ -172,36 +173,113 @@ def save_scan_results(results: list[dict]) -> Path:
     return path
 
 
-def scan(explain: bool = False) -> list[dict]:
-    """Run full social scan: HypeFinder + ApeWisdom → merged rankings."""
+def scan_chinese_social(
+    tickers: list[str] | None = None,
+    platforms: list[str] | None = None,
+) -> list[dict]:
+    """扫描中文社交平台（微博/雪球），返回情绪数据。
+
+    依赖 Agent-Reach CLI；未安装时返回空列表。
+    """
+    try:
+        from quant_framework.data.fetchers.chinese_social_sentiment import (
+            scan_watchlist,
+            _ar_available,
+        )
+    except ImportError:
+        print("[warn] chinese_social_sentiment 模块不可用")
+        return []
+
+    if not _ar_available():
+        print("[info] Agent-Reach 未安装，跳过中文社交扫描")
+        return []
+
+    platforms = platforms or ["weibo", "xueqiu"]
+    df = scan_watchlist(tickers=tickers, platforms=platforms, verbose=False)
+    if df.empty:
+        return []
+
+    results = []
+    for _, row in df.iterrows():
+        results.append({
+            "ticker": row.get("ticker", ""),
+            "sentiment_score": row.get("weighted_score", 0),
+            "positive_ratio": row.get("positive_ratio", 0),
+            "negative_ratio": row.get("negative_ratio", 0),
+            "count": row.get("count", 0),
+            "platforms": row.get("platforms", ""),
+        })
+    return results
+
+
+def scan(explain: bool = False, cn: bool = False) -> list[dict]:
+    """Run full social scan: HypeFinder + ApeWisdom → merged rankings.
+
+    Args:
+        explain: 打印详细说明
+        cn: 是否包含中文社交平台 (微博/雪球)
+    """
+    sources = "HypeFinder (Reddit+X) + ApeWisdom (WSB)"
+    if cn:
+        sources += " + Agent-Reach (微博/雪球)"
+
     print("=" * 60)
     print(f"  OnionQuant Social Scanner  |  {datetime.now():%Y-%m-%d %H:%M}")
-    print("  Sources: HypeFinder (Reddit+X) + ApeWisdom (WSB)")
+    print(f"  Sources: {sources}")
     print("=" * 60)
 
-    print("\n[1/3] Running HypeFinder...")
+    steps = 3 + (1 if cn else 0)
+    step = 1
+
+    print(f"\n[{step}/{steps}] Running HypeFinder...")
     hf = run_hypefinder_scan()
     print(f"      → {len(hf)} tickers found")
+    step += 1
 
-    print("[2/3] Cross-checking ApeWisdom...")
+    print(f"[{step}/{steps}] Cross-checking ApeWisdom...")
     aw = cross_check_apewisdom()
     print(f"      → {len(aw)} tickers found")
+    step += 1
 
-    print("[3/3] Merging & ranking...")
+    if cn:
+        print(f"[{step}/{steps}] Scanning Chinese social media (Agent-Reach)...")
+        cn_results = scan_chinese_social()
+        print(f"      → {len(cn_results)} tickers with Chinese sentiment")
+        step += 1
+    else:
+        cn_results = []
+
+    print(f"[{step}/{steps}] Merging & ranking...")
     results = merge_and_rank(hf, aw)
     print(f"      → {len(results)} unique tickers")
 
+    # 附加中文情绪数据到结果中
+    if cn_results:
+        cn_map = {r["ticker"].upper(): r for r in cn_results}
+        for r in results:
+            cn_data = cn_map.get(r["ticker"], {})
+            r["cn_sentiment"] = cn_data.get("sentiment_score")
+            r["cn_mentions"] = cn_data.get("count", 0)
+            r["cn_platforms"] = cn_data.get("platforms", "")
+
     path = save_scan_results(results)
 
-    print(f"\n{'Rank':<5} {'Ticker':<8} {'Hype':>6} {'Cross':>6} {'AW Rank':>8}")
-    print("-" * 40)
+    print(f"\n{'Rank':<5} {'Ticker':<8} {'Hype':>6} {'Cross':>6} {'AW Rank':>8}", end="")
+    if cn:
+        print(f" {'CN Sent':>8}", end="")
+    print()
+    print("-" * (48 if not cn else 58))
     for i, r in enumerate(results[:15]):
         xv = "✓" if r["cross_validated"] else "—"
-        print(
-            f"{i + 1:<5} {r['ticker']:<8} {r['hype_score']:>6.0f} {xv:>6} {r['aw_rank']:>8}"
-        )
+        line = f"{i + 1:<5} {r['ticker']:<8} {r['hype_score']:>6.0f} {xv:>6} {r['aw_rank']:>8}"
+        if cn:
+            cs = r.get("cn_sentiment")
+            line += f" {cs:>8.3f}" if cs is not None else f" {'N/A':>8}"
+        print(line)
 
     print(f"\n→ Full results: {path}")
+    if cn and cn_results:
+        print(f"→ Chinese sentiment data integrated into results")
     return results
 
 

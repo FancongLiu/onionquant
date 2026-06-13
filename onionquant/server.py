@@ -40,12 +40,35 @@ if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
+import threading
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+
+from infrastructure.api_proxy import TokenBucket
 from sse_starlette.sse import EventSourceResponse
 
 app = FastAPI(title="OnionQuant Dashboard")
+
+# ─── Rate Limiting ───────────────────────────────────────────
+# Per-IP token bucket rate limiter, reusing the existing
+# TokenBucket from infrastructure/api_proxy.py.
+
+_inbox_buckets: dict = {}
+_inbox_buckets_lock = threading.Lock()
+_INBOX_RATE = 5.0 / 60.0   # 5 requests per minute refill
+_INBOX_BURST = 10           # allow short bursts up to 10
+_INBOX_CLEANUP_AFTER = 10_000  # clean up stale buckets after 10k unique IPs
+
+
+def _get_inbox_bucket(client_ip: str) -> TokenBucket:
+    with _inbox_buckets_lock:
+        if client_ip not in _inbox_buckets:
+            if len(_inbox_buckets) > _INBOX_CLEANUP_AFTER:
+                _inbox_buckets.clear()
+            _inbox_buckets[client_ip] = TokenBucket(rate=_INBOX_RATE, capacity=_INBOX_BURST)
+        return _inbox_buckets[client_ip]
+
 
 # ─── Auth ─────────────────────────────────────────────
 
@@ -286,6 +309,16 @@ async def get_departments():
 
 @app.post("/api/inbox")
 async def post_inbox(request: Request):
+    # Rate limit check — per-IP token bucket
+    client_ip = request.client.host if request.client else "127.0.0.1"
+    bucket = _get_inbox_bucket(client_ip)
+    allowed, wait = bucket.acquire()
+    if not allowed:
+        return JSONResponse(
+            {"ok": False, "error": f"rate limited, retry in {wait:.0f}s"},
+            status_code=429,
+        )
+
     body = await request.json()
     text = body.get("text", "").strip()
     urgent = body.get("urgent", False)

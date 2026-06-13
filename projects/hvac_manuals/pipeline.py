@@ -261,6 +261,7 @@ def download_pdf(url: str, output_path: Path, timeout: int = 120) -> bool:
             ],
             capture_output=True,
             text=True,
+            encoding="utf-8",
             timeout=timeout + 10,
         )
         http_code = result.stdout.strip()

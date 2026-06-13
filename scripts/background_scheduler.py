@@ -15,7 +15,15 @@ from datetime import datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
-VENV_PYTHON = str(PROJECT_ROOT / ".venv" / "Scripts" / "python.exe")
+
+# Docker / container: use the system Python; Windows dev: use .venv
+_VENV_CANDIDATES = [
+    PROJECT_ROOT / ".venv" / "Scripts" / "python.exe",  # Windows
+    PROJECT_ROOT / ".venv" / "bin" / "python",           # Linux/macOS venv
+]
+VENV_PYTHON = str(
+    next((p for p in _VENV_CANDIDATES if p.exists()), __import__("sys").executable)
+)
 
 
 def run_script(script_name: str, args: list = None, timeout: int = 120) -> bool:
@@ -31,6 +39,7 @@ def run_script(script_name: str, args: list = None, timeout: int = 120) -> bool:
             cwd=str(PROJECT_ROOT),
             capture_output=True,
             text=True,
+            encoding="utf-8",
             timeout=timeout,
             env=env,
         )

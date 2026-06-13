@@ -56,7 +56,7 @@ CN_TICKER_MAP: Dict[str, str] = {
     "京东": "JD",
     "拼多多": "PDD",
     "台积电": "TSM",
-    "伯克希尔": "BRK.B",
+    "伯克希尔": "BRK-B",
     "摩根大通": "JPM",
     "维萨": "V",
 }

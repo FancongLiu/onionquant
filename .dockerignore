@@ -1,0 +1,83 @@
+# ── Git ──
+.git
+.gitignore
+.github/
+
+# ── Python artifacts ──
+__pycache__
+*.pyc
+*.pyo
+*.egg-info
+.ropeproject
+.venv
+.venv-linux
+venv
+env
+
+# ── IDE & editor ──
+.idea
+.vscode
+.DS_Store
+*.swp
+*.swo
+*~
+
+# ── Claude / AI caches ──
+.claude
+.ruff_cache
+.mypy_cache
+.pytest_cache
+
+# ── Secrets (mounted at runtime, NOT baked into image) ──
+.env
+*.env
+
+# ── Runtime state (mounted as volumes) ──
+company/task_claims/*/.claim
+company/chairman_outbox
+company/chairman_inbox/processed
+company/departments/execution/*.json
+company/departments/execution/*.txt
+company/departments/execution/*.bin
+company/departments/execution/*.jsonl
+company/wechat_pushed.json
+company/cron_config.json
+company/reports
+company/market_snapshots
+company/.server_log.txt
+company/.watcher_state.json
+company/watcher_seen.json
+company/chairman_position_tracker.json
+company/.wechat_locks
+company/wechat_locks
+company/sentiment_data/collector/*.json
+
+# ── Submodules & vendored tools (large, not needed at runtime) ──
+tradingagents
+onionquant/tools/HypeFinder
+onionquant/tools/Stock-Sentiment-Analyzer
+onionquant/tools/stocksight
+onionquant/tools/tickerpulse-ai
+
+# ── Docs & misc ──
+docs
+projects
+logs
+lib
+*.bat
+github_sync
+*.log
+*.db
+*.sqlite
+*.sqlite3
+WECOM_CALLBACK_CREDS.md
+auto_sync_log.txt
+
+# ── Docker self-reference ──
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# ── Tests ──
+tests
+*.ipynb_checkpoints

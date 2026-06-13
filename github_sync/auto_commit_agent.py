@@ -29,6 +29,7 @@ def run(cmd, cwd=None):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
+        encoding="utf-8",
     )
 
 

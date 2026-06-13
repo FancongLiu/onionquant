@@ -45,7 +45,7 @@ QUANT_TICKERS = [
     "NVDA",
     "META",
     "TSLA",
-    "BRK.B",
+    "BRK-B",
     "JPM",
     "V",
     "JNJ",

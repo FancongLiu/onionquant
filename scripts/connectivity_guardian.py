@@ -61,10 +61,10 @@ def check_tmux():
         # Check if claude process is running inside tmux
         r2 = subprocess.run(
             ["bash", "-c", "ps aux | grep -c '[c]laude'"],
-            capture_output=True,
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
             timeout=10,
         )
-        count = int(r2.stdout.decode().strip() or "0")
+        count = int((r2.stdout or "").strip() or "0")
         if count == 0:
             return False, "tmux 会话存在但 claude 进程不在"
 
@@ -83,7 +83,7 @@ def check_hermes():
     try:
         req = urllib.request.Request("http://localhost:8645/health")
         with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read().decode())
+            data = json.loads(resp.read().decode("utf-8", errors="replace"))
             if data.get("status") == "ok":
                 return True, f"platform={data.get('platform', '?')}"
             return False, f"status={data.get('status', '?')}"
@@ -101,7 +101,7 @@ def check_dashboard():
     try:
         req = urllib.request.Request("http://localhost:8765/api/status")
         with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read().decode())
+            data = json.loads(resp.read().decode("utf-8", errors="replace"))
             return (
                 True,
                 f"depts={data.get('departments', '?')} inbox={data.get('inbox_pending', '?')}",
@@ -186,10 +186,10 @@ def check_deepseek_api():
     try:
         r = subprocess.run(
             ["bash", "-c", "ps aux | grep -c '[c]laude'"],
-            capture_output=True,
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
             timeout=10,
         )
-        claude_count = int(r.stdout.decode().strip() or "0")
+        claude_count = int((r.stdout or "").strip() or "0")
         if claude_count > 0:
             return True, "Claude CLI 运行中 (API 可用)"
     except Exception:
@@ -224,10 +224,10 @@ def check_tunnels():
     try:
         r = subprocess.run(
             ["bash", "-c", "pgrep -a cloudflared 2>/dev/null"],
-            capture_output=True,
+            capture_output=True, text=True, encoding="utf-8", errors="replace",
             timeout=10,
         )
-        output = r.stdout.decode().strip()
+        output = (r.stdout or "").strip()
         if output:
             lines = output.split("\n")
             return True, f"{len(lines)} 隧道运行中"
@@ -279,7 +279,7 @@ def restart_hermes():
         # Verify
         req = urllib.request.Request("http://localhost:8645/health")
         with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read().decode())
+            data = json.loads(resp.read().decode("utf-8", errors="replace"))
             return data.get("status") == "ok"
     except Exception:
         return False

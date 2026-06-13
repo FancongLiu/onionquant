@@ -175,6 +175,7 @@ def attempt_download_jci_direct(document_id: str, output_path: Path) -> bool:
             ["curl", "-s", "-L", "-o", str(output_path), "-w", "%{http_code}", url],
             capture_output=True,
             text=True,
+            encoding="utf-8",
             timeout=120,
         )
         http_code = result.stdout.strip()
@@ -219,6 +220,7 @@ def attempt_download_from_url(url: str, output_path: Path) -> bool:
             ],
             capture_output=True,
             text=True,
+            encoding="utf-8",
             timeout=130,
         )
         http_code = result.stdout.strip()
