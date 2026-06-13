@@ -27,6 +27,71 @@ STOCK_REQUEST_KEYWORDS = [
     "股票", "标的", "行情", "技术面", "基本面",
 ]
 
+# ── Headroom context compression ──────────────────────────────
+# DeepSeek V4 context window: 128K (deepseek-chat) / 1M (deepseek-v4-pro via Claude Code)
+# Headroom = context_window - (system_prompt + context + user_message)
+# We target 60%+ headroom for the LLM to think and generate a response.
+
+DEEPSEEK_CHAT_WINDOW = 128_000  # deepseek-chat model
+HEADROOM_TARGET_RATIO = 0.6  # aim for 60% free context window
+MAX_ASSEMBLED_CONTEXT_TOKENS = int(DEEPSEEK_CHAT_WINDOW * (1 - HEADROOM_TARGET_RATIO) * 0.5)  # ~25K for context
+
+# Per-section token budgets (for _assemble_context)
+SECTION_BUDGETS = {
+    "claude_md": 800,      # CLAUDE.md core rules
+    "memory": 500,         # MemPalace semantic results
+    "task_queue": 200,     # pending task summary
+    "interrupt": 300,      # interrupt context
+    "total": 1800,         # hard cap on assembled context
+}
+
+
+def _compress_text_for_budget(text: str, max_tokens: int) -> str:
+    """Compress text to fit within a token budget by truncating to sentence boundaries.
+
+    Uses sentence-aware truncation: splits on Chinese/English sentence delimiters
+    (。！？\n. ! ?) and accumulates sentences until the budget is reached.
+    Falls back to character-based truncation if no sentence boundaries found.
+    """
+    if not text:
+        return ""
+    est = _estimate_tokens(text)
+    if est <= max_tokens:
+        return text
+
+    # Sentence-aware truncation
+    sentences = __import__("re").split(r'(?<=[。！？\n\.!\?])', text)
+    result_parts = []
+    used = 0
+    for sent in sentences:
+        sent_est = _estimate_tokens(sent)
+        if used + sent_est > max_tokens:
+            break
+        result_parts.append(sent)
+        used += sent_est
+    if result_parts:
+        return "".join(result_parts)
+
+    # Fallback: character-based with CJK-awareness
+    return text[:max_tokens * 2]  # rough: ~2 chars per token for CJK-heavy text
+
+
+def _measure_headroom(system_tokens: int, user_tokens: int,
+                      context_window: int = DEEPSEEK_CHAT_WINDOW) -> dict:
+    """Measure context window headroom for an LLM call.
+
+    Returns dict with used_tokens, free_tokens, headroom_pct, and a warning flag.
+    """
+    used = system_tokens + user_tokens
+    free = max(context_window - used, 0)
+    pct = free / context_window if context_window > 0 else 0
+    return {
+        "used_tokens": used,
+        "free_tokens": free,
+        "headroom_pct": round(pct, 3),
+        "low_headroom": pct < HEADROOM_TARGET_RATIO,
+    }
+
 
 def _infer_priority(text: str) -> str:
     p0_kw = ["紧急", "urgent", "立刻", "马上", "爆仓", "止损", "崩盘", "暴跌"]
@@ -66,9 +131,17 @@ def _is_stock_request(text: str) -> bool:
     return any(kw.upper() in text.upper() for kw in STOCK_REQUEST_KEYWORDS)
 
 
-def _assemble_context(project_root: Path, task_queue_file: Path, ctx_state_path: Path) -> str:
-    """Assemble full project context for LLM calls. Zero AI tokens."""
+def _assemble_context(project_root: Path, task_queue_file: Path, ctx_state_path: Path,
+                      query: str = "", max_memory_tokens: int = 600) -> str:
+    """Assemble project context for LLM calls with per-section token budgets.
+
+    Each section has a token budget (SECTION_BUDGETS). Sections are assembled
+    independently and compressed to fit their budget. The total assembled context
+    is capped at SECTION_BUDGETS['total'].
+    """
     parts = []
+
+    # Section 1: CLAUDE.md core rules (budget: ~800 tokens)
     claude_md = project_root / "CLAUDE.md"
     if claude_md.exists():
         claude = claude_md.read_text(encoding="utf-8")
@@ -82,38 +155,91 @@ def _assemble_context(project_root: Path, task_queue_file: Path, ctx_state_path:
             if capture:
                 essential_sections.append(line)
         if essential_sections:
-            parts.append("## 项目核心规则\n" + "\n".join(essential_sections[:80]))
-    memory_dir = project_root / "memory"
-    if memory_dir.exists():
-        mem_lines = []
-        for mf in sorted(memory_dir.glob("*.md"))[:8]:
-            try:
-                content = mf.read_text(encoding="utf-8")[:300]
-                name = mf.stem.replace("_", " ")
-                mem_lines.append(f"- {name}: {content.split(chr(10))[0][:100]}")
-            except Exception:
-                pass
-        if mem_lines:
-            parts.append("## 关键记忆\n" + "\n".join(mem_lines[:15]))
+            raw = "## 项目核心规则\n" + "\n".join(essential_sections[:80])
+            compressed = _compress_text_for_budget(raw, SECTION_BUDGETS["claude_md"])
+            parts.append(compressed)
+
+    # Section 2: MemPalace semantic memory (budget: ~500 tokens)
+    memory_context = _get_memory_context(project_root, query, SECTION_BUDGETS["memory"])
+    if memory_context:
+        parts.append("## 关键记忆\n" + _compress_text_for_budget(memory_context, SECTION_BUDGETS["memory"]))
+
+    # Section 3: Task queue (budget: ~200 tokens)
     if task_queue_file.exists():
         try:
             queue = json.loads(task_queue_file.read_text(encoding="utf-8"))
             tasks = queue.get("tasks", [])
             if tasks:
                 task_lines = [f"- [{t.get('priority','?')}] {t.get('preview','')[:80]}" for t in tasks[:5]]
-                parts.append(f"## 当前任务队列 ({len(tasks)} 个)\n" + "\n".join(task_lines))
+                raw = f"## 当前任务队列 ({len(tasks)} 个)\n" + "\n".join(task_lines)
+                parts.append(_compress_text_for_budget(raw, SECTION_BUDGETS["task_queue"]))
         except Exception:
             pass
+
+    # Section 4: Interrupt context (budget: ~300 tokens)
     if ctx_state_path.exists():
         try:
             ctx = json.loads(ctx_state_path.read_text(encoding="utf-8"))
             key_info = {k: ctx[k] for k in ["interrupted_task", "urgent_reason", "pending_actions"]
                         if k in ctx and ctx[k]}
             if key_info:
-                parts.append("## 中断上下文\n" + json.dumps(key_info, ensure_ascii=False, indent=2)[:500])
+                raw = "## 中断上下文\n" + json.dumps(key_info, ensure_ascii=False, indent=2)
+                parts.append(_compress_text_for_budget(raw, SECTION_BUDGETS["interrupt"]))
         except Exception:
             pass
-    return "\n\n".join(parts) if parts else ""
+
+    # Assemble and apply total budget cap
+    assembled = "\n\n".join(parts) if parts else ""
+    return _compress_text_for_budget(assembled, SECTION_BUDGETS["total"])
+
+
+# ── MemPalace memory context builder ──────────────────────────
+
+_MEM_PALACE = None  # lazy singleton
+
+
+def _get_memory_context(project_root: Path, query: str = "", max_tokens: int = 600) -> str:
+    """Retrieve semantically relevant memories using MemPalace.
+
+    When query is non-empty, uses LSA/TF-IDF semantic search to find
+    memories relevant to the query. When query is empty, falls back to
+    blind top-N file reading. Returns a formatted context string.
+    """
+    global _MEM_PALACE
+
+    # Resolve the actual memory directory (Claude-managed, not project-root/memory/)
+    mem_dir = project_root / ".claude" / "projects" / "-mnt-e-2026-AgentStudy-Python-code" / "memory"
+    if not mem_dir.exists():
+        return ""
+
+    if _MEM_PALACE is None:
+        try:
+            from infrastructure.mem_palace import MemPalace
+            _MEM_PALACE = MemPalace(memory_dir=mem_dir)
+        except Exception:
+            return ""
+
+    palace = _MEM_PALACE
+    if not palace.cards:
+        return ""
+
+    if query.strip():
+        # Semantic search: find memories relevant to the query
+        try:
+            return palace.build_context(query, max_tokens=max_tokens)
+        except Exception:
+            pass
+
+    # Fallback: blind top-N (no query available)
+    try:
+        top_cards = sorted(palace.cards.values(), key=lambda c: len(c.content), reverse=True)[:8]
+        lines = []
+        for card in top_cards:
+            snippet = card.description or card.content[:120].replace("\n", " ")
+            lines.append(f"- [{card.room}] {card.name}: {snippet}")
+        return "\n".join(lines[:15])
+    except Exception:
+        return ""
 
 
 def setup(project_root: Path, task_queue_file: Path, outbox_dir: Path,
@@ -132,13 +258,19 @@ def setup(project_root: Path, task_queue_file: Path, outbox_dir: Path,
 
 
 def _log_token_usage(source: str, input_tokens: int, output_tokens: int, cost_est: float,
-                     message_id: str = ""):
-    """Log token usage per inbox message for observability. Appends JSON line to token log."""
+                     message_id: str = "", headroom: dict | None = None):
+    """Log token usage per inbox message for observability. Appends JSON line to token log.
+
+    When headroom is provided, includes context window headroom metrics
+    (used/free tokens, headroom percentage, low-headroom warning flag).
+    """
     import json as _json
     from datetime import datetime as _dt
     entry = {"ts": _dt.now().isoformat(), "source": source,
              "input_tokens": input_tokens, "output_tokens": output_tokens,
              "cost_est": cost_est, "message_id": message_id}
+    if headroom:
+        entry["headroom"] = headroom
     try:
         with open(globals().get("_TOKEN_LOG"), "a", encoding="utf-8") as f:
             f.write(_json.dumps(entry, ensure_ascii=False) + "\n")
@@ -260,18 +392,13 @@ def _call_deepseek(message: str, message_id: str = "") -> str | None:
         pr = globals().get("_PROJECT_ROOT")
         tqf = globals().get("_TASK_QUEUE_FILE")
         ctx = globals().get("_CTX_STATE_PATH")
-        context = _assemble_context(pr, tqf, ctx)
+        context = _assemble_context(pr, tqf, ctx, query=message)
+        system_prompt = f"你是 OnionQuant CEO Agent。用中文回复。\n{context}\n\n回复原则: 基于上下文,精炼结构化Markdown,署名 -- CEO Agent"
         client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
         resp = client.chat.completions.create(
             model="deepseek-chat",
             messages=[
-                {"role": "system", "content": f"""你是 OnionQuant CEO Agent。请用中文回复。
-{context}
-## 回复原则
-- 基于上述项目上下文回答，不凭空猜测
-- 涉及持仓/决策时引用 memory 信息
-- 精炼、结构化（Markdown）、可执行
-- 署名: -- CEO Agent"""},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": message},
             ], max_tokens=1200, temperature=0.5)
         reply = resp.choices[0].message.content.strip()
@@ -279,27 +406,39 @@ def _call_deepseek(message: str, message_id: str = "") -> str | None:
         if usage:
             input_tok = usage.prompt_tokens or 0
             output_tok = usage.completion_tokens or 0
-            cost = (input_tok * 0.025 + output_tok * 3) / 1_000_000  # DeepSeek pricing
-            _log_token_usage("deepseek", input_tok, output_tok, cost, message_id)
+            cost = (input_tok * 0.025 + output_tok * 3) / 1_000_000
+            headroom = _measure_headroom(input_tok, 0, DEEPSEEK_CHAT_WINDOW)
+            _log_token_usage("deepseek", input_tok, output_tok, cost, message_id,
+                           headroom=headroom)
         return reply
     except Exception:
         return None
 
 
 def _call_claude_code(message: str, message_id: str = "") -> str | None:
-    """Process via WSL Claude Code persistent session — 100% chat quality."""
+    """Process via WSL Claude Code persistent session — pre-injected context for caching."""
     import subprocess as sp
     pr = globals().get("_PROJECT_ROOT")
     sid = globals().get("_CLAUDE_SESSION_ID")
     sinit = globals().get("_SESSION_INITIALIZED")
+    tqf = globals().get("_TASK_QUEUE_FILE")
+    ctx = globals().get("_CTX_STATE_PATH")
+
+    # Pre-assemble compressed context so Claude Code doesn't re-read files
+    context = _assemble_context(pr, tqf, ctx, query=message)
 
     prompt = (
-        f"你是 OnionQuant CEO Agent。董事长通过信箱发来消息。请基于项目上下文给出深度回复。\n\n"
-        f"消息:\n{message}\n\n"
-        f"要求: 1.基于CLAUDE.md和memory文件的项目信息回答 2.如涉及股票分析使用11部门LangGraph管道 "
-        f"3.如需最新信息直接使用WebSearch 4.直接执行搜索和分析不要写'我会去搜索'然后停下 "
-        f"5.回复精炼结构化(Markdown)可执行 6.署名:-- CEO Agent"
+        f"[CEO Agent] 董事长信箱消息。以下是预注入的项目上下文:\n\n"
+        f"{context}\n\n"
+        f"─── 消息 ───\n{message}\n\n"
+        f"要求: 基于上述上下文+memory+WebSearch深度回复。涉及股票用LangGraph管道。"
+        f"直接执行不停顿。Markdown可执行回复。署名 -- CEO Agent"
     )
+
+    # Measure headroom before call
+    est_system = _estimate_tokens(prompt)
+    headroom = _measure_headroom(est_system, 0, DEEPSEEK_CHAT_WINDOW)
+
     try:
         prompt_file = pr / "company" / ".claude_prompt.txt"
         prompt_file.write_text(prompt, encoding="utf-8")
@@ -322,7 +461,8 @@ def _call_claude_code(message: str, message_id: str = "") -> str | None:
         est_input = _estimate_tokens(prompt)
         est_output = _estimate_tokens(reply)
         est_cost = (est_input * 0.025 + est_output * 3) / 1_000_000
-        _log_token_usage("claude_code", est_input, est_output, est_cost, message_id)
+        _log_token_usage("claude_code", est_input, est_output, est_cost, message_id,
+                       headroom=headroom)
         return reply
     except sp.TimeoutExpired:
         sinit.unlink(missing_ok=True)

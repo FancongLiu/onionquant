@@ -41,7 +41,7 @@ UPGRADE_PLAN = [
     ("P0", "docs", "Add architecture decision records (ADRs) to docs/ for key design choices"),
     ("P1", "observability", "Add token usage tracking per inbox message (already partially done)"),
     ("P1", "memory", "Integrate MemPalace-style semantic retrieval for memory files"),
-    ("P1", "context", "Evaluate headroom context compression for inbox LLM calls"),
+    ("P1", "context", "✅ Evaluate headroom context compression for inbox LLM calls — DONE 2026-06-13"),
     ("P1", "research", "Integrate Agent-Reach for Chinese social media sentiment data"),
     ("P2", "frontend", "Add research panel SSE progress for LangGraph pipeline execution"),
     ("P2", "security", "Add rate limiting to POST /api/inbox"),
