@@ -216,7 +216,7 @@ def _check_wsl_tmux() -> bool:
 
 
 def _start_wsl_tmux() -> bool:
-    """Start WSL tmux with ceo_loop.sh."""
+    """Start WSL tmux with Claude Code inbox relay."""
     try:
         subprocess.Popen(
             [
@@ -224,7 +224,7 @@ def _start_wsl_tmux() -> bool:
                 "-e",
                 "bash",
                 "-c",
-                "cd /mnt/e/2026_AgentStudy/Python_code && tmux new-session -d -s ceo-24x7 'bash scripts/ceo_loop.sh'",
+                "cd /mnt/e/2026_AgentStudy/Python_code && bash scripts/start_ceo_claude.sh",
             ],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,

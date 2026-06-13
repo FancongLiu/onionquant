@@ -103,6 +103,8 @@ def main():
         ("3 8,20 * * *", "health_monitor.py", [], 60),
         # Content reviewer — twice daily (09:13 + 21:13 BJT), no AI tokens
         ("13 9,21 * * *", "content_review.py", [], 60),
+        # Self-evolution cycle — every 6 hours (03:17, 09:17, 15:17, 21:17 BJT)
+        ("17 3,9,15,21 * * *", "self_evolve.py", [], 360),
     ]
 
     print(f"Watching {len(tasks)} tasks", flush=True)

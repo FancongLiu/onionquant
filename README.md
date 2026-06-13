@@ -24,7 +24,41 @@ OnionQuant is an **AI-native quantitative research platform** that demonstrates 
 
 **For quant researchers**: it provides a full factor research pipeline — multi-source data ingestion → factor computation → IC analysis → regime detection → risk threshold scoring → deployment decision matrix.
 
-## Architecture
+## Architecture (2026 Production Pattern)
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  L4: Evolution Layer (Self-Improving)                        │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │ Observe → Analyze → Propose → Execute → Remember         │ │
+│  │ Harness Engine: Default-FAIL + Fresh Evaluator + Skill   │ │
+│  │ Auto-distill: 5+ tool calls → reusable SKILL.md          │ │
+│  │ PROGRESS.md: agent reads/writes own state                │ │
+│  └─────────────────────────────────────────────────────────┘ │
+├──────────────────────────────────────────────────────────────┤
+│  L3: State Layer (File-as-State)                             │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │ task_queue.json · context_state.json · PROGRESS.md       │ │
+│  │ test_contract.json · skills/ · LangGraph SqliteSaver     │ │
+│  │ Scale path: File → Redis → Postgres/DynamoDB            │ │
+│  └─────────────────────────────────────────────────────────┘ │
+├──────────────────────────────────────────────────────────────┤
+│  L2: Orchestration Layer                                     │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │ Claude Code persistent session (--session-id UUID)       │ │
+│  │ Simple → direct Claude  |  Complex → LangGraph 11-dept   │ │
+│  │ inbox/outbox → event-driven, zero polling                │ │
+│  └─────────────────────────────────────────────────────────┘ │
+├──────────────────────────────────────────────────────────────┤
+│  L1: Interface Layer                                         │
+│  ┌─────────────────────────────────────────────────────────┐ │
+│  │ Web Dashboard · Mobile · WeChat · SSE real-time push     │ │
+│  │ Cloudflare Tunnel · Basic Auth · AES-256-CBC             │ │
+│  └─────────────────────────────────────────────────────────┘ │
+└──────────────────────────────────────────────────────────────┘
+```
+
+## Department Architecture (LangGraph 11-Node Pipeline)
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
