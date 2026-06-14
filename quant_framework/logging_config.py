@@ -12,10 +12,8 @@ Usage:
 import logging
 import sys
 from collections import deque
-from pathlib import Path
 from datetime import datetime
-from typing import Optional, List
-
+from pathlib import Path
 
 # Default format: timestamp | module | level | message
 CONSOLE_FORMAT = "%(asctime)s | %(levelname)-7s | %(name)-28s | %(message)s"
@@ -30,8 +28,8 @@ _log_buffer: deque = deque(maxlen=200)
 
 def setup_logging(
     level: int = logging.INFO,
-    log_file: Optional[str] = None,
-    module_levels: Optional[dict] = None,
+    log_file: str | None = None,
+    module_levels: dict | None = None,
 ) -> None:
     """Configure root logger for quant_framework.
 
@@ -121,17 +119,17 @@ class MemoryLogHandler(logging.Handler):
             }
         )
 
-    def get_records(self, level: Optional[str] = None, limit: int = 50) -> List[dict]:
+    def get_records(self, level: str | None = None, limit: int = 50) -> list[dict]:
         records = list(self.buffer)
         if level:
             records = [r for r in records if r["level"] == level.upper()]
         return records[-limit:]
 
 
-_memory_handler: Optional[MemoryLogHandler] = None
+_memory_handler: MemoryLogHandler | None = None
 
 
-def get_log_records(level: Optional[str] = None, limit: int = 50) -> List[dict]:
+def get_log_records(level: str | None = None, limit: int = 50) -> list[dict]:
     """Get recent log records from memory buffer (for dashboard API)."""
     global _memory_handler
     if _memory_handler is None:

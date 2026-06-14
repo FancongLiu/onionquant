@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Quantitative scan for 12 target stocks — DXYZ priority."""
 
-import yfinance as yf
-import pandas as pd
 import numpy as np
+import pandas as pd
+import yfinance as yf
 
 TICKERS = ["DXYZ", "INTC", "MU", "AMD", "GE", "BABA", "JD", "NOK", "WDC"]
 data = {}

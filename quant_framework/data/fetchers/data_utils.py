@@ -1,7 +1,6 @@
 """OHLCV standardization, quality checks, and ticker mapping."""
 
 import logging
-from typing import Dict
 
 import pandas as pd
 import pandera.pandas as pa
@@ -31,7 +30,7 @@ _OHLCV_SCHEMA = pa.DataFrameSchema(
     ],
 )
 # Standard OHLCV column mapping (source -> target)
-OHLCV_COLUMN_MAP: Dict[str, str] = {
+OHLCV_COLUMN_MAP: dict[str, str] = {
     "open": "open",
     "high": "high",
     "low": "low",
@@ -41,7 +40,7 @@ OHLCV_COLUMN_MAP: Dict[str, str] = {
     "volume": "volume",
 }
 # Chinese name -> ticker mapping
-CN_TICKER_MAP: Dict[str, str] = {
+CN_TICKER_MAP: dict[str, str] = {
     "苹果": "AAPL",
     "微软": "MSFT",
     "谷歌": "GOOGL",
@@ -75,9 +74,9 @@ def standardize_ohlc(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def check_data_quality(df: pd.DataFrame) -> Dict[str, object]:
+def check_data_quality(df: pd.DataFrame) -> dict[str, object]:
     """Quality checks with Pandera schema validation (manual fallback)."""
-    report: Dict[str, object] = {
+    report: dict[str, object] = {
         "rows": len(df),
         "columns": list(df.columns),
         "missing_summary": {},

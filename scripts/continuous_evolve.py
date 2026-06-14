@@ -16,16 +16,15 @@ vs v1: /goal replaces claude -p (persistent within task), skill accumulation,
 deep research replaces trending scan.
 """
 
-import json
 import os
 import platform as _platform
 import re
 import subprocess
-from scripts._subprocess_utils import run, Popen
-import sys
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+from scripts._subprocess_utils import run
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 STOP_FILE = PROJECT_ROOT / "company" / ".stop_evolve"
@@ -81,8 +80,10 @@ def run_goal(prompt: str, timeout: int = 600) -> str:
     except Exception as e:
         return f"[ERROR: {e}]"
     finally:
-        try: prompt_file.unlink()
-        except: pass
+        try:
+            prompt_file.unlink()
+        except OSError:
+            pass
 
 
 # ─── Phase 1: Deep Research ─────────────────────────────
@@ -274,7 +275,7 @@ def main():
             # 6. Verify + Commit
             from scripts.harness_engine import update_progress
             update_progress(task, "completed", 0,
-                           evaluator_result=f"goal_completed",
+                           evaluator_result="goal_completed",
                            skills_distilled=1 if skill_file else 0)
 
             log("COMMIT: Staging...")

@@ -15,9 +15,8 @@ Usage:
 import argparse
 import json
 import sys
-from datetime import datetime, date
+from datetime import date, datetime
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 from dotenv import load_dotenv
@@ -123,7 +122,7 @@ def _log_trade(entry: dict):
 # ─── Step 1: Data ────────────────────────────────────────
 
 
-def fetch_data(tickers: list, period: str = "1mo") -> Optional[pd.DataFrame]:
+def fetch_data(tickers: list, period: str = "1mo") -> pd.DataFrame | None:
     """Pull OHLCV data via yfinance. Returns DataFrame with ticker col."""
     print("📡 拉取市场数据...")
     try:
@@ -151,16 +150,16 @@ def fetch_data(tickers: list, period: str = "1mo") -> Optional[pd.DataFrame]:
 # ─── Step 2: Factors & Signals ───────────────────────────
 
 
-def compute_signals(data: pd.DataFrame) -> Optional[pd.DataFrame]:
+def compute_signals(data: pd.DataFrame) -> pd.DataFrame | None:
     """Run factor calculation → combine → generate signals."""
     print("🧮 计算因子...")
     try:
-        from quant_framework.strategies.qlib_factor_engine import compute_all_factors
         from quant_framework.strategies.factor_combiner import (
-            ic_weighted_combine,
             filter_factors_by_ic,
             generate_signals,
+            ic_weighted_combine,
         )
+        from quant_framework.strategies.qlib_factor_engine import compute_all_factors
 
         factor_df = compute_all_factors(data)
         if factor_df.empty:

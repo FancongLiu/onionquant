@@ -28,10 +28,11 @@
   8. 仓位: 波动率目标 2%, 最大 4 倍杠杆
 """
 
+import warnings
+
 import numpy as np
 import pandas as pd
 import yfinance as yf
-import warnings
 
 warnings.filterwarnings("ignore")
 

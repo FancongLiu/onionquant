@@ -1,4 +1,8 @@
-import yfinance as yf, sys, io
+import io
+import sys
+
+import yfinance as yf
+
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 msft = yf.Ticker('MSFT')

@@ -19,7 +19,7 @@ Usage:
 import re
 import threading
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import requests
@@ -254,7 +254,7 @@ class RedditScanner:
 
             created_utc = post_data.get("created_utc", 0)
             created_str = (
-                datetime.fromtimestamp(created_utc, tz=timezone.utc).isoformat()
+                datetime.fromtimestamp(created_utc, tz=UTC).isoformat()
                 if created_utc
                 else ""
             )
@@ -296,7 +296,7 @@ class RedditScanner:
 
         positive = sum(1 for p in posts if p.get("sentiment_label") == "positive")
         negative = sum(1 for p in posts if p.get("sentiment_label") == "negative")
-        neutral = sum(1 for p in posts if p.get("sentiment_label") == "neutral")
+        sum(1 for p in posts if p.get("sentiment_label") == "neutral")
 
         sub_counts = {}
         for p in posts:

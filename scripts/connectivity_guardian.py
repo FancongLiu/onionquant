@@ -10,8 +10,9 @@ import io
 import json
 import os
 import subprocess
-from scripts._subprocess_utils import run, Popen
 import sys
+
+from scripts._subprocess_utils import Popen, run
 
 # Fix Windows GBK encoding for emoji output
 if sys.platform == "win32":
@@ -19,8 +20,8 @@ if sys.platform == "win32":
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 import sys
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 
@@ -170,7 +171,7 @@ def check_cross_fs():
     test_file = PROJECT_ROOT / "company" / ".connectivity_test"
     try:
         test_file.write_text(datetime.now().isoformat())
-        content = test_file.read_text()
+        test_file.read_text()
         test_file.unlink()
         return True, "/mnt/e/ 读写正常"
     except Exception as e:
@@ -314,7 +315,7 @@ def run_all_checks():
 
 def generate_report(results):
     fails = [k for k, v in results.items() if v["status"] == "fail"]
-    oks = [k for k, v in results.items() if v["status"] == "ok"]
+    [k for k, v in results.items() if v["status"] == "ok"]
 
     lines = [
         f"# 🔗 连通守护报告 — {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} CST",

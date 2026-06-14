@@ -29,7 +29,7 @@ Usage:
 import json
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -341,7 +341,7 @@ class FullScanner:
         start = time.time()
         print(f"\n{'=' * 65}")
         print("  OnionQuant FULL SCAN ENGINE v3.0")
-        print(f"  Time: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
+        print(f"  Time: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}")
         print("  Sources: ApeWisdom(v2) + MarketHeat + Reddit + Finviz News")
         print("  Cost: FREE (no API keys, no registration)")
         print("  Data Scale: social(Reddit) + trading(millions of shares) + news")

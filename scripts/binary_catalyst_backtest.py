@@ -164,8 +164,8 @@ def backtest_binary_events(
     ret_values = [r["return"] for r in results]
     ret_series = pd.Series(ret_values)
 
-    wins = [r for r in results if r["return"] > 0]
-    losses = [r for r in results if r["return"] <= 0]
+    [r for r in results if r["return"] > 0]
+    [r for r in results if r["return"] <= 0]
 
     # By result type
     successes = [r for r in results if r["result"] == "success"]

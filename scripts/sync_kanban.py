@@ -8,11 +8,11 @@ Usage:
     python3 scripts/sync_kanban.py [--dry-run]
 """
 
-import subprocess
-from scripts._subprocess_utils import run, Popen
-import sys
 import re
+import sys
 from pathlib import Path
+
+from scripts._subprocess_utils import run
 
 TASK_TRACKER = Path(__file__).parent.parent / "TASK_TRACKER.md"
 BOARD = "onionquant"

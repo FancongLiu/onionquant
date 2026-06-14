@@ -13,8 +13,10 @@ import re
 import subprocess
 import sys
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+from scripts._subprocess_utils import Popen
 
 # Windows GBK terminal workaround
 if sys.platform == "win32":
@@ -125,7 +127,7 @@ def run_cloudflared():
     while True:
         print(f"  Starting cloudflared --url localhost:{LOCAL_PORT} ...")
         try:
-            proc = subprocess.Popen(
+            proc = Popen(
                 [CLOUDFLARED, "tunnel", "--url", f"http://localhost:{LOCAL_PORT}"],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.PIPE,
@@ -133,8 +135,7 @@ def run_cloudflared():
                 encoding="utf-8",
                 errors="replace",
             )
-            for line in proc.stderr:
-                yield line
+            yield from proc.stderr
             # If we get here, process exited
             rc = proc.wait()
             print(f"  cloudflared exited (code={rc}), restarting in 5s...")

@@ -7,7 +7,7 @@ Supports fallback to NetworkX when Neo4j is unavailable.
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import networkx as nx
 
@@ -76,7 +76,7 @@ class QuantGraphStore:
         from_id: str,
         to_id: str,
         rel_type: str,
-        properties: Optional[dict[str, Any]] = None,
+        properties: dict[str, Any] | None = None,
     ) -> None:
         props = properties or {}
         if self._connected:
@@ -95,7 +95,7 @@ class QuantGraphStore:
 
     def add_relationships_batch(
         self,
-        triples: list[tuple[str, str, str, Optional[dict[str, Any]]]],
+        triples: list[tuple[str, str, str, dict[str, Any] | None]],
     ) -> None:
         for from_id, to_id, rel_type, props in triples:
             self.add_relationship(from_id, to_id, rel_type, props)
@@ -153,7 +153,7 @@ class QuantGraphStore:
 
     # ── Internal ─────────────────────────────────────────────────
 
-    def _run(self, query: str, params: Optional[dict] = None):
+    def _run(self, query: str, params: dict | None = None):
         if not self._driver:
             raise RuntimeError("Neo4j not connected")
         with self._driver.session(database=self._database) as session:

@@ -4,7 +4,7 @@ import os
 ext_path = os.path.expanduser(
     r"~\.vscode\extensions\github.copilot-chat-0.48.1\package.json"
 )
-with open(ext_path, "r", encoding="utf-8") as f:
+with open(ext_path, encoding="utf-8") as f:
     d = json.load(f)
 
 props_list = d["contributes"]["configuration"]

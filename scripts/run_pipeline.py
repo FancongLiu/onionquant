@@ -394,6 +394,8 @@ def main():
             try:
                 from quant_framework.strategies.auto_tuner import (
                     auto_tune,
+                )
+                from quant_framework.strategies.auto_tuner import (
                     report_markdown as tune_report,
                 )
 

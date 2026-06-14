@@ -13,11 +13,10 @@ Usage:
 
 import argparse
 import warnings
-from typing import Dict, Tuple
 
+import empyrical as ep
 import numpy as np
 import pandas as pd
-import empyrical as ep
 
 warnings.filterwarnings("ignore")
 
@@ -28,7 +27,7 @@ def vectorized_backtest(
     capital: float = 100_000,
     commission: float = 0.001,
     ppy: int = 252,
-) -> Dict:
+) -> dict:
     """向量化回测: 信号 × 收益 = 策略收益。
 
     Args:
@@ -71,7 +70,7 @@ def signal_backtest(
     capital: float = 100_000,
     commission: float = 0.001,
     ppy: int = 252,
-) -> Dict:
+) -> dict:
     """单资产信号回测: 信号方向 × 收益率。
 
     Args:
@@ -97,7 +96,7 @@ def event_driven_backtest(
     capital: float = 100_000,
     commission: float = 0.001,
     **strategy_kwargs,
-) -> Dict:
+) -> dict:
     """事件驱动回测 (Backtrader Cerebro 引擎).
 
     Args:
@@ -165,7 +164,7 @@ def event_driven_backtest(
 # ─── Metrics (empyrical) ─────────────────────────────────────────
 def _compute_metrics(
     returns: pd.Series, equity: pd.Series, ppy: int, capital: float
-) -> Dict:
+) -> dict:
     """使用 empyrical 计算所有标准指标。"""
     r = returns.dropna()
     if len(r) < 2:
@@ -213,7 +212,7 @@ def _compute_metrics(
     }
 
 
-def compare_strategies(results: Dict[str, Dict]) -> pd.DataFrame:
+def compare_strategies(results: dict[str, dict]) -> pd.DataFrame:
     """比较多个策略的回测结果。
 
     Args:
@@ -245,7 +244,7 @@ def compare_strategies(results: Dict[str, Dict]) -> pd.DataFrame:
 
 
 # ─── Demo ─────────────────────────────────────────────────────────
-def _make_demo_data(n: int = 500, seed: int = 42) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def _make_demo_data(n: int = 500, seed: int = 42) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Generate demo prices + signals for testing."""
     np.random.seed(seed)
     dates = pd.date_range("2022-01-01", periods=n, freq="B")

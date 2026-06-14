@@ -1,4 +1,5 @@
 import pathlib
+
 p = pathlib.Path('company/chairman_dashboard.html')
 content = p.read_text('utf-8')
 

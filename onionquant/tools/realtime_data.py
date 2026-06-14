@@ -19,7 +19,7 @@ Usage:
 import json
 import sys
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import requests
@@ -46,7 +46,7 @@ AFTERHOURS_END = 20  # 8:00 PM ET
 
 def _et_now() -> datetime:
     """当前ET时间."""
-    return datetime.now(timezone.utc) + ET_OFFSET
+    return datetime.now(UTC) + ET_OFFSET
 
 
 def detect_market_session() -> dict:
@@ -64,7 +64,7 @@ def detect_market_session() -> dict:
 
     result = {
         "et_time": et.strftime("%Y-%m-%d %H:%M ET"),
-        "utc_time": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
+        "utc_time": datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC"),
         "weekday": et.strftime("%A"),
         "is_open": False,
         "session": "closed",
@@ -175,7 +175,7 @@ def finnhub_quote(ticker: str) -> dict | None:
         if data.get("c") is None:
             return {"error": "no data"}
         ts = data.get("t", 0)
-        ts_dt = datetime.fromtimestamp(ts, tz=timezone.utc) if ts else None
+        ts_dt = datetime.fromtimestamp(ts, tz=UTC) if ts else None
         return {
             "price": data["c"],
             "prev_close": data.get("pc"),
@@ -216,7 +216,7 @@ def yahoo_prepost(ticker: str) -> dict | None:
         change = (current - prev) if (current and prev) else None
         pct = (change / prev * 100) if (change is not None and prev) else None
         ts = meta.get("regularMarketTime")
-        ts_dt = datetime.fromtimestamp(ts, tz=timezone.utc) if ts else None
+        ts_dt = datetime.fromtimestamp(ts, tz=UTC) if ts else None
         return {
             "price": current,
             "prev_close": prev,
@@ -274,7 +274,7 @@ def alpha_vantage_quote(ticker: str) -> dict | None:
 
 def _classify_freshness(ts_dt: datetime) -> str:
     """分类数据新鲜度."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     age = now - ts_dt
     if age < timedelta(minutes=5):
         return "LIVE (<5min)"
@@ -293,7 +293,7 @@ def get_realtime_quote(ticker: str) -> dict:
     """
     result = {
         "ticker": ticker.upper(),
-        "fetched_at": datetime.now(timezone.utc).isoformat(),
+        "fetched_at": datetime.now(UTC).isoformat(),
         "market": detect_market_session(),
         "quotes": {},
     }

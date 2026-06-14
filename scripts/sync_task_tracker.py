@@ -15,7 +15,8 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+
+from scripts._subprocess_utils import run
 
 # ── Config ──────────────────────────────────────────────────────────────────
 PROJECT_ROOT = Path("/mnt/e/2026_AgentStudy/Python_code")
@@ -40,16 +41,16 @@ PRIORITY_MAP = {"P0": 1, "P1": 2, "P2": 3}
 def run_kanban(*args: str, check: bool = True) -> subprocess.CompletedProcess:
     """Run hermes kanban command."""
     cmd = ["hermes", "kanban"] + list(args)
-    return subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", check=check)
+    return run(cmd, capture_output=True, text=True, encoding="utf-8", check=check)
 
 
-def get_existing_tasks() -> Dict[str, dict]:
+def get_existing_tasks() -> dict[str, dict]:
     """Fetch all kanban tasks, return {task_id_prefix → task_dict}.
 
     Matches by task ID prefix (e.g., 'T945' from 'T945: Alpaca WebSocket...').
     """
     try:
-        result = subprocess.run(
+        result = run(
             ["hermes", "kanban", "ls", "--json"],
             capture_output=True,
             text=True,
@@ -71,7 +72,7 @@ def get_existing_tasks() -> Dict[str, dict]:
         return {}
 
 
-def parse_task_tracker(path: Path) -> List[dict]:
+def parse_task_tracker(path: Path) -> list[dict]:
     """Parse TASK_TRACKER.md — only extract tasks from active Sprint sections.
 
     Active sprints are marked with 🟢 in the section header. Tasks within
@@ -188,15 +189,15 @@ def parse_task_tracker(path: Path) -> List[dict]:
 
 
 def sync_tasks(
-    tasks: List[dict],
-    existing: Dict[str, dict],
+    tasks: list[dict],
+    existing: dict[str, dict],
     dry_run: bool = False,
-) -> Tuple[int, int, int]:
+) -> tuple[int, int, int]:
     """Sync tasks to Kanban. Returns (created, updated, skipped)."""
     created = updated = skipped = 0
 
     for task in tasks:
-        title = task["title"]
+        task["title"]
         task_key = task["id"]
 
         if task_key in existing:
@@ -227,7 +228,7 @@ def sync_tasks(
             # Create new task
             if not dry_run:
                 try:
-                    result = subprocess.run(
+                    result = run(
                         [
                             "hermes",
                             "kanban",

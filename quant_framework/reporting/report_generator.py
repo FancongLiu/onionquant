@@ -4,12 +4,12 @@
 Integrates all quant_framework modules to produce comprehensive markdown reports.
 Uses existing module report functions where available."""
 
-import numpy as np
-import pandas as pd
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple
 from datetime import datetime, timedelta
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
 
 
 @dataclass
@@ -30,12 +30,12 @@ class ReportConfig:
 
 
 def generate_daily_briefing(
-    signals: Optional[pd.DataFrame] = None,
-    positions: Optional[pd.DataFrame] = None,
-    pnl: Optional[pd.Series] = None,
-    factor_ic: Optional[pd.DataFrame] = None,
-    market_data: Optional[pd.DataFrame] = None,
-    config: Optional[ReportConfig] = None,
+    signals: pd.DataFrame | None = None,
+    positions: pd.DataFrame | None = None,
+    pnl: pd.Series | None = None,
+    factor_ic: pd.DataFrame | None = None,
+    market_data: pd.DataFrame | None = None,
+    config: ReportConfig | None = None,
 ) -> str:
     """Generate daily briefing report.
 
@@ -148,13 +148,13 @@ def generate_daily_briefing(
 
 
 def generate_weekly_report(
-    equity_curve: Optional[pd.Series] = None,
-    returns: Optional[pd.Series] = None,
-    trades: Optional[pd.DataFrame] = None,
-    factor_performance: Optional[Dict] = None,
-    risk_summary: Optional[Dict] = None,
-    rebalance_events: Optional[pd.DataFrame] = None,
-    config: Optional[ReportConfig] = None,
+    equity_curve: pd.Series | None = None,
+    returns: pd.Series | None = None,
+    trades: pd.DataFrame | None = None,
+    factor_performance: dict | None = None,
+    risk_summary: dict | None = None,
+    rebalance_events: pd.DataFrame | None = None,
+    config: ReportConfig | None = None,
 ) -> str:
     """Generate weekly strategy performance report."""
     if config is None:
@@ -246,14 +246,14 @@ def generate_weekly_report(
 
 
 def generate_monthly_report(
-    returns: Optional[pd.Series] = None,
-    equity_curve: Optional[pd.Series] = None,
-    attribution: Optional[Dict] = None,
-    stress_result: Optional[Dict] = None,
-    factor_analysis: Optional[Dict] = None,
-    covariance_comparison: Optional[pd.DataFrame] = None,
-    tca_summary: Optional[Dict] = None,
-    config: Optional[ReportConfig] = None,
+    returns: pd.Series | None = None,
+    equity_curve: pd.Series | None = None,
+    attribution: dict | None = None,
+    stress_result: dict | None = None,
+    factor_analysis: dict | None = None,
+    covariance_comparison: pd.DataFrame | None = None,
+    tca_summary: dict | None = None,
+    config: ReportConfig | None = None,
 ) -> str:
     """Generate comprehensive monthly strategy review."""
     if config is None:
@@ -393,7 +393,7 @@ def generate_monthly_report(
 def generate_full_report(
     report_type: str,
     **kwargs,
-) -> Tuple[str, str]:
+) -> tuple[str, str]:
     """Generate and save a report to disk.
 
     Parameters
@@ -427,7 +427,7 @@ def generate_full_report(
 # ── Demo ────────────────────────────────────────────────────
 
 
-def _make_demo_data() -> Dict:
+def _make_demo_data() -> dict:
     """Create demo data covering all report inputs."""
     rng = np.random.default_rng(42)
     n = 252

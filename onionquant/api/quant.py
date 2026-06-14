@@ -4,12 +4,13 @@ Quantitative analysis routes — factors, signals, backtest, optimization, strat
 
 import random
 from datetime import datetime
+
 from fastapi import APIRouter
 
 from .shared import (
     PROJECT_ROOT,
-    QUANT_TICKERS,
     QUANT_FACTOR_NAMES,
+    QUANT_TICKERS,
 )
 
 router = APIRouter(tags=["quant"])
@@ -84,13 +85,13 @@ async def quant_signals():
 
             df = pd.concat([pd.read_parquet(f) for f in price_files[:2]])
             if "ticker" in df.columns and len(df) > 100:
-                from quant_framework.strategies.qlib_factor_engine import (
-                    compute_all_factors,
-                )
                 from quant_framework.strategies.factor_combiner import (
-                    ic_weighted_combine,
                     filter_factors_by_ic,
                     generate_signals,
+                    ic_weighted_combine,
+                )
+                from quant_framework.strategies.qlib_factor_engine import (
+                    compute_all_factors,
                 )
 
                 result = compute_all_factors(df)
@@ -173,10 +174,10 @@ async def quant_ic_trend():
 
             df = pd.concat([pd.read_parquet(f) for f in price_files[:2]])
             if "ticker" in df.columns and len(df) > 300:
+                from quant_framework.strategies.factor_combiner import rolling_ic_matrix
                 from quant_framework.strategies.qlib_factor_engine import (
                     compute_all_factors as compute_all,
                 )
-                from quant_framework.strategies.factor_combiner import rolling_ic_matrix
 
                 result = compute_all(df, neutralize=False)
                 exclude = {
@@ -230,10 +231,10 @@ async def quant_ic_trend():
 async def quant_risk():
     try:
         from quant_framework.risk.risk_metrics import (
+            ann_vol,
+            max_drawdown,
             sharpe_ratio,
             sortino_ratio,
-            max_drawdown,
-            ann_vol,
             var_historical,
         )
 
@@ -369,11 +370,11 @@ async def portfolio_optimization(method: str = "mv"):
                 if not prices.empty and len(prices.columns) >= 3:
                     returns = prices.pct_change().dropna()
                     from quant_framework.risk.portfolio_optimizer import (
+                        bl_optimize,
+                        hierarchical_risk_parity,
+                        kelly_criterion,
                         mean_variance_optimize,
                         risk_parity,
-                        hierarchical_risk_parity,
-                        bl_optimize,
-                        kelly_criterion,
                     )
 
                     method_map = {
@@ -430,8 +431,8 @@ async def backtest_equity_curve():
 
     if price_files:
         try:
-            import pandas as pd
             import numpy as np
+            import pandas as pd
 
             df = pd.concat([pd.read_parquet(f) for f in price_files[:2]])
             if "close" in df.columns and "ticker" in df.columns and len(df) > 50:
@@ -482,11 +483,12 @@ async def strategy_comparison():
 
     if price_files:
         try:
-            import pandas as pd
             import numpy as np
+            import pandas as pd
+
             from quant_framework.backtest.harness import (
-                vectorized_backtest,
                 compare_strategies,
+                vectorized_backtest,
             )
 
             df = pd.concat([pd.read_parquet(f) for f in price_files[:2]])
@@ -654,11 +656,11 @@ async def quant_risk_enhanced():
                 returns = df["ret"].dropna()
 
                 if len(returns) > 200:
-                    from quant_framework.risk.stress_testing import (
-                        var_backtest,
-                        portfolio_stress_test,
-                    )
                     from quant_framework.risk.risk_metrics import var_historical
+                    from quant_framework.risk.stress_testing import (
+                        portfolio_stress_test,
+                        var_backtest,
+                    )
 
                     var95 = var_historical(returns.values, 0.95)
                     var_series = pd.Series(var95, index=returns.index)
@@ -702,8 +704,9 @@ async def quant_risk_enhanced():
 @router.get("/api/quant/market")
 async def quant_market():
     try:
-        from quant_framework.data.fetchers.yfinance_fetcher import _fetch_via_yfinance
         from datetime import date, timedelta
+
+        from quant_framework.data.fetchers.yfinance_fetcher import _fetch_via_yfinance
 
         stocks = []
         tickers = QUANT_TICKERS[:10]
@@ -765,8 +768,9 @@ async def param_sweep():
 
     if price_files:
         try:
-            import pandas as pd
             import numpy as np
+            import pandas as pd
+
             from quant_framework.backtest.harness import vectorized_backtest
 
             df = pd.concat([pd.read_parquet(f) for f in price_files[:2]])
@@ -854,11 +858,11 @@ async def param_sweep():
 @router.get("/api/factor/decay")
 async def factor_decay_alerts():
     try:
+        from quant_framework.strategies.factor_combiner import _cs_ic_series
         from quant_framework.strategies.factor_decay import (
             check_decay_alerts,
             report_markdown,
         )
-        from quant_framework.strategies.factor_combiner import _cs_ic_series
         from scripts.run_pipeline import step1_fetch, step2_factors
 
         tickers = QUANT_TICKERS[:15]
@@ -907,16 +911,17 @@ async def strategy_sensitivity():
     try:
         import numpy as np
         import pandas as pd
-        from quant_framework.strategies.sensitivity import (
-            sensitivity_matrix,
-            report_markdown,
-        )
+
+        from quant_framework.backtest.harness import vectorized_backtest
         from quant_framework.strategies.factor_combiner import (
-            ic_weighted_combine,
             filter_factors_by_ic,
             generate_signals,
+            ic_weighted_combine,
         )
-        from quant_framework.backtest.harness import vectorized_backtest
+        from quant_framework.strategies.sensitivity import (
+            report_markdown,
+            sensitivity_matrix,
+        )
 
         # Use real pipeline data for strategy sensitivity
         data_dir = PROJECT_ROOT / "quant_framework" / "data" / "raw"
@@ -987,8 +992,10 @@ async def strategy_sensitivity():
 
         # Fallback: toy strategy
         from quant_framework.strategies.sensitivity import (
-            sensitivity_matrix as sm,
             report_markdown as rm,
+        )
+        from quant_framework.strategies.sensitivity import (
+            sensitivity_matrix as sm,
         )
 
         def toy(**kw):
@@ -1156,13 +1163,14 @@ async def stock_recommendations():
     if price_files:
         try:
             import pandas as pd
-            from quant_framework.strategies.qlib_factor_engine import (
-                compute_all_factors,
-            )
+
             from quant_framework.strategies.factor_combiner import (
-                ic_weighted_combine,
                 filter_factors_by_ic,
                 generate_signals,
+                ic_weighted_combine,
+            )
+            from quant_framework.strategies.qlib_factor_engine import (
+                compute_all_factors,
             )
 
             df = pd.concat([pd.read_parquet(f) for f in price_files[:2]])

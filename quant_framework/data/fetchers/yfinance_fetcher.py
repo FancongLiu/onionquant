@@ -4,7 +4,6 @@ import argparse
 import logging
 import time
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 
@@ -19,8 +18,8 @@ MAX_RETRIES, RETRY_DELAY = 3, 5
 
 
 def _fetch_via_openbb(
-    ticker: str, start: str, end: Optional[str]
-) -> Optional[pd.DataFrame]:
+    ticker: str, start: str, end: str | None
+) -> pd.DataFrame | None:
     """Fetch via OpenBB Platform SDK, trying multiple providers in order."""
     try:
         from openbb import obb
@@ -60,8 +59,8 @@ def _fetch_via_openbb(
 
 
 def _fetch_via_yfinance(
-    ticker: str, start: str, end: Optional[str]
-) -> Optional[pd.DataFrame]:
+    ticker: str, start: str, end: str | None
+) -> pd.DataFrame | None:
     """Fallback: yfinance (legacy)."""
     try:
         import yfinance as yf
@@ -100,8 +99,8 @@ def _fetch_via_yfinance(
 
 
 def fetch_single(
-    ticker: str, start: str, end: Optional[str], source: str = "auto"
-) -> Optional[pd.DataFrame]:
+    ticker: str, start: str, end: str | None, source: str = "auto"
+) -> pd.DataFrame | None:
     """Dispatch single-ticker fetch by source strategy."""
     if source == "yfinance":
         return _fetch_via_yfinance(ticker, start, end)
@@ -113,7 +112,7 @@ def fetch_single(
 
 
 def fetch_batch(
-    tickers, start: str, end: Optional[str], source: str = "auto"
+    tickers, start: str, end: str | None, source: str = "auto"
 ) -> pd.DataFrame:
     """Fetch multiple tickers and concatenate."""
     frames = [fetch_single(t.strip(), start, end, source) for t in tickers if t.strip()]

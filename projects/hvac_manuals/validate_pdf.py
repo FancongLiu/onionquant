@@ -2,14 +2,14 @@
 PDF Validator — extracts specs from downloaded PDFs and matches against Excel rows.
 """
 
-import sys
 import io
 import re
-from pathlib import Path
+import sys
 from collections import defaultdict
+from pathlib import Path
 
-import pdfplumber
 import openpyxl
+import pdfplumber
 
 PDF_DIR = Path(__file__).parent / "pdf_downloads"
 EXCEL_PATH = Path(r"E:\HVAC_PDF_search\Unitary_pdf_manual_search_0519_lite.xlsx")

@@ -10,7 +10,6 @@ Handles the full inbox lifecycle:
   5. Message moved to processed/
 """
 import json
-import os
 import re
 from datetime import datetime
 from pathlib import Path
@@ -300,7 +299,8 @@ def get_token_usage_by_message(hours: int = 24) -> dict:
     If hours=0, returns all records.
     """
     import json as _json
-    from datetime import datetime as _dt, timedelta as _td
+    from datetime import datetime as _dt
+    from datetime import timedelta as _td
     token_log = globals().get("_TOKEN_LOG")
     if not token_log or not token_log.exists():
         return {}
@@ -359,12 +359,15 @@ def _smart_add_to_queue(message_id: str, text: str, preview: str):
     }
     queue = {"tasks": []}
     if tqf.exists():
-        try: queue = json.loads(tqf.read_text(encoding="utf-8"))
-        except: pass
+        try:
+            queue = json.loads(tqf.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            pass
     best_match, best_sim = None, 0.0
     for i, t in enumerate(queue.get("tasks", [])):
         sim = _similarity(new_task, t)
-        if sim > best_sim: best_sim, best_match = sim, i
+        if sim > best_sim:
+            best_sim, best_match = sim, i
     if best_match is not None and best_sim > 0.25:
         existing = queue["tasks"][best_match]
         existing["full_text"] = (existing.get("full_text", "") + "\n\n[更新] " + text[:500])[:2000]
@@ -453,8 +456,10 @@ def _call_claude_code(message: str, message_id: str = "") -> str | None:
             ["wsl", "-e", "bash", "-c", cmd], cwd=str(pr),
             capture_output=True, encoding="utf-8", errors="replace", timeout=180)
         reply = (result.stdout or "").strip()
-        try: prompt_file.unlink()
-        except: pass
+        try:
+            prompt_file.unlink()
+        except OSError:
+            pass
         if not reply or len(reply) < 20:
             return _call_deepseek(message, message_id)
         # Estimate token usage (Claude Code via subprocess doesn't return usage)

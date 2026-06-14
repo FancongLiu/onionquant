@@ -1,13 +1,14 @@
 """Update Excel with score labels, color coding, legend sheet, and per-person stats."""
 
 import json
-import openpyxl
-from openpyxl.styles import PatternFill, Font
-from openpyxl.utils import get_column_letter
 from collections import defaultdict
 
+import openpyxl
+from openpyxl.styles import Font, PatternFill
+from openpyxl.utils import get_column_letter
+
 with open(
-    "e:/2026_AgentStudy/Python_code/hvac_manuals/manifest.json", "r", encoding="utf-8"
+    "e:/2026_AgentStudy/Python_code/hvac_manuals/manifest.json", encoding="utf-8"
 ) as f:
     manifest = json.load(f)
 

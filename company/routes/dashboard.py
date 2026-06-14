@@ -1,21 +1,21 @@
 """Dashboard & meta routes — data health, logs, snapshot, wechat."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from .shared import (
-    PROJECT_ROOT,
     INBOX_DIR,
     OUTBOX_DIR,
-    wechat_status,
+    PROJECT_ROOT,
+    WECHAT_AGENT_ID,
     WECHAT_CONFIGURED,
     WECHAT_CORP_ID,
     WECHAT_SECRET,
-    WECHAT_AGENT_ID,
     notify_all,
+    wechat_status,
 )
 
 router = APIRouter(tags=["dashboard"])
@@ -48,8 +48,8 @@ async def api_data_health():
     if parquet_files:
         latest = parquet_files[-1]
         stat = latest.stat()
-        fetch_time = datetime.fromtimestamp(stat.st_mtime, tz=timezone.utc)
-        minutes_ago = (datetime.now(timezone.utc) - fetch_time).total_seconds() / 60
+        fetch_time = datetime.fromtimestamp(stat.st_mtime, tz=UTC)
+        minutes_ago = (datetime.now(UTC) - fetch_time).total_seconds() / 60
 
         health["last_fetch"] = fetch_time.isoformat()
         health["staleness_minutes"] = round(minutes_ago, 1)
@@ -118,10 +118,10 @@ async def dashboard_snapshot():
                 returns = df["ret"].dropna()
                 if len(returns) > 200:
                     from quant_framework.risk.risk_metrics import (
+                        ann_vol,
+                        max_drawdown,
                         sharpe_ratio,
                         sortino_ratio,
-                        max_drawdown,
-                        ann_vol,
                         var_historical,
                     )
 
@@ -252,7 +252,7 @@ def list_research_reports(limit: int = 5):
             {
                 "name": f.name,
                 "updated": datetime.fromtimestamp(
-                    f.stat().st_mtime, tz=timezone.utc
+                    f.stat().st_mtime, tz=UTC
                 ).isoformat(),
                 "size": f.stat().st_size,
             }

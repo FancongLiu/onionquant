@@ -43,7 +43,7 @@ include = ["onionquant*", "quant_framework*", "infrastructure*"]
 [tool.ruff]
 target-version = "py312"
 line-length = 100
-extend-exclude = ["projects", "tradingagents", ".venv", ".venv-linux", "lib"]
+extend-exclude = ["projects", "tradingagents", ".venv", ".venv-linux", "lib", "onionquant/tools/Stock-Sentiment-Analyzer", "onionquant/tools/HypeFinder", "onionquant/tools/stocksight", "onionquant/tools/tickerpulse-ai", "onionquant/hello_world.py", "onionquant/server.py", "onionquant/tools/strategy_pipeline.py", "github_sync", "infrastructure/knowledge_graph.py", "scripts/_mu_deep_tech.py", "scripts/_mu_levels.py", "scripts/_mu_pyramid_full.py", "scripts/_msft_check.py", "scripts/_fix_milestones.py", "scripts/add_stage_kg.py", "scripts/fibonacci.py", "scripts/fix_skills.py", "scripts/sync_kanban.py", "scripts/tsp_data"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]

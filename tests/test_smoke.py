@@ -248,8 +248,8 @@ def test_data_utils_normalize():
 
 def test_sentiment_utils_score():
     from quant_framework.data.fetchers.sentiment_utils import (
-        score_text,
         aggregate_sentiments,
+        score_text,
     )
 
     r = score_text("Revenue grew 30% year over year with expanding margins.")
@@ -279,8 +279,8 @@ def test_news_sentiment_demo():
 
 def test_reddit_sentiment_demo():
     from quant_framework.data.fetchers.reddit_sentiment import (
-        fetch_hot_posts,
         build_daily_index,
+        fetch_hot_posts,
     )
 
     df = fetch_hot_posts("wallstreetbets", limit=20)
@@ -320,16 +320,14 @@ def test_qlib_factor_engine():
 
 
 def test_factor_combiner():
-    from quant_framework.strategies.qlib_factor_engine import (
-        compute_all_factors,
-        neutralize_and_standardize,
-    )
-    from quant_framework.strategies.qlib_factor_engine import (
-        FACTOR_REGISTRY,
-    )
     from quant_framework.strategies.factor_combiner import (
         equal_weighted_combine,
         generate_signals,
+    )
+    from quant_framework.strategies.qlib_factor_engine import (
+        FACTOR_REGISTRY,
+        compute_all_factors,
+        neutralize_and_standardize,
     )
 
     df = _make_multi_ohlcv(n_tickers=3, n=200, seed=2)
@@ -356,15 +354,15 @@ def test_import_alpha_combiner():
 
 def test_alpha_combiner():
     from quant_framework.strategies.alpha_combiner import (
-        ic_weighted,
-        ic_ir_weighted,
-        bayesian_shrinkage_weights,
-        combine_alphas,
-        evaluate_combination,
-        estimate_ic_weights,
-        report_markdown,
         CombineConfig,
         _make_demo_data,
+        bayesian_shrinkage_weights,
+        combine_alphas,
+        estimate_ic_weights,
+        evaluate_combination,
+        ic_ir_weighted,
+        ic_weighted,
+        report_markdown,
     )
 
     df, fwd_ret, regime_labels = _make_demo_data(252, 5, 10, seed=7)
@@ -413,11 +411,11 @@ def test_alpha_combiner():
 
 def test_canslim_screener():
     from quant_framework.strategies.canslim_screener import (
+        _make_demo_data,
+        level1_quantitative,
         load_config,
         run_screener,
-        level1_quantitative,
     )
-    from quant_framework.strategies.canslim_screener import _make_demo_data
 
     config_path = (
         PROJECT_ROOT / "quant_framework" / "strategies" / "canslim_config.yaml"
@@ -439,10 +437,10 @@ def test_canslim_screener():
 
 def test_stat_arb():
     from quant_framework.strategies.stat_arb import (
-        find_cointegrated_pairs,
-        compute_spread,
-        generate_signals,
         _make_demo_prices,
+        compute_spread,
+        find_cointegrated_pairs,
+        generate_signals,
     )
 
     prices = _make_demo_prices(n=250, seed=7)
@@ -459,10 +457,10 @@ def test_stat_arb():
 
 def test_regime_detector():
     from quant_framework.strategies.regime_detector import (
-        detect_regimes,
-        classify_current,
-        rolling_regime_simple,
         _make_demo_returns,
+        classify_current,
+        detect_regimes,
+        rolling_regime_simple,
     )
 
     returns = _make_demo_returns(n=300, seed=3)
@@ -481,11 +479,11 @@ def test_regime_detector():
 # ── risk modules ─────────────────────────────────────────
 def test_risk_metrics_summary():
     from quant_framework.risk.risk_metrics import (
-        var_historical,
         cvar,
         max_drawdown,
-        sharpe_ratio,
         risk_metrics_summary,
+        sharpe_ratio,
+        var_historical,
     )
 
     rng = np.random.default_rng(99)
@@ -508,9 +506,9 @@ def test_risk_metrics_summary():
 
 def test_portfolio_optimizer():
     from quant_framework.risk.portfolio_optimizer import (
+        kelly_criterion,
         mean_variance_optimize,
         risk_parity,
-        kelly_criterion,
     )
 
     rng = np.random.default_rng(42)
@@ -529,10 +527,10 @@ def test_portfolio_optimizer():
 
 def test_stress_testing():
     from quant_framework.risk.stress_testing import (
-        portfolio_stress_test,
-        var_backtest,
-        report_markdown,
         _make_demo_data,
+        portfolio_stress_test,
+        report_markdown,
+        var_backtest,
     )
 
     returns = _make_demo_data(252, 4, seed=3)
@@ -563,8 +561,8 @@ def test_stress_testing():
 def test_drawdown_control():
     from quant_framework.risk.drawdown_control import (
         cppi,
-        volatility_targeting,
         fixed_stop_loss,
+        volatility_targeting,
     )
 
     rng = np.random.default_rng(42)
@@ -592,17 +590,17 @@ def test_import_covariance():
 
 def test_covariance_estimation():
     from quant_framework.risk.covariance import (
-        sample_cov,
-        ledoit_wolf,
-        oas,
+        _make_demo_data,
+        compare_estimators,
+        cov_to_corr,
+        estimate_covariance,
         exponentially_weighted,
         factor_model_cov,
-        estimate_covariance,
-        cov_to_corr,
-        compare_estimators,
+        ledoit_wolf,
         nearest_pd,
+        oas,
         rolling_covariance,
-        _make_demo_data,
+        sample_cov,
     )
 
     returns = _make_demo_data(252, 6, seed=7)
@@ -661,9 +659,9 @@ def test_covariance_estimation():
 # ── backtest module ──────────────────────────────────────
 def test_backtest_harness():
     from quant_framework.backtest.harness import (
-        vectorized_backtest,
-        signal_backtest,
         _make_demo_data,
+        signal_backtest,
+        vectorized_backtest,
     )
 
     prices, signals = _make_demo_data(n=250, seed=1)
@@ -738,7 +736,7 @@ def test_import_optimizer():
 
 
 def test_optimizer_simple():
-    from quant_framework.strategies.optimizer import optimize, ParamSpec
+    from quant_framework.strategies.optimizer import ParamSpec, optimize
 
     def obj(params):
         x = params.get("x", 0)
@@ -776,9 +774,9 @@ def test_import_factor_analysis():
 
 def test_factor_analysis():
     from quant_framework.strategies.factor_analysis import (
+        _make_demo_data,
         full_analysis,
         report_markdown,
-        _make_demo_data,
     )
 
     factor_df, returns = _make_demo_data(252, 3, seed=3)
@@ -810,12 +808,12 @@ def test_import_visualization():
 
 def test_visualization_charts():
     from quant_framework.backtest.visualization import (
-        equity_curve,
-        drawdown_plot,
-        monthly_returns_heatmap,
-        annual_returns,
-        full_report,
         _make_demo_equity,
+        annual_returns,
+        drawdown_plot,
+        equity_curve,
+        full_report,
+        monthly_returns_heatmap,
     )
 
     equity, returns = _make_demo_equity(n=120, seed=7)
@@ -834,8 +832,8 @@ def test_visualization_charts():
     fig5 = annual_returns(returns)
     assert fig5 is not None
 
-    import tempfile
     import os
+    import tempfile
 
     with tempfile.TemporaryDirectory() as tmp:
         paths = full_report(equity, returns, output_dir=tmp, prefix="test")
@@ -861,9 +859,9 @@ def test_import_order_simulator():
 
 def test_order_simulator():
     from quant_framework.execution.order_simulator import (
-        simulate_orders,
-        execution_quality_report,
         _make_demo_data,
+        execution_quality_report,
+        simulate_orders,
     )
 
     prices, signals = _make_demo_data(n_dates=100, n_tickers=3, seed=99)
@@ -958,14 +956,14 @@ def test_import_rebalancer():
 
 def test_rebalancer():
     from quant_framework.execution.rebalancer import (
-        generate_calendar_dates,
-        check_drift,
-        should_rebalance,
-        compute_trades,
-        run_rebalance,
         RebalanceConfig,
-        estimate_rebalance_cost,
         _make_demo_data,
+        check_drift,
+        compute_trades,
+        estimate_rebalance_cost,
+        generate_calendar_dates,
+        run_rebalance,
+        should_rebalance,
     )
 
     dates, weights, target, prices, port_val = _make_demo_data(100, 5, seed=7)
@@ -1033,15 +1031,16 @@ def test_import_tca():
 
 
 def test_tca():
+    import numpy as np
+
     from quant_framework.execution.tca import (
+        _make_demo_data,
+        almgrin_chriss_impact,
+        analyze_execution,
         estimate_pre_trade,
         implementation_shortfall,
         vwap_slippage,
-        almgrin_chriss_impact,
-        analyze_execution,
-        _make_demo_data,
     )
-    import numpy as np
 
     # Pre-trade
     pre = estimate_pre_trade(500, 150.0, 10_000_000)
@@ -1104,15 +1103,16 @@ def test_import_report_generator():
 
 
 def test_report_generator():
-    from quant_framework.reporting.report_generator import (
-        generate_daily_briefing,
-        generate_weekly_report,
-        generate_monthly_report,
-        generate_full_report,
-        _make_demo_data,
-    )
-    import tempfile
     import os
+    import tempfile
+
+    from quant_framework.reporting.report_generator import (
+        _make_demo_data,
+        generate_daily_briefing,
+        generate_full_report,
+        generate_monthly_report,
+        generate_weekly_report,
+    )
 
     data = _make_demo_data()
 
@@ -1175,12 +1175,12 @@ def test_import_performance_attribution():
 
 def test_performance_attribution():
     from quant_framework.risk.performance_attribution import (
-        factor_regression,
-        rolling_attribution,
+        _make_demo_data,
         brinson_attribution,
         contribution_summary,
+        factor_regression,
         report_markdown,
-        _make_demo_data,
+        rolling_attribution,
     )
 
     port_ret, factor_ret = _make_demo_data(504, 4, seed=7)
@@ -1253,10 +1253,10 @@ def test_import_ml_predictor():
 def test_ml_predictor():
     from quant_framework.strategies.ml_predictor import (
         PredictorConfig,
-        predict_returns,
-        evaluate_prediction,
-        report_markdown,
         _make_demo_data,
+        evaluate_prediction,
+        predict_returns,
+        report_markdown,
         time_series_split,
     )
 
@@ -1314,14 +1314,14 @@ def test_import_backtest_analytics():
 
 def test_backtest_analytics():
     from quant_framework.backtest.analytics import (
-        analyze_streaks,
+        analytics_report_markdown,
         analyze_drawdown_duration,
-        monthly_returns_table,
+        analyze_streaks,
         annual_returns_table,
+        full_analytics,
+        monthly_returns_table,
         profit_loss_ratio,
         rolling_metrics_df,
-        full_analytics,
-        analytics_report_markdown,
     )
 
     rng = np.random.default_rng(42)
@@ -1396,12 +1396,12 @@ def test_import_industry_attribution():
 
 def test_industry_attribution():
     from quant_framework.risk.industry_attribution import (
-        check_industry_exposure,
-        barra_risk_attribution,
-        risk_budget_decomposition,
-        analyze_risk_attribution,
-        report_markdown,
         _make_demo_data,
+        analyze_risk_attribution,
+        barra_risk_attribution,
+        check_industry_exposure,
+        report_markdown,
+        risk_budget_decomposition,
     )
 
     rets, factor_ret, weights, ind_map = _make_demo_data(252, 10, 4, seed=7)
@@ -1460,14 +1460,14 @@ def test_import_data_quality():
 
 def test_data_quality():
     from quant_framework.data.data_quality import (
-        check_nan_ratio,
+        _make_demo_data,
+        check_completeness,
         check_freshness,
         check_lookahead_bias,
+        check_nan_ratio,
         check_outliers,
-        check_completeness,
-        run_quality_checks,
         quality_report_markdown,
-        _make_demo_data,
+        run_quality_checks,
     )
 
     df, factor_cols = _make_demo_data(252, 8, seed=7)
@@ -1526,6 +1526,7 @@ def test_import_memory_store():
 def test_memory_store():
     import tempfile
     from pathlib import Path
+
     from infrastructure.memory_store import MemoryStore
 
     path = Path(tempfile.gettempdir()) / "test_smoke_memory.jsonl"
@@ -1577,6 +1578,7 @@ def test_import_manifest_schema():
 
 def test_agent_manifests():
     from pathlib import Path
+
     from onionquant.agents.manifest_schema import ManifestRegistry
 
     manifests_dir = Path("onionquant/agents/manifests")
@@ -1611,6 +1613,7 @@ def test_import_api_proxy():
 def test_api_proxy():
     import tempfile
     from pathlib import Path
+
     from infrastructure.api_proxy import APIProxy, RateConfig
 
     audit_file = Path(tempfile.gettempdir()) / "test_api_audit.jsonl"
@@ -1664,6 +1667,7 @@ def test_import_seed_context():
 def test_seed_context():
     import numpy as np
     import pandas as pd
+
     from quant_framework.orchestration.seed_context import SeedContext
 
     ctx = SeedContext()
@@ -1698,8 +1702,8 @@ def test_seed_context():
     assert evidence.key == "prices"
 
     # Audit save
-    from pathlib import Path
     import tempfile
+    from pathlib import Path
 
     audit_path = Path(tempfile.gettempdir()) / "test_seed_audit.json"
     ctx.save_audit(audit_path)
@@ -1715,7 +1719,7 @@ def test_import_model_tier():
 
 
 def test_model_tier():
-    from infrastructure.model_tier import TierRouter, Tier
+    from infrastructure.model_tier import Tier, TierRouter
 
     router = TierRouter()
 
@@ -1753,10 +1757,11 @@ def test_model_tier():
 
 def test_black_litterman_rp():
     import numpy as np
+
     from quant_framework.risk.portfolio_optimizer import (
-        black_litterman_rp,
-        black_litterman_bayesian,
         bl_optimize,
+        black_litterman_bayesian,
+        black_litterman_rp,
     )
 
     rng = np.random.default_rng(42)
@@ -1791,9 +1796,9 @@ def test_black_litterman_rp():
 def test_factor_decay():
     """T870: Factor decay monitor — IC trend + crowding + alerts."""
     from quant_framework.strategies.factor_decay import (
-        ic_trend_test,
-        detect_crowding,
         check_decay_alerts,
+        detect_crowding,
+        ic_trend_test,
     )
 
     rng = np.random.default_rng(42)
@@ -1911,8 +1916,8 @@ def test_import_auto_tuner():
 def test_import_sensitivity():
     """T934b: Verify sensitivity module imports cleanly."""
     from quant_framework.strategies.sensitivity import (
-        sensitivity_matrix,
         report_markdown,
+        sensitivity_matrix,
     )
 
     assert sensitivity_matrix is not None
@@ -1922,6 +1927,7 @@ def test_import_sensitivity():
 def test_sensitivity_basic():
     """T934c: Verify sensitivity_matrix runs on synthetic data."""
     import pandas as pd
+
     from quant_framework.strategies.sensitivity import sensitivity_matrix
 
     def _dummy_obj(**params):

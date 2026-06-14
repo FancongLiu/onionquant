@@ -4,16 +4,15 @@
 Uses matplotlib (object-oriented API). All charts take pd.Series/DataFrame inputs
 from the backtest harness or execution simulator."""
 
+import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib
 
 matplotlib.use("Agg")  # non-interactive backend
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
-from pathlib import Path
-from typing import Optional, Dict, Tuple
-
 
 # ── Style defaults ───────────────────────────────────────
 plt.rcParams.update(
@@ -45,9 +44,9 @@ COLORS = {
 
 def equity_curve(
     equity: pd.Series,
-    benchmark: Optional[pd.Series] = None,
+    benchmark: pd.Series | None = None,
     title: str = "Equity Curve",
-    figsize: Tuple[int, int] = (14, 6),
+    figsize: tuple[int, int] = (14, 6),
 ) -> plt.Figure:
     """Plot equity curve with optional benchmark overlay."""
     fig, ax = plt.subplots(figsize=figsize)
@@ -99,7 +98,7 @@ def equity_curve(
 
 
 def drawdown_plot(
-    equity: pd.Series, top_n: int = 5, figsize: Tuple[int, int] = (14, 6)
+    equity: pd.Series, top_n: int = 5, figsize: tuple[int, int] = (14, 6)
 ) -> plt.Figure:
     """Underwater plot showing drawdowns over time."""
     peak = equity.expanding().max()
@@ -133,7 +132,7 @@ def drawdown_plot(
 
 
 def monthly_returns_heatmap(
-    returns: pd.Series, figsize: Tuple[int, int] = (12, 8)
+    returns: pd.Series, figsize: tuple[int, int] = (12, 8)
 ) -> plt.Figure:
     """Monthly returns heatmap (years × months)."""
     if isinstance(returns.index, pd.DatetimeIndex):
@@ -192,7 +191,7 @@ def monthly_returns_heatmap(
 
 
 def rolling_metrics(
-    returns: pd.Series, window: int = 63, figsize: Tuple[int, int] = (14, 8)
+    returns: pd.Series, window: int = 63, figsize: tuple[int, int] = (14, 8)
 ) -> plt.Figure:
     """Rolling Sharpe, volatility, and cumulative return."""
     ppy = 252
@@ -227,7 +226,7 @@ def rolling_metrics(
 
 
 def annual_returns(
-    returns: pd.Series, figsize: Tuple[int, int] = (12, 5)
+    returns: pd.Series, figsize: tuple[int, int] = (12, 5)
 ) -> plt.Figure:
     """Annual returns bar chart with cumulative overlay."""
     if isinstance(returns.index, pd.DatetimeIndex):
@@ -270,7 +269,7 @@ def annual_returns(
 
 
 def return_distribution(
-    returns: pd.Series, figsize: Tuple[int, int] = (12, 5)
+    returns: pd.Series, figsize: tuple[int, int] = (12, 5)
 ) -> plt.Figure:
     """Return distribution histogram with normal overlay."""
     r = returns.dropna().values
@@ -304,7 +303,7 @@ def return_distribution(
     ax.grid(True, alpha=0.2, axis="y")
 
     # Skew/kurtosis annotation
-    from scipy.stats import skew, kurtosis
+    from scipy.stats import kurtosis, skew
 
     s = float(skew(r, bias=False))
     k = float(kurtosis(r, bias=False))
@@ -325,10 +324,10 @@ def return_distribution(
 def full_report(
     equity: pd.Series,
     returns: pd.Series,
-    benchmark: Optional[pd.Series] = None,
+    benchmark: pd.Series | None = None,
     output_dir: str = "company/reports",
     prefix: str = "backtest",
-) -> Dict[str, Path]:
+) -> dict[str, Path]:
     """Generate full visualization report — all charts saved as PNG."""
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -352,7 +351,7 @@ def full_report(
     return paths
 
 
-def _make_demo_equity(n: int = 504, seed: int = 42) -> Tuple[pd.Series, pd.Series]:
+def _make_demo_equity(n: int = 504, seed: int = 42) -> tuple[pd.Series, pd.Series]:
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2023-01-01", periods=n, freq="B")
     returns = pd.Series(rng.normal(0.0006, 0.012, n), index=dates)

@@ -6,11 +6,11 @@ VWAP benchmarking, Almgren-Chriss market impact, and cost decomposition.
 
 All models reference established frameworks — no hand-rolled cost formulas."""
 
+from dataclasses import dataclass
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
-from dataclasses import dataclass
-from typing import Dict, Optional, Tuple
-from datetime import datetime
 
 
 @dataclass
@@ -30,8 +30,8 @@ def estimate_pre_trade(
     price: float,
     daily_volume: float,
     daily_volatility: float = 0.02,
-    config: Optional[CostConfig] = None,
-) -> Dict:
+    config: CostConfig | None = None,
+) -> dict:
     """Estimate trading costs before execution.
 
     Components: spread cost + market impact + commission + exchange fees.
@@ -84,7 +84,7 @@ def pre_trade_batch(
     orders: pd.DataFrame,
     daily_volumes: pd.Series,
     price_volatility: float = 0.02,
-    config: Optional[CostConfig] = None,
+    config: CostConfig | None = None,
 ) -> pd.DataFrame:
     """Estimate pre-trade costs for a batch of orders.
 
@@ -116,7 +116,7 @@ def implementation_shortfall(
     total_order_size: float,
     final_price: float,
     benchmark: str = "arrival",
-) -> Dict:
+) -> dict:
     """Decompose implementation shortfall (Perold 1988).
 
     Total shortfall = paper return - actual return, decomposed into:
@@ -184,7 +184,7 @@ def vwap_slippage(
     execution_sizes: np.ndarray,
     market_vwap: float,
     direction: int = 1,
-) -> Dict:
+) -> dict:
     """Compute slippage vs market VWAP benchmark.
 
     Positive slippage = worse than VWAP (cost).
@@ -224,7 +224,7 @@ def almgrin_chriss_impact(
     eta: float = 0.142,  # market power parameter (Almgren-Chriss calibration)
     gamma: float = 2.5e-6,  # temporary impact coefficient
     time_fraction: float = 1.0,
-) -> Dict:
+) -> dict:
     """Almgren-Chriss (2001) market impact model.
 
     Permanent impact: gamma * sigma * |Q/V|
@@ -257,8 +257,8 @@ def analyze_execution(
     trades: pd.DataFrame,
     market_prices: pd.DataFrame,
     benchmark: str = "arrival",
-    config: Optional[CostConfig] = None,
-) -> Dict:
+    config: CostConfig | None = None,
+) -> dict:
     """Full post-trade execution analysis.
 
     Parameters
@@ -375,9 +375,9 @@ def analyze_execution(
 
 
 def report_markdown(
-    pre_trade: Optional[Dict] = None,
-    post_trade: Optional[Dict] = None,
-    benchmark: Optional[Dict] = None,
+    pre_trade: dict | None = None,
+    post_trade: dict | None = None,
+    benchmark: dict | None = None,
 ) -> str:
     """Generate markdown TCA report."""
     lines = [
@@ -435,7 +435,7 @@ def report_markdown(
 # ── Demo ────────────────────────────────────────────────────
 
 
-def _make_demo_data(seed: int = 42) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def _make_demo_data(seed: int = 42) -> tuple[pd.DataFrame, pd.DataFrame]:
     rng = np.random.default_rng(seed)
     n = 20
     dates = pd.date_range("2024-06-01", periods=n, freq="B")

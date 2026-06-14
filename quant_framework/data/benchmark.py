@@ -5,10 +5,10 @@ Benchmarks yfinance vs alpha_vantage (if key available) on real tickers.
 Generates a comparison report with per-source metrics."""
 
 import time
-import pandas as pd
-from typing import Dict, List, Optional
 from dataclasses import dataclass
 from datetime import datetime
+
+import pandas as pd
 
 
 @dataclass
@@ -23,7 +23,7 @@ class SourceResult:
     duplicate_rows: int = 0
     null_pct: float = 0.0
     price_outlier_pct: float = 0.0
-    error: Optional[str] = None
+    error: str | None = None
 
 
 def benchmark_single(
@@ -90,7 +90,7 @@ def benchmark_single(
         )
 
 
-def benchmark_multi(tickers: List[str], start: str, end: str) -> pd.DataFrame:
+def benchmark_multi(tickers: list[str], start: str, end: str) -> pd.DataFrame:
     """Benchmark multiple tickers across available sources."""
     results = []
     sources = ["yfinance"]
@@ -127,7 +127,7 @@ def benchmark_multi(tickers: List[str], start: str, end: str) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
-def benchmark_cross_source(tickers: List[str], start: str, end: str) -> Dict:
+def benchmark_cross_source(tickers: list[str], start: str, end: str) -> dict:
     """Cross-source accuracy comparison — compare prices from different sources.
 
     Returns per-ticker price difference statistics between sources.

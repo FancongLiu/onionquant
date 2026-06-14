@@ -5,11 +5,11 @@ Uses existing quant_framework/ modules — no hand-rolled calculations.
 Output: company/chairman_outbox/quant_research_20260518.md
 """
 
+import logging
 import sys
 import warnings
-import logging
+from datetime import date, datetime
 from pathlib import Path
-from datetime import datetime, date
 
 import numpy as np
 import pandas as pd
@@ -24,14 +24,14 @@ PROJECT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT))
 
 # ── Import existing framework modules ──
+from quant_framework.risk.portfolio_optimizer import (
+    hierarchical_risk_parity,
+    risk_parity,
+)
 from quant_framework.strategies.qlib_factor_engine import (
+    FACTOR_GROUPS,
     compute_all_factors,
     neutralize_and_standardize,
-    FACTOR_GROUPS,
-)
-from quant_framework.risk.portfolio_optimizer import (
-    risk_parity,
-    hierarchical_risk_parity,
 )
 
 TICKERS = [
@@ -242,7 +242,7 @@ def build_correlation_matrix(close_df, ret_df):
     corr_matrix = ret_df[valid_tickers].corr(method="spearman")
 
     # Hierarchical clustering on correlation distance
-    from scipy.cluster.hierarchy import linkage, fcluster
+    from scipy.cluster.hierarchy import fcluster, linkage
     from scipy.spatial.distance import squareform
 
     dist = 1 - corr_matrix.abs()

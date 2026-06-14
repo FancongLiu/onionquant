@@ -18,7 +18,7 @@ Usage:
 import re
 import time
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -341,7 +341,7 @@ class NewsScanner:
 
         return {
             "ticker": ticker,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "news_count": news_volume,
             "finviz_count": len(finviz_news),
             "google_count": len(google_news),

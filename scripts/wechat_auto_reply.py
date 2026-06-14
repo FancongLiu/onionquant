@@ -11,11 +11,13 @@ import json
 import os
 import subprocess
 import time
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
+
+from scripts._subprocess_utils import Popen
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 INBOX_DIR = PROJECT_ROOT / "company" / "chairman_inbox"
@@ -136,7 +138,7 @@ def get_status_reply():
 def trigger_research():
     """Kick off a quick Claude research and report back."""
     # Return immediately, Claude will send result separately
-    subprocess.Popen(
+    Popen(
         [
             "claude",
             "-p",
@@ -148,6 +150,7 @@ def trigger_research():
         cwd=str(PROJECT_ROOT),
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
+        encoding="utf-8",
     )
     return "🔬 已触发深度研究，结果将推送到微信，请稍候..."
 

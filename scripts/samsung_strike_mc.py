@@ -476,7 +476,7 @@ def format_markdown(results: dict, sizing: dict) -> str:
     )
     for key in ["A_settled", "B_partial", "C_full"]:
         s = SCENARIOS[key]
-        sc_stats = sc.get(key, {})
+        sc.get(key, {})
         dram_r = s["dram_disruption_pct"]
         nand_r = s["nand_disruption_pct"]
         dram_s = (

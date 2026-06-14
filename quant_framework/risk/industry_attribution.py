@@ -8,19 +8,18 @@ Three pillars:
 
 Uses sklearn PCA + statsmodels OLS for factor fitting. No hand-rolled math."""
 
+
 import numpy as np
 import pandas as pd
-from typing import Dict, Optional, Tuple
-
 
 # ── 1. Industry Exposure Check ─────────────────────────────
 
 
 def check_industry_exposure(
     portfolio_weights: pd.Series,
-    industry_map: Optional[Dict[str, str]] = None,
-    benchmark_weights: Optional[pd.Series] = None,
-) -> Dict:
+    industry_map: dict[str, str] | None = None,
+    benchmark_weights: pd.Series | None = None,
+) -> dict:
     """Check portfolio industry concentration vs benchmark.
 
     Args:
@@ -112,8 +111,8 @@ def barra_risk_attribution(
     asset_returns: pd.DataFrame,
     factor_returns: pd.DataFrame,
     weights: pd.Series,
-    covariance: Optional[pd.DataFrame] = None,
-) -> Dict:
+    covariance: pd.DataFrame | None = None,
+) -> dict:
     """Barra-style risk attribution: systematic + specific risk decomposition.
 
     Steps:
@@ -218,7 +217,7 @@ def barra_risk_attribution(
 def risk_budget_decomposition(
     weights: pd.Series,
     covariance: pd.DataFrame,
-) -> Dict:
+) -> dict:
     """Marginal and component risk contribution from covariance matrix.
 
     Marginal Risk Contribution (MRC):     MRC_i = ∂σ_p / ∂w_i = (Σ w)_i / σ_p
@@ -278,10 +277,10 @@ def analyze_risk_attribution(
     asset_returns: pd.DataFrame,
     factor_returns: pd.DataFrame,
     weights: pd.Series,
-    industry_map: Optional[Dict[str, str]] = None,
-    benchmark_weights: Optional[pd.Series] = None,
-    covariance: Optional[pd.DataFrame] = None,
-) -> Dict:
+    industry_map: dict[str, str] | None = None,
+    benchmark_weights: pd.Series | None = None,
+    covariance: pd.DataFrame | None = None,
+) -> dict:
     """Full risk attribution analysis: industry + Barra + risk budget.
 
     Returns dict with industry_check, barra_attribution, risk_budget.
@@ -317,7 +316,7 @@ def analyze_risk_attribution(
 # ── Markdown Report ───────────────────────────────────────
 
 
-def report_markdown(attribution: Dict) -> str:
+def report_markdown(attribution: dict) -> str:
     """Generate markdown risk attribution report."""
     from datetime import datetime
 
@@ -401,7 +400,7 @@ def report_markdown(attribution: Dict) -> str:
 
 def _make_demo_data(
     n: int = 252, n_assets: int = 10, n_factors: int = 4, seed: int = 42
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Series, Dict[str, str]]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.Series, dict[str, str]]:
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2024-01-01", periods=n, freq="B")
     tickers = [f"STK{i}" for i in range(n_assets)]

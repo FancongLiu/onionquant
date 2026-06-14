@@ -3,12 +3,12 @@
 Uses statsmodels for trend significance testing and scipy for hypothesis tests.
 Integrates with factor_analysis.py for IC computation."""
 
-import numpy as np
-import pandas as pd
-from typing import List, Optional
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-import logging
+
+import numpy as np
+import pandas as pd
 
 from quant_framework.strategies.factor_analysis import ic_summary
 
@@ -84,7 +84,7 @@ def ic_trend_test(
 
 def detect_crowding(
     factor_df: pd.DataFrame,
-    factor_cols: List[str],
+    factor_cols: list[str],
     window: int = 63,
 ) -> pd.DataFrame:
     """Detect factor crowding via rising cross-sectional return correlation.
@@ -142,11 +142,11 @@ def detect_crowding(
 
 def check_decay_alerts(
     ic_df: pd.DataFrame,
-    factor_df: Optional[pd.DataFrame] = None,
-    factor_cols: Optional[List[str]] = None,
+    factor_df: pd.DataFrame | None = None,
+    factor_cols: list[str] | None = None,
     ic_min_threshold: float = -0.02,
     trend_sig_threshold: float = 0.05,
-) -> List[DecayAlert]:
+) -> list[DecayAlert]:
     """Generate decay alerts from IC trend analysis and crowding detection.
 
     Returns list of DecayAlert objects ready for logging/reporting.
@@ -205,8 +205,8 @@ def check_decay_alerts(
 
 
 def report_markdown(
-    alerts: List[DecayAlert],
-    ic_df: Optional[pd.DataFrame] = None,
+    alerts: list[DecayAlert],
+    ic_df: pd.DataFrame | None = None,
 ) -> str:
     """Generate markdown decay monitoring report."""
     lines = [

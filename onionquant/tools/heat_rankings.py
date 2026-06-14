@@ -33,7 +33,7 @@ import sys
 import time
 import urllib.request
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -194,7 +194,7 @@ class HeatRankings:
                 stocks.append(stock)
 
         self.all_stocks = stocks
-        self.fetch_time = datetime.now(timezone.utc)
+        self.fetch_time = datetime.now(UTC)
         print(f"    Total: {len(stocks)} stocks\n")
         return stocks
 
@@ -286,7 +286,7 @@ class HeatRankings:
 
         stock_list.sort(key=lambda x: -x["mentions"])
         self.all_stocks = stock_list
-        self.fetch_time = datetime.now(timezone.utc)
+        self.fetch_time = datetime.now(UTC)
 
         total_raw = sum(len(v) for v in self._filter_data.values())
         print(
@@ -339,7 +339,7 @@ class HeatRankings:
         ts = datetime.now().strftime("%Y%m%d_%H%M")
         path = SNAPSHOT_DIR / f"heat_{ts}.json"
         snapshot = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "total_stocks": len(self.all_stocks),
             "stocks": self.all_stocks[:200],  # 只存前200只, 省空间
         }

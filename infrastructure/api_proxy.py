@@ -11,15 +11,16 @@ Wraps all external API calls (LLM, data vendors) with:
 Pure Python, zero new dependencies beyond stdlib.
 """
 
-import time
 import json
 import logging
 import threading
-from pathlib import Path
-from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional, Tuple
+import time
+from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime
 from functools import wraps
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +49,7 @@ class TokenBucket:
         self.tokens = min(self.capacity, self.tokens + elapsed * self.rate)
         self.last_refill = now
 
-    def acquire(self, tokens: float = 1.0) -> Tuple[bool, float]:
+    def acquire(self, tokens: float = 1.0) -> tuple[bool, float]:
         """Try to acquire tokens. Returns (allowed, wait_seconds)."""
         with self.lock:
             self._refill()
@@ -122,9 +123,9 @@ class CallRecord:
 class AuditLog:
     """Append-only audit log for all API calls."""
 
-    def __init__(self, log_path: Optional[Path] = None):
+    def __init__(self, log_path: Path | None = None):
         self.log_path = log_path
-        self.records: List[CallRecord] = []
+        self.records: list[CallRecord] = []
         self.lock = threading.Lock()
 
     def record(self, call: CallRecord):
@@ -177,14 +178,14 @@ class ProviderRegistry:
     """
 
     def __init__(self):
-        self.providers: Dict[str, dict] = {}
+        self.providers: dict[str, dict] = {}
 
     def register(
         self,
         name: str,
-        endpoints: List[str],
-        rate_config: Optional[RateConfig] = None,
-        headers: Optional[dict] = None,
+        endpoints: list[str],
+        rate_config: RateConfig | None = None,
+        headers: dict | None = None,
     ):
         self.providers[name] = {
             "endpoints": endpoints,
@@ -196,7 +197,7 @@ class ProviderRegistry:
             "last_failure": 0.0,
         }
 
-    def get_endpoint(self, name: str) -> Optional[str]:
+    def get_endpoint(self, name: str) -> str | None:
         p = self.providers.get(name)
         if not p or not p["endpoints"]:
             return None
@@ -235,18 +236,18 @@ class APIProxy:
             ...
     """
 
-    def __init__(self, audit_path: Optional[Path] = None):
+    def __init__(self, audit_path: Path | None = None):
         self.registry = ProviderRegistry()
         self.audit = AuditLog(audit_path)
-        self.buckets: Dict[str, TokenBucket] = {}
+        self.buckets: dict[str, TokenBucket] = {}
         logger.info("APIProxy initialized")
 
     def register(
         self,
         name: str,
-        endpoints: List[str],
-        rate_config: Optional[RateConfig] = None,
-        headers: Optional[dict] = None,
+        endpoints: list[str],
+        rate_config: RateConfig | None = None,
+        headers: dict | None = None,
     ):
         self.registry.register(name, endpoints, rate_config, headers)
         cfg = self.registry.providers[name]["rate_config"]
@@ -360,10 +361,10 @@ class APIProxy:
 
 # ── Singleton ──────────────────────────────────────────────
 
-_global_proxy: Optional[APIProxy] = None
+_global_proxy: APIProxy | None = None
 
 
-def get_proxy(audit_path: Optional[Path] = None) -> APIProxy:
+def get_proxy(audit_path: Path | None = None) -> APIProxy:
     """Get or create the global API proxy singleton."""
     global _global_proxy
     if _global_proxy is None:

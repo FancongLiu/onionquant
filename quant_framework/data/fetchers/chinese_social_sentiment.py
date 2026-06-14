@@ -14,16 +14,12 @@ import os
 import shutil
 import subprocess
 import sys
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Optional
+from datetime import UTC, datetime
 
 import pandas as pd
 
 from quant_framework.data.fetchers.sentiment_utils import (
-    batch_score,
     aggregate_sentiments,
-    has_chinese,
     score_chinese_text,
 )
 
@@ -128,7 +124,7 @@ def _run_ar_search(
                 "text": item.get("title", item.get("text", item.get("content", ""))),
                 "url": item.get("url", ""),
                 "platform": platform,
-                "timestamp": item.get("timestamp", datetime.now(timezone.utc).isoformat()),
+                "timestamp": item.get("timestamp", datetime.now(UTC).isoformat()),
             }
             for item in items
         ]
@@ -145,7 +141,7 @@ def _run_ar_search(
 
 def fetch_platform_sentiment(
     ticker: str,
-    platforms: Optional[list[str]] = None,
+    platforms: list[str] | None = None,
     max_per_query: int = 20,
     timeout: int = 90,
 ) -> pd.DataFrame:
@@ -177,7 +173,7 @@ def fetch_platform_sentiment(
                     "positive": scores["positive"],
                     "negative": scores["negative"],
                     "neutral": scores["neutral"],
-                    "timestamp": item.get("timestamp", datetime.now(timezone.utc).isoformat()),
+                    "timestamp": item.get("timestamp", datetime.now(UTC).isoformat()),
                 })
 
     if not records and not _ar_available():
@@ -189,7 +185,6 @@ def fetch_platform_sentiment(
 
 def _fallback_data(ticker: str) -> pd.DataFrame:
     """Agent-Reach 不可用时的占位数据。"""
-    from quant_framework.data.fetchers.sentiment_utils import score_text
 
     fallback_texts = {
         "DXYZ": ["Destiny XYZ 太空概念股引热议", "Starship 概念股投资价值分析", "DXYZ SpaceX 关联公司讨论"],
@@ -208,7 +203,7 @@ def _fallback_data(ticker: str) -> pd.DataFrame:
             "positive": scores["positive"],
             "negative": scores["negative"],
             "neutral": scores["neutral"],
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         })
     return pd.DataFrame(records)
 
@@ -225,13 +220,13 @@ def build_daily_index(
             "neutral_ratio": 0,
             "weighted_score": 0.0,
             "count": 0,
-            "date": pd.to_datetime(datetime.now(timezone.utc).date()),
+            "date": pd.to_datetime(datetime.now(UTC).date()),
         }])
 
     scores = df[["positive", "negative", "neutral"]].to_dict("records")
     agg = aggregate_sentiments(scores)
     agg["ticker"] = ticker
-    agg["date"] = pd.to_datetime(datetime.now(timezone.utc).date())
+    agg["date"] = pd.to_datetime(datetime.now(UTC).date())
     agg["platforms"] = ",".join(df["platform"].unique())
     return pd.DataFrame([agg])
 
@@ -244,8 +239,8 @@ def save_parquet(df: pd.DataFrame, name: str):
 
 
 def scan_watchlist(
-    tickers: Optional[list[str]] = None,
-    platforms: Optional[list[str]] = None,
+    tickers: list[str] | None = None,
+    platforms: list[str] | None = None,
     verbose: bool = False,
 ) -> pd.DataFrame:
     """批量扫描监控列表的中文舆情。

@@ -4,15 +4,14 @@
 Supplements harness.py metrics and visualization.py charts with numerical analysis
 that can be used directly in reports."""
 
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Optional, Tuple
-
 
 # ── Streak Analysis ────────────────────────────────────────
 
 
-def analyze_streaks(returns: pd.Series) -> Dict:
+def analyze_streaks(returns: pd.Series) -> dict:
     """Analyze winning/losing streaks from daily returns.
 
     Returns dict with max_win_streak, max_loss_streak, avg_win_streak,
@@ -75,7 +74,7 @@ def analyze_streaks(returns: pd.Series) -> Dict:
 # ── Drawdown Duration ──────────────────────────────────────
 
 
-def analyze_drawdown_duration(equity: pd.Series) -> Dict:
+def analyze_drawdown_duration(equity: pd.Series) -> dict:
     """Analyze time underwater: duration, recovery, drawdown depth.
 
     Returns dict with drawdown statistics.
@@ -210,7 +209,7 @@ def annual_returns_table(returns: pd.Series) -> pd.DataFrame:
 # ── Profit/Loss Ratio ──────────────────────────────────────
 
 
-def profit_loss_ratio(returns: pd.Series) -> Dict:
+def profit_loss_ratio(returns: pd.Series) -> dict:
     """Detailed profit/loss analysis with tail analysis."""
     r = returns.dropna().values
     if len(r) < 5:
@@ -254,7 +253,7 @@ def profit_loss_ratio(returns: pd.Series) -> Dict:
 
 
 def rolling_metrics_df(
-    returns: pd.Series, windows: Optional[List[int]] = None
+    returns: pd.Series, windows: list[int] | None = None
 ) -> pd.DataFrame:
     """Compute rolling Sharpe, vol, return, VaR as DataFrame.
 
@@ -288,7 +287,7 @@ def rolling_metrics_df(
 # ── Full Analytics Report ──────────────────────────────────
 
 
-def full_analytics(returns: pd.Series, equity: pd.Series, ppy: int = 252) -> Dict:
+def full_analytics(returns: pd.Series, equity: pd.Series, ppy: int = 252) -> dict:
     """Run all backtest analytics and return comprehensive dict.
 
     Returns dict with: pl_ratio, streaks, drawdown_duration,
@@ -307,7 +306,7 @@ def full_analytics(returns: pd.Series, equity: pd.Series, ppy: int = 252) -> Dic
 # ── Markdown Report ────────────────────────────────────────
 
 
-def analytics_report_markdown(analytics: Dict) -> str:
+def analytics_report_markdown(analytics: dict) -> str:
     """Generate markdown report from full_analytics output."""
     from datetime import datetime
 
@@ -392,7 +391,7 @@ def analytics_report_markdown(analytics: Dict) -> str:
 # ── Demo ────────────────────────────────────────────────────
 
 
-def _make_demo_data(n: int = 504, seed: int = 42) -> Tuple[pd.Series, pd.Series]:
+def _make_demo_data(n: int = 504, seed: int = 42) -> tuple[pd.Series, pd.Series]:
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2023-01-01", periods=n, freq="B")
     returns = pd.Series(rng.normal(0.0006, 0.012, n), index=dates)

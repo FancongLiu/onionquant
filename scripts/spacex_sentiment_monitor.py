@@ -17,7 +17,7 @@ import argparse
 import json
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -65,8 +65,9 @@ def check_reddit_sentiment() -> dict:
 
     try:
         # Read credentials from .env
-        from dotenv import load_dotenv
         import os
+
+        from dotenv import load_dotenv
 
         load_dotenv(PROJECT_ROOT / ".env")
 
@@ -242,11 +243,11 @@ def write_sentiment_alert(alerts: list[dict], current: dict) -> Path | None:
 
     outbox_dir = PROJECT_ROOT / "company" / "chairman_outbox"
     outbox_dir.mkdir(parents=True, exist_ok=True)
-    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M")
+    ts = datetime.now(UTC).strftime("%Y%m%d_%H%M")
 
     lines = [
         f"# 📡 SpaceX 舆情预警 — {len(alerts)} 项异常",
-        f"**时间**: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}",
+        f"**时间**: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}",
         "",
         "| 级别 | 来源 | 指标 | 详情 |",
         "|------|------|------|------|",
@@ -291,7 +292,7 @@ def main():
 
             # Gather sentiment
             current = {
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "reddit": check_reddit_sentiment(),
                 "stocktwits": check_stocktwits_dxyz(),
                 "news": check_news_headlines(),
@@ -312,7 +313,7 @@ def main():
                 alert_history = cache.get("alert_history", [])
                 alert_history.append(
                     {
-                        "time": datetime.now(timezone.utc).isoformat(),
+                        "time": datetime.now(UTC).isoformat(),
                         "count": len(alerts),
                         "alerts": alerts,
                     }

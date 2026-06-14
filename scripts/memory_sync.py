@@ -6,8 +6,8 @@ memory_sync.py — 记忆自动同步脚本
 """
 
 import re
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 PROJECT = Path(__file__).resolve().parent.parent
 MEMORY_DIR = (

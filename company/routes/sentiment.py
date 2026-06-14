@@ -4,7 +4,6 @@ from datetime import datetime
 
 from fastapi import APIRouter
 
-
 router = APIRouter(tags=["sentiment"])
 
 SENTIMENT_TICKERS = ["DXYZ", "MU", "WDC", "INTC", "AMD"]

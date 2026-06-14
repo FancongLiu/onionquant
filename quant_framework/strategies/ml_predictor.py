@@ -5,11 +5,11 @@ Uses established sklearn estimators (Ridge, RandomForest, XGBoost) to predict
 forward returns from factor values. Time-series aware cross-validation
 (no lookahead bias). Feature importance for factor evaluation."""
 
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from datetime import datetime
+
+import numpy as np
+import pandas as pd
 
 
 @dataclass
@@ -69,9 +69,9 @@ def _get_model(config: PredictorConfig):
 
 def prepare_data(
     factor_df: pd.DataFrame,
-    factor_cols: List[str],
+    factor_cols: list[str],
     forward_returns: pd.Series,
-) -> Tuple[np.ndarray, np.ndarray, pd.Index]:
+) -> tuple[np.ndarray, np.ndarray, pd.Index]:
     """Prepare X (factors) and y (forward returns) for ML training.
 
     Returns (X, y, index) where X and y are aligned and NaN-free.
@@ -93,7 +93,7 @@ def time_series_split(
     n_samples: int,
     n_splits: int = 5,
     test_size: float = 0.2,
-) -> List[Tuple[np.ndarray, np.ndarray]]:
+) -> list[tuple[np.ndarray, np.ndarray]]:
     """Time-series aware train/test split (no lookahead bias).
 
     Each split: train = [0, t], test = [t+1, t+test_size].
@@ -121,8 +121,8 @@ def time_series_split(
 def train_predict(
     X: np.ndarray,
     y: np.ndarray,
-    config: Optional[PredictorConfig] = None,
-) -> Dict:
+    config: PredictorConfig | None = None,
+) -> dict:
     """Train an ML model to predict forward returns from factors.
 
     Returns dict with model, metrics, feature_importance.
@@ -140,7 +140,7 @@ def train_predict(
     y_pred = model.predict(X)
 
     # Metrics
-    from sklearn.metrics import r2_score, mean_squared_error
+    from sklearn.metrics import mean_squared_error, r2_score
 
     r2 = float(r2_score(y, y_pred))
     mse = float(mean_squared_error(y, y_pred))
@@ -175,8 +175,8 @@ def _feature_importance(model, config: PredictorConfig, n_features: int) -> np.n
 def cross_validate(
     X: np.ndarray,
     y: np.ndarray,
-    factor_cols: List[str],
-    config: Optional[PredictorConfig] = None,
+    factor_cols: list[str],
+    config: PredictorConfig | None = None,
 ) -> pd.DataFrame:
     """Time-series cross-validation for ML factor model.
 
@@ -231,10 +231,10 @@ def cross_validate(
 
 def predict_returns(
     factor_df: pd.DataFrame,
-    factor_cols: List[str],
-    config: Optional[PredictorConfig] = None,
+    factor_cols: list[str],
+    config: PredictorConfig | None = None,
     cross_validated: bool = True,
-) -> Dict:
+) -> dict:
     """Full ML prediction pipeline: prepare → train → CV → predict.
 
     Returns dict with predictions, metrics, cv_results, importance_df.
@@ -302,7 +302,7 @@ def evaluate_prediction(
     predictions: pd.Series,
     actual_returns: pd.Series,
     n_quantiles: int = 5,
-) -> Dict:
+) -> dict:
     """Evaluate ML predictions: IC, quantile spread, hit rate."""
     aligned = pd.DataFrame(
         {
@@ -338,7 +338,7 @@ def evaluate_prediction(
     }
 
 
-def report_markdown(result: Dict, eval_result: Optional[Dict] = None) -> str:
+def report_markdown(result: dict, eval_result: dict | None = None) -> str:
     """Generate markdown ML prediction report."""
     lines = [
         "# ML Return Prediction Report",
@@ -396,7 +396,7 @@ def report_markdown(result: Dict, eval_result: Optional[Dict] = None) -> str:
 
 def _make_demo_data(
     n: int = 252, n_factors: int = 8, n_tickers: int = 10, seed: int = 42
-) -> Tuple[pd.DataFrame, List[str]]:
+) -> tuple[pd.DataFrame, list[str]]:
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2024-01-01", periods=n, freq="B")
     tickers = [f"T{i}" for i in range(n_tickers)]

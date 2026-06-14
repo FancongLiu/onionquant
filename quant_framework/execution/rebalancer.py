@@ -5,11 +5,11 @@ Handles target weight → trade list generation with configurable rebalancing
 schedules and constraints. Integrates with position_sizer for weight calculation
 and order_simulator for execution simulation."""
 
-import numpy as np
-import pandas as pd
-from typing import Dict, Optional, Tuple
 from dataclasses import dataclass
 from datetime import timedelta
+
+import numpy as np
+import pandas as pd
 
 
 @dataclass
@@ -32,7 +32,7 @@ class RebalanceConfig:
 def generate_calendar_dates(
     dates: pd.DatetimeIndex,
     freq: str = "M",
-    start_date: Optional[str] = None,
+    start_date: str | None = None,
 ) -> pd.DatetimeIndex:
     """Generate rebalance calendar dates.
 
@@ -93,8 +93,8 @@ def should_rebalance(
     current_date: pd.Timestamp,
     current_weights: pd.Series,
     target_weights: pd.Series,
-    last_rebalance_date: Optional[pd.Timestamp],
-    next_calendar_date: Optional[pd.Timestamp],
+    last_rebalance_date: pd.Timestamp | None,
+    next_calendar_date: pd.Timestamp | None,
     config: RebalanceConfig,
 ) -> bool:
     """Determine if rebalancing should occur.
@@ -130,8 +130,8 @@ def compute_trades(
     current_prices: pd.Series,
     portfolio_value: float,
     config: RebalanceConfig,
-    current_positions: Optional[pd.Series] = None,
-    cost_basis: Optional[pd.Series] = None,
+    current_positions: pd.Series | None = None,
+    cost_basis: pd.Series | None = None,
 ) -> pd.DataFrame:
     """Generate trade list from weight drift.
 
@@ -290,8 +290,8 @@ def run_rebalance(
     current_prices: pd.Series,
     portfolio_value: float,
     config: RebalanceConfig,
-    current_positions: Optional[pd.Series] = None,
-    cost_basis: Optional[pd.Series] = None,
+    current_positions: pd.Series | None = None,
+    cost_basis: pd.Series | None = None,
 ) -> RebalanceResult:
     """Execute a single rebalance event.
 
@@ -375,7 +375,7 @@ def simulate_rebalance_series(
     price_history: pd.DataFrame,
     portfolio_values: pd.Series,
     config: RebalanceConfig,
-    position_history: Optional[pd.DataFrame] = None,
+    position_history: pd.DataFrame | None = None,
 ) -> pd.DataFrame:
     """Simulate rebalancing over a historical period.
 
@@ -445,7 +445,7 @@ def estimate_rebalance_cost(
     portfolio_value: float,
     spread_bp: float = 5.0,
     market_impact_bp_per_pct: float = 2.0,
-) -> Dict:
+) -> dict:
     """Estimate total rebalance cost: spread + market impact.
 
     Returns dict with cost breakdown.
@@ -513,7 +513,7 @@ def _make_demo_data(
     n_dates: int = 252,
     n_tickers: int = 5,
     seed: int = 42,
-) -> Tuple[pd.DatetimeIndex, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.Series]:
+) -> tuple[pd.DatetimeIndex, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.Series]:
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2024-01-01", periods=n_dates, freq="B")
 

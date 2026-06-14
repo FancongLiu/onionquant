@@ -192,25 +192,24 @@ async def auth_middleware(request: Request, call_next):
 
 # ─── Shared state imports ────────────────────────────
 
+from company.routes.dashboard import router as dashboard_router
+
+# ─── Include route modules ───────────────────────────
+from company.routes.quant import router as quant_router
+from company.routes.risk import router as risk_router
+from company.routes.sentiment import router as sentiment_router
 from company.routes.shared import (
     INBOX_DIR,
-    PROCESSED_DIR,
     OUTBOX_DIR,
-    subscribers,
-    notify_all,
-    wechat_status,
+    PROCESSED_DIR,
+    WECHAT_AGENT_ID,
     WECHAT_CONFIGURED,
     WECHAT_CORP_ID,
     WECHAT_SECRET,
-    WECHAT_AGENT_ID,
+    notify_all,
+    subscribers,
+    wechat_status,
 )
-
-# ─── Include route modules ───────────────────────────
-
-from company.routes.quant import router as quant_router
-from company.routes.risk import router as risk_router
-from company.routes.dashboard import router as dashboard_router
-from company.routes.sentiment import router as sentiment_router
 from company.routes.wechat import router as wechat_router
 
 app.include_router(quant_router)
@@ -363,13 +362,6 @@ async def post_inbox(request: Request, background_tasks: BackgroundTasks):
 
 from company.harness.inbox_processor import (
     setup as inbox_setup,
-    _is_urgent,
-    _infer_priority,
-    _write_outbox,
-    _smart_add_to_queue,
-    _is_stock_request,
-    get_token_usage_by_message,
-    URGENT_KEYWORDS,
 )
 
 TASK_QUEUE_FILE = PROJECT_ROOT / "company" / "task_queue.json"
@@ -407,7 +399,7 @@ def _parse_msg_metadata(filename: str, text: str | None = None) -> dict:
     # Extract subject from content
     if text:
         lines = [
-            l.strip() for l in text.split("\n") if l.strip() and not l.startswith("#")
+            line.strip() for line in text.split("\n") if line.strip() and not line.startswith("#")
         ]
         # Find the subject: first meaningful line after headers
         subject = ""
@@ -703,7 +695,7 @@ async def outbox_respond(request: Request):
 
 
 @app.post("/api/outbox/delete/{filename:path}")
-async def outbox_delete_file(filename: str):
+async def outbox_delete_file(filename: str):  # noqa: F811
     fp = OUTBOX_DIR / filename
     if not fp.exists() or fp.suffix != ".md":
         # Also check processed dir
@@ -816,12 +808,12 @@ def _parse_outbox_message(filename: str, text: str) -> dict:
     # Fallback: use file modification time when content timestamp is unparseable
     if not ts_iso:
         try:
-            from datetime import datetime, timezone, timedelta
+            from datetime import datetime, timedelta, timezone
 
             fp = OUTBOX_DIR / filename
             if fp.exists():
                 mtime = fp.stat().st_mtime
-                from datetime import datetime, timezone, timedelta
+                from datetime import datetime, timedelta, timezone
 
                 dt = datetime.fromtimestamp(mtime)
                 ts_iso = dt.isoformat()
@@ -1097,11 +1089,10 @@ def _factor_alert_thread():
 
     while True:
         try:
-            from quant_framework.strategies.factor_decay import check_decay_alerts
-            from quant_framework.strategies.factor_combiner import _cs_ic_series
-            from scripts.run_pipeline import step1_fetch, step2_factors
-
             from company.routes.shared import QUANT_TICKERS
+            from quant_framework.strategies.factor_combiner import _cs_ic_series
+            from quant_framework.strategies.factor_decay import check_decay_alerts
+            from scripts.run_pipeline import step1_fetch, step2_factors
 
             tickers = QUANT_TICKERS[:15]
             df = step1_fetch(tickers, "2025-01-01")
@@ -1221,7 +1212,7 @@ async def api_alpaca_account():
 @app.get("/api/market/snapshot")
 async def api_market_snapshot():
     """Compact market snapshot for sidebar — MU, INTC, SOX."""
-    from datetime import datetime, timezone, timedelta
+    from datetime import datetime, timedelta, timezone
 
     tz_cn = timezone(timedelta(hours=8))
     result = {"ok": True, "updated": datetime.now(tz_cn).strftime("%H:%M:%S")}
@@ -1263,7 +1254,7 @@ async def sse_endpoint():
                 try:
                     msg = await asyncio.wait_for(queue.get(), timeout=30)
                     yield msg
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     yield {
                         "event": "heartbeat",
                         "data": json.dumps({"ts": datetime.now().isoformat()}),
@@ -1500,7 +1491,7 @@ async def api_research_stream(request: Request, tickers: str = "", query: str = 
                 yield msg
                 if msg.get("event") in ("done", "error"):
                     break
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 yield {"event": "heartbeat",
                        "data": json.dumps({"ts": datetime.now().isoformat()})}
 
@@ -1564,7 +1555,7 @@ async def api_research_dxyz():
 
         tk = yf.Ticker("DXYZ")
         info = tk.info or {}
-        hist = tk.history(period="5d")
+        tk.history(period="5d")
         price = info.get("currentPrice") or info.get("regularMarketPrice") or 0
         prev_close = (
             info.get("regularMarketPreviousClose") or info.get("previousClose") or price
@@ -1745,8 +1736,8 @@ if static_dir.exists():
 
 def start_watchdog():
     try:
-        from watchdog.observers import Observer
         from watchdog.events import FileSystemEventHandler
+        from watchdog.observers import Observer
 
         class ChangeHandler(FileSystemEventHandler):
             def on_modified(self, event):

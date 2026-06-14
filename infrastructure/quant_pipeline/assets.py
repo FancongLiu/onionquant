@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import pandas as pd
-from dagster import asset, AssetExecutionContext, Config
+from dagster import AssetExecutionContext, Config, asset
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))

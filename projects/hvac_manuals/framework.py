@@ -10,8 +10,8 @@ HVAC Manual Search & Download Framework
 import json
 import re
 import subprocess
-from pathlib import Path
 from collections import defaultdict
+from pathlib import Path
 
 import openpyxl
 
@@ -55,7 +55,7 @@ def build_manifest(rows):
     """
     # Load existing manifest if any
     if MANIFEST_PATH.exists():
-        with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
+        with open(MANIFEST_PATH, encoding="utf-8") as f:
             manifest = json.load(f)
     else:
         manifest = {}

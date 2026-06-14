@@ -1,11 +1,16 @@
 """Test P0-2: Error recovery — node failure never crashes the pipeline."""
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
 from quant_framework.agents.full_research_graph import (
-    _call_llm, _make_dept_node, FullResearchState, DEPT_ORDER
+    DEPT_ORDER,
+    FullResearchState,
+    _call_llm,
+    _make_dept_node,
 )
 
 
@@ -63,7 +68,7 @@ def test_node_skip_on_failure():
         assert "strategy_research" in result["steps_completed"]
         assert "errors" in result
         assert any("strategy_research" in e for e in result["errors"])
-        assert "[SKIPPED]" in result.get(f"strategy_research_result", "")
+        assert "[SKIPPED]" in result.get("strategy_research_result", "")
 
 
 def test_downstream_node_gets_skip_context():

@@ -29,13 +29,12 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 # ─── 真实量化库导入 ──────────────────────────────────
 
-from risk_threshold_engine import RiskThresholdEngine, FactorScores
-
 # 项目内 quant_framework 模块
 from quant_framework.strategies.regime_detector import (
     classify_current,
     rolling_regime_simple,
 )
+from risk_threshold_engine import FactorScores, RiskThresholdEngine
 
 # ─── 工具版本声明 ────────────────────────────────────
 TOOL_STACK = {
@@ -621,7 +620,7 @@ def main():
     print("-" * 40)
 
     # RTE says REDUCED_DCA → 25% smaller lots
-    rte_actions = {a["type"]: a for a in rte["actions"]}
+    {a["type"]: a for a in rte["actions"]}
     lot_reduction = 0.25 if any("REDUCE" in a["type"] for a in rte["actions"]) else 0
 
     buy_decisions = [d for d in decisions if d["composite"] > 0]

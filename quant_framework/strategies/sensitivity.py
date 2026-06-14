@@ -3,12 +3,13 @@
 Identifies which parameters most affect strategy performance, guiding tuning priorities.
 T879: Sensitivity analysis module using numpy finite-difference approach."""
 
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Callable
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
+
+import numpy as np
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +26,8 @@ class SensitivityResult:
 
 
 def perturb_and_evaluate(
-    fn: Callable[..., Dict],
-    base_params: Dict[str, float],
+    fn: Callable[..., dict],
+    base_params: dict[str, float],
     param_name: str,
     perturbation: float = 0.20,
     output_key: str = "sharpe",
@@ -82,9 +83,9 @@ def perturb_and_evaluate(
 
 
 def sensitivity_matrix(
-    fn: Callable[..., Dict],
-    base_params: Dict[str, float],
-    param_names: List[str],
+    fn: Callable[..., dict],
+    base_params: dict[str, float],
+    param_names: list[str],
     perturbation: float = 0.20,
     output_key: str = "sharpe",
 ) -> pd.DataFrame:

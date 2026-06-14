@@ -7,13 +7,12 @@ regime-aware, and turnover-constrained alpha combination.
 Integrates with qlib_factor_engine (factors), factor_analysis (IC metrics),
 and regime_detector (market regimes)."""
 
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
-from scipy.stats import spearmanr
 
+import numpy as np
+import pandas as pd
+from scipy.stats import spearmanr
 
 # ── Helpers ─────────────────────────────────────────────────
 
@@ -41,7 +40,7 @@ def _rolling_spearman(a: pd.Series, b: pd.Series, window: int) -> pd.Series:
 
 def ic_weighted(
     factor_df: pd.DataFrame,
-    factor_cols: List[str],
+    factor_cols: list[str],
     forward_returns: pd.Series,
     window: int = 252,
     floor: float = 0.1,
@@ -107,7 +106,7 @@ def ic_weighted(
 
 def ic_ir_weighted(
     factor_df: pd.DataFrame,
-    factor_cols: List[str],
+    factor_cols: list[str],
     forward_returns: pd.Series,
     estimation_window: int = 504,
     rolling_window: int = 63,
@@ -157,7 +156,7 @@ def ic_ir_weighted(
 
 def bayesian_shrinkage_weights(
     factor_df: pd.DataFrame,
-    factor_cols: List[str],
+    factor_cols: list[str],
     forward_returns: pd.Series,
     shrinkage: float = 0.3,
     window: int = 252,
@@ -213,8 +212,8 @@ def bayesian_shrinkage_weights(
 
 def decay_adjusted_scores(
     factor_df: pd.DataFrame,
-    factor_cols: List[str],
-    decay_half_lives: Dict[str, float],
+    factor_cols: list[str],
+    decay_half_lives: dict[str, float],
 ) -> pd.DataFrame:
     """Adjust factor scores by estimated decay half-life.
 
@@ -241,10 +240,10 @@ def decay_adjusted_scores(
 
 def turnover_constrained_combine(
     factor_df: pd.DataFrame,
-    factor_cols: List[str],
+    factor_cols: list[str],
     ic_summary_df: pd.DataFrame,
     max_turnover: float = 0.5,
-    prev_weights: Optional[pd.Series] = None,
+    prev_weights: pd.Series | None = None,
 ) -> pd.DataFrame:
     """Combine factors with a turnover constraint on resulting signals.
 
@@ -291,10 +290,10 @@ def turnover_constrained_combine(
 
 def regime_aware_combine(
     factor_df: pd.DataFrame,
-    factor_cols: List[str],
+    factor_cols: list[str],
     regime_labels: pd.Series,
-    regime_weights: Dict[int, Dict[str, float]],
-    default_weights: Optional[Dict[str, float]] = None,
+    regime_weights: dict[int, dict[str, float]],
+    default_weights: dict[str, float] | None = None,
 ) -> pd.DataFrame:
     """Combine factors with different weights per market regime.
 
@@ -349,22 +348,22 @@ class CombineConfig:
     method: str = (
         "ic_weighted"  # ic_weighted | ic_ir | bayesian | equal | regime | turnover
     )
-    factor_cols: List[str] = field(default_factory=list)
+    factor_cols: list[str] = field(default_factory=list)
     window: int = 252
     shrinkage: float = 0.3
     max_turnover: float = 0.5
     floor: float = 0.1
-    regime_weights: Optional[Dict[int, Dict[str, float]]] = None
-    decay_half_lives: Optional[Dict[str, float]] = None
+    regime_weights: dict[int, dict[str, float]] | None = None
+    decay_half_lives: dict[str, float] | None = None
 
 
 def combine_alphas(
     factor_df: pd.DataFrame,
     forward_returns: pd.Series,
-    config: Optional[CombineConfig] = None,
-    regime_labels: Optional[pd.Series] = None,
-    ic_summary_df: Optional[pd.DataFrame] = None,
-    prev_scores: Optional[pd.Series] = None,
+    config: CombineConfig | None = None,
+    regime_labels: pd.Series | None = None,
+    ic_summary_df: pd.DataFrame | None = None,
+    prev_scores: pd.Series | None = None,
 ) -> pd.DataFrame:
     """Unified alpha combination pipeline.
 
@@ -473,10 +472,10 @@ def combine_alphas(
 
 def estimate_ic_weights(
     factor_df: pd.DataFrame,
-    factor_cols: List[str],
+    factor_cols: list[str],
     forward_returns: pd.Series,
     window: int = 252,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Estimate static IC-based weights for a snapshot (e.g., end-of-period)."""
     weights = {}
     valid = []
@@ -498,7 +497,7 @@ def evaluate_combination(
     combined_score: pd.Series,
     forward_returns: pd.Series,
     n_quantiles: int = 5,
-) -> Dict:
+) -> dict:
     """Evaluate a combined alpha score: quantile spread, IC, hit rate."""
     aligned = pd.DataFrame(
         {
@@ -538,7 +537,7 @@ def evaluate_combination(
     }
 
 
-def report_markdown(config: CombineConfig, evaluation: Dict) -> str:
+def report_markdown(config: CombineConfig, evaluation: dict) -> str:
     """Generate markdown report for the alpha combination."""
     lines = [
         "# Alpha Combination Report",
@@ -577,7 +576,7 @@ def report_markdown(config: CombineConfig, evaluation: Dict) -> str:
 
 def _make_demo_data(
     n: int = 252, n_factors: int = 5, n_tickers: int = 10, seed: int = 42
-) -> Tuple[pd.DataFrame, pd.Series, pd.Series]:
+) -> tuple[pd.DataFrame, pd.Series, pd.Series]:
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2024-01-01", periods=n, freq="B")
     tickers = [f"T{i}" for i in range(n_tickers)]

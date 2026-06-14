@@ -8,7 +8,6 @@ factor_calculator.py — DEPRECATED 兼容层 (v4)
 
 import argparse
 import warnings
-from typing import Optional
 
 warnings.warn(
     "factor_calculator.py is deprecated, use qlib_factor_engine.py instead",
@@ -20,9 +19,9 @@ import numpy as np  # noqa: E402
 import pandas as pd  # noqa: E402
 
 from quant_framework.strategies.qlib_factor_engine import (  # noqa: E402
+    FACTOR_REGISTRY,
     compute_all_factors,
     neutralize_and_standardize,
-    FACTOR_REGISTRY,
 )
 
 warnings.filterwarnings("ignore")
@@ -63,7 +62,7 @@ def standardize(factor_df: pd.DataFrame, sigma: float = 3.0) -> pd.DataFrame:
 
 
 def compute_all(
-    df: pd.DataFrame, neutralize: bool = True, factors: Optional[list] = None
+    df: pd.DataFrame, neutralize: bool = True, factors: list | None = None
 ) -> pd.DataFrame:
     """一站式：计算因子 → 中性化 → 标准化 (v4: 委托 qlib_factor_engine)."""
     result = compute_all_factors(df, factors)

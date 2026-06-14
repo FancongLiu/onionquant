@@ -10,7 +10,6 @@ from __future__ import annotations
 import logging
 import re
 from pathlib import Path
-from typing import Optional
 
 from .neo4j_store import QuantGraphStore
 
@@ -130,9 +129,9 @@ TOOL_DEPT_MAP = {
 
 
 def build_quant_knowledge_graph(
-    store: Optional[QuantGraphStore] = None,
-    tracker_path: Optional[Path] = None,
-    pipeline_reports_dir: Optional[Path] = None,
+    store: QuantGraphStore | None = None,
+    tracker_path: Path | None = None,
+    pipeline_reports_dir: Path | None = None,
 ) -> QuantGraphStore:
     """Build the full quant knowledge graph.
 
@@ -316,7 +315,7 @@ def _build_tool_graph(store: QuantGraphStore) -> None:
 
 def build_correlation_edges(
     store: QuantGraphStore,
-    price_data_path: Optional[Path] = None,
+    price_data_path: Path | None = None,
     min_corr: float = 0.5,
 ) -> int:
     """Build stock→stock edges from price correlation data (data-driven).
@@ -361,7 +360,7 @@ def build_correlation_edges(
 
 
 def export_graph_html(
-    store: QuantGraphStore, output_path: Optional[Path] = None
+    store: QuantGraphStore, output_path: Path | None = None
 ) -> Path:
     """Export the knowledge graph as an interactive vis.js HTML page.
 
@@ -452,7 +451,7 @@ new vis.Network(container, data, options);
 
 
 def _build_supply_chain_edges(store: QuantGraphStore) -> None:
-    edges: list[tuple[str, str, str, Optional[dict]]] = [
+    edges: list[tuple[str, str, str, dict | None]] = [
         # GPU supply chain
         ("NVDA", "MU", "SUPPLIER_OF", {"component": "HBM"}),
         ("NVDA", "SNDK", "SUPPLIER_OF", {"component": "NAND"}),

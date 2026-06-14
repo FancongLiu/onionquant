@@ -6,7 +6,7 @@ PyPortfolioOpt (github.com/PyPortfolio/PyPortfolioOpt) 替代手搓实现。"""
 import numpy as np
 import pandas as pd
 import riskfolio as rp
-from pypfopt import HRPOpt, BlackLittermanModel
+from pypfopt import BlackLittermanModel, HRPOpt
 from sklearn.covariance import LedoitWolf
 
 

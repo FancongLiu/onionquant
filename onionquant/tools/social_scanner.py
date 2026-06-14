@@ -52,7 +52,7 @@ def run_hypefinder_scan(
         "3",
     ]
     try:
-        result = subprocess.run(
+        subprocess.run(
             cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120, cwd=str(HYPEFINDER_DIR)
         )
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
@@ -144,11 +144,12 @@ def merge_and_rank(hypefinder: list[dict], apewisdom: list[dict]) -> list[dict]:
                 "aw_rank": item.get("rank", 999),
             }
 
-    combined_score = lambda m: (
-        m["hype_score"] * 0.4
-        + (10 / (m["aw_rank"] + 1)) * 100 * 0.3
-        + (m["cross_validated"] * 50) * 0.3
-    )
+    def combined_score(m):
+        return (
+            m["hype_score"] * 0.4
+            + (10 / (m["aw_rank"] + 1)) * 100 * 0.3
+            + (m["cross_validated"] * 50) * 0.3
+        )
 
     ranked = sorted(merged.values(), key=combined_score, reverse=True)
     return ranked
@@ -183,8 +184,8 @@ def scan_chinese_social(
     """
     try:
         from quant_framework.data.fetchers.chinese_social_sentiment import (
-            scan_watchlist,
             _ar_available,
+            scan_watchlist,
         )
     except ImportError:
         print("[warn] chinese_social_sentiment 模块不可用")
@@ -279,7 +280,7 @@ def scan(explain: bool = False, cn: bool = False) -> list[dict]:
 
     print(f"\n→ Full results: {path}")
     if cn and cn_results:
-        print(f"→ Chinese sentiment data integrated into results")
+        print("→ Chinese sentiment data integrated into results")
     return results
 
 

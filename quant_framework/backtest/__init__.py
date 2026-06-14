@@ -1,27 +1,27 @@
 """quant_framework.backtest — unified backtesting infrastructure."""
 
-from quant_framework.backtest.harness import (
-    vectorized_backtest,
-    signal_backtest,
-    event_driven_backtest,
-    compare_strategies,
-)
-from quant_framework.backtest.visualization import (
-    equity_curve,
-    drawdown_plot,
-    monthly_returns_heatmap,
-    rolling_metrics,
-    annual_returns,
-    return_distribution,
-    full_report,
-)
 from quant_framework.backtest.analytics import (
-    analyze_streaks,
+    analytics_report_markdown,
     analyze_drawdown_duration,
-    monthly_returns_table,
+    analyze_streaks,
     annual_returns_table,
+    full_analytics,
+    monthly_returns_table,
     profit_loss_ratio,
     rolling_metrics_df,
-    full_analytics,
-    analytics_report_markdown,
+)
+from quant_framework.backtest.harness import (
+    compare_strategies,
+    event_driven_backtest,
+    signal_backtest,
+    vectorized_backtest,
+)
+from quant_framework.backtest.visualization import (
+    annual_returns,
+    drawdown_plot,
+    equity_curve,
+    full_report,
+    monthly_returns_heatmap,
+    return_distribution,
+    rolling_metrics,
 )

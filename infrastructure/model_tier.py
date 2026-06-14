@@ -12,8 +12,8 @@ Pure config + routing — no new dependencies.
 
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional
 from pathlib import Path
+
 import yaml
 
 
@@ -57,7 +57,7 @@ class TaskRouting:
     task_category: str  # e.g., factor_analysis, regime_detection
     tier: Tier
     rationale: str = ""
-    examples: List[str] = field(default_factory=list)
+    examples: list[str] = field(default_factory=list)
     budget_tokens: int = 2000
     timeout_seconds: float = 60.0
 
@@ -207,15 +207,15 @@ class TierRouter:
 
     def __init__(
         self,
-        models: Optional[Dict[str, ModelSpec]] = None,
-        routing: Optional[List[TaskRouting]] = None,
+        models: dict[str, ModelSpec] | None = None,
+        routing: list[TaskRouting] | None = None,
     ):
         self.models = models or DEFAULT_MODELS
-        self.routing: Dict[str, TaskRouting] = {}
+        self.routing: dict[str, TaskRouting] = {}
         for r in routing or DEFAULT_ROUTING:
             self.routing[r.task_category] = r
 
-    def route(self, task_category: str) -> Optional[TierConfig]:
+    def route(self, task_category: str) -> TierConfig | None:
         """Get tier config for a task category."""
         rt = self.routing.get(task_category)
         if rt is None:
@@ -278,7 +278,7 @@ class TierRouter:
             )
         return "\n".join(lines)
 
-    def daily_cost_estimate(self, task_volumes: Dict[str, int]) -> dict:
+    def daily_cost_estimate(self, task_volumes: dict[str, int]) -> dict:
         """Estimate daily LLM cost based on task volumes.
 
         Args:

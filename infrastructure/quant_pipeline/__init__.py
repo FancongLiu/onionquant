@@ -8,12 +8,12 @@ Dagster pipeline for daily market data ingestion + factor computation + reportin
   - daily_report_job    (每天 09:00 EST)   生成市场摘要报告
 """
 
-from dagster import Definitions, define_asset_job, AssetSelection, ScheduleDefinition
+from dagster import AssetSelection, Definitions, ScheduleDefinition, define_asset_job
 
 from quant_pipeline.assets import (
-    market_data_ingest,
-    factor_compute,
     data_quality_check,
+    factor_compute,
+    market_data_ingest,
     report_generate,
 )
 

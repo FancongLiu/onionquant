@@ -8,9 +8,8 @@ Paper Trading Performance Tracker — 独立的虚拟交易追踪系统。
 """
 
 import json
-from datetime import datetime, date
+from datetime import date, datetime
 from pathlib import Path
-from typing import Optional
 
 import yfinance as yf
 
@@ -46,7 +45,7 @@ class PaperPortfolio:
             json.dumps(self.state, indent=2, ensure_ascii=False), encoding="utf-8"
         )
 
-    def get_market_price(self, ticker: str) -> Optional[float]:
+    def get_market_price(self, ticker: str) -> float | None:
         try:
             tk = yf.Ticker(ticker)
             hist = tk.history(period="1d", interval="1m")
@@ -90,7 +89,7 @@ class PaperPortfolio:
         ticker: str,
         action: str,
         shares: int,
-        price: Optional[float] = None,
+        price: float | None = None,
         reason: str = "",
     ):
         """执行虚拟交易。action: buy/sell"""

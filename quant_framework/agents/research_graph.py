@@ -22,7 +22,6 @@ Usage:
   result = await graph.run("分析 NVDA 目标价和风险", tickers=["NVDA"])
 """
 
-import json
 import operator
 import os
 import re
@@ -31,8 +30,6 @@ from pathlib import Path
 from typing import Annotated, Any, TypedDict
 
 from langgraph.graph import END, StateGraph
-from langgraph.checkpoint.sqlite import SqliteSaver
-
 
 # ─── State Schema ────────────────────────────────────────
 
@@ -246,7 +243,7 @@ def _call_llm(prompt: str, system: str, temperature: float = 0.3) -> str:
 def supervisor_node(state: ResearchState) -> dict:
     """Supervisor: decide which node to execute next based on request and completed steps."""
     completed = state.get("steps_completed", [])
-    tickers = state.get("tickers", [])
+    state.get("tickers", [])
     user_request = state.get("user_request", "")
 
     # Determine what's needed based on request content

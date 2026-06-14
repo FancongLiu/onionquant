@@ -4,11 +4,11 @@
 Uses empyrical for risk metrics. Historical scenarios from known crisis periods.
 All calculations use established risk methodologies (no hand-rolled math)."""
 
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Optional
 from dataclasses import dataclass, field
 from datetime import datetime
+
+import numpy as np
+import pandas as pd
 
 try:
     from empyrical import max_drawdown
@@ -24,7 +24,7 @@ class Scenario:
     start: str
     end: str
     description: str
-    asset_class_impact: Dict[str, float] = field(default_factory=dict)
+    asset_class_impact: dict[str, float] = field(default_factory=dict)
 
 
 # ── Pre-defined historical crisis scenarios ──────────────
@@ -90,7 +90,7 @@ HISTORICAL_SCENARIOS = [
 
 def apply_scenario(
     returns: pd.DataFrame,
-    scenario_shock: Dict[str, float],
+    scenario_shock: dict[str, float],
     correlation_shock: float = 0.3,
 ) -> pd.DataFrame:
     """Apply a stress scenario shock to historical returns.
@@ -125,9 +125,9 @@ def apply_scenario(
 def portfolio_stress_test(
     returns: pd.DataFrame,
     weights: np.ndarray,
-    scenarios: Optional[List[Scenario]] = None,
+    scenarios: list[Scenario] | None = None,
     var_cl: float = 0.95,
-) -> Dict:
+) -> dict:
     """Run full stress test on a portfolio.
 
     Parameters
@@ -193,7 +193,7 @@ def _compute_mdd(returns: pd.Series) -> float:
     return float(((equity - peak) / peak).min())
 
 
-def var_backtest(returns: pd.Series, var_series: pd.Series, cl: float = 0.95) -> Dict:
+def var_backtest(returns: pd.Series, var_series: pd.Series, cl: float = 0.95) -> dict:
     """Backtest VaR model: count exceedances vs expected.
 
     Returns dict with actual_exceedances, expected_exceedances, kupiec_pvalue.
@@ -238,8 +238,8 @@ def var_backtest(returns: pd.Series, var_series: pd.Series, cl: float = 0.95) ->
 
 def stress_correlation_matrix(
     returns: pd.DataFrame,
-    scenarios: Optional[List[Scenario]] = None,
-) -> Dict[str, pd.DataFrame]:
+    scenarios: list[Scenario] | None = None,
+) -> dict[str, pd.DataFrame]:
     """Compute correlation matrix under each stress scenario.
 
     Returns dict of scenario_name → correlation DataFrame.
@@ -258,7 +258,7 @@ def stress_correlation_matrix(
     return matrices
 
 
-def report_markdown(stress_result: Dict) -> str:
+def report_markdown(stress_result: dict) -> str:
     """Generate markdown stress test report."""
     lines = [
         "# Portfolio Stress Test Report",

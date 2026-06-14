@@ -15,7 +15,6 @@ import os
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 from dotenv import load_dotenv
@@ -25,27 +24,27 @@ sys.path.insert(0, str(PROJECT_ROOT))
 load_dotenv(PROJECT_ROOT / ".env")
 
 from infrastructure.kg_schema import (
-    NODE_STOCK,
+    CONSTRAINT_DDL,
+    INDEX_DDL,
+    INDUSTRY_TAXONOMY,
+    NODE_EVENT,
     NODE_FACTOR,
     NODE_INDUSTRY,
     NODE_REPORT,
-    NODE_EVENT,
     NODE_RISK,
+    NODE_STOCK,
     REL_CORRELATES,
     REL_HAS_FACTOR,
     REL_IN_INDUSTRY,
     REL_MENTIONED,
     REL_TRIGGERED,
-    CONSTRAINT_DDL,
-    INDEX_DDL,
-    INDUSTRY_TAXONOMY,
     TICKER_INDUSTRY_MAP,
-    StockNode,
+    EventNode,
     FactorNode,
     IndustryNode,
     ReportNode,
-    EventNode,
     RiskAlertNode,
+    StockNode,
 )
 
 
@@ -54,9 +53,9 @@ class KnowledgeGraph:
 
     def __init__(
         self,
-        uri: Optional[str] = None,
-        user: Optional[str] = None,
-        password: Optional[str] = None,
+        uri: str | None = None,
+        user: str | None = None,
+        password: str | None = None,
     ):
         self._driver = None
         self._uri = uri or os.getenv("NEO4J_URI", "bolt://localhost:7687")
@@ -185,7 +184,7 @@ class KnowledgeGraph:
                 self._merge_industry(session, IndustryNode(name=key, sector=name))
             print(f"[KG] Ingested {len(INDUSTRY_TAXONOMY)} industries")
 
-    def ingest_pipeline_tickers(self, tickers: list, df: Optional[pd.DataFrame] = None):
+    def ingest_pipeline_tickers(self, tickers: list, df: pd.DataFrame | None = None):
         """摄入流水线标的 + 行业关系 + 因子关系.
 
         Args:
@@ -207,7 +206,7 @@ class KnowledgeGraph:
 
                 # Stock → Industry
                 if industry_key:
-                    ind_name = INDUSTRY_TAXONOMY.get(industry_key, industry_key)
+                    INDUSTRY_TAXONOMY.get(industry_key, industry_key)
                     session.run(
                         f"MATCH (s:{NODE_STOCK} {{ticker: $ticker}}) "
                         f"MERGE (i:{NODE_INDUSTRY} {{name: $industry}}) "
@@ -514,8 +513,8 @@ class KnowledgeGraph:
 
 def ingest_all(
     tickers: list,
-    price_df: Optional[pd.DataFrame] = None,
-    factor_df: Optional[pd.DataFrame] = None,
+    price_df: pd.DataFrame | None = None,
+    factor_df: pd.DataFrame | None = None,
     reports_dir: str = "company/reports",
 ) -> dict:
     """一键摄入: 行业→标的→因子→报告→事件.

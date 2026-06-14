@@ -13,8 +13,8 @@ import warnings
 
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.stattools import coint
 import statsmodels.api as sm
+from statsmodels.tsa.stattools import coint
 
 warnings.filterwarnings("ignore")
 

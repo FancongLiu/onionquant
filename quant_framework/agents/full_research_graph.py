@@ -31,7 +31,7 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, StateGraph
 
 try:
-    from stigmergy import StigmergyScheduler, TaskSpec, DispatchResult
+    from stigmergy import DispatchResult, StigmergyScheduler, TaskSpec
     _STIGMERGY_AVAILABLE = True
 except ImportError:
     _STIGMERGY_AVAILABLE = False
@@ -392,7 +392,7 @@ def _compute_risk_metrics(market_data: dict[str, dict]) -> dict[str, dict]:
             stock = yf.Ticker(ticker.upper())
             hist = stock.history(period="6mo")
             if hist.empty:
-                results[ticker] = {"error": f"no hist data for metrics"}
+                results[ticker] = {"error": "no hist data for metrics"}
                 continue
             closes = hist["Close"].values.astype(float)
             returns = np.diff(np.log(np.maximum(closes, 1e-10)))
@@ -408,7 +408,7 @@ def _compute_risk_metrics(market_data: dict[str, dict]) -> dict[str, dict]:
             ann_vol = float(ep.annual_volatility(returns, annualization=252))
 
             # Risk threshold engine
-            engine = RiskThresholdEngine()
+            RiskThresholdEngine()
             scores, rte_result = RiskThresholdEngine.from_returns(returns)
 
             results[ticker] = {
@@ -698,7 +698,7 @@ def _make_dept_node(dept_key: str, progress_callback=None):
                 conf_lines = [f"  {DEPT_NAMES.get(d, d)}: {conf[d]:.2f}/10"
                               for d in DEPT_ORDER[:-2] if d in conf]  # exclude ceo_office + chairman
                 if conf_lines:
-                    context_parts.append(f"\n🎯 各部门置信度:\n" + "\n".join(conf_lines))
+                    context_parts.append("\n🎯 各部门置信度:\n" + "\n".join(conf_lines))
                     valid_scores = [conf[d] for d in DEPT_ORDER[:-2] if d in conf]
                     if valid_scores:
                         avg = sum(valid_scores) / len(valid_scores)

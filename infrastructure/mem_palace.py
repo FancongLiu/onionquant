@@ -18,11 +18,10 @@ from __future__ import annotations
 import hashlib
 import re
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 import numpy as np
-from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import TruncatedSVD
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
 # ── Optional: sentence-transformers for stronger embeddings ──
@@ -36,7 +35,7 @@ except ImportError:
 # ── Frontmatter parser ──────────────────────────────────────
 
 
-def _parse_frontmatter(text: str) -> Tuple[dict, str]:
+def _parse_frontmatter(text: str) -> tuple[dict, str]:
     """Parse YAML-style frontmatter from memory files. Returns (meta, body)."""
     meta = {}
     body = text
@@ -89,7 +88,7 @@ class MemoryCard:
         self.room = memory_type  # room = memory type by default
 
     @classmethod
-    def from_file(cls, path: Path) -> "MemoryCard":
+    def from_file(cls, path: Path) -> MemoryCard:
         text = path.read_text(encoding="utf-8")
         meta, body = _parse_frontmatter(text)
         return cls(
@@ -136,14 +135,14 @@ class MemPalace:
         self.lsa_components = min(lsa_components, 64)
 
         # State
-        self.cards: Dict[str, MemoryCard] = {}
-        self.rooms: Dict[str, List[str]] = {}  # room_name -> [card_ids]
+        self.cards: dict[str, MemoryCard] = {}
+        self.rooms: dict[str, list[str]] = {}  # room_name -> [card_ids]
 
         # Vector index
-        self._vectorizer: Optional[TfidfVectorizer] = None
-        self._lsa: Optional[TruncatedSVD] = None
+        self._vectorizer: TfidfVectorizer | None = None
+        self._lsa: TruncatedSVD | None = None
         self._index_matrix = None  # LSA-transformed matrix
-        self._index_ids: List[str] = []  # card IDs in index order
+        self._index_ids: list[str] = []  # card IDs in index order
         self._st_model = None
 
         self._load()
@@ -253,9 +252,9 @@ class MemPalace:
         self,
         query: str,
         k: int = 5,
-        room: Optional[str] = None,
+        room: str | None = None,
         min_score: float = 0.0,
-    ) -> List[Tuple[MemoryCard, float]]:
+    ) -> list[tuple[MemoryCard, float]]:
         """Semantic search across memories.
 
         Args:
@@ -293,7 +292,7 @@ class MemPalace:
 
     def _semantic_search(
         self, query: str, candidate_ids: set, k: int
-    ) -> List[Tuple[MemoryCard, float]]:
+    ) -> list[tuple[MemoryCard, float]]:
         """LSA-based semantic search."""
         # Also try embedding-based if available
         if self._st_model is not None:
@@ -318,7 +317,7 @@ class MemPalace:
 
     def _tfidf_search(
         self, query: str, candidate_ids: set, k: int
-    ) -> List[Tuple[MemoryCard, float]]:
+    ) -> list[tuple[MemoryCard, float]]:
         """TF-IDF cosine similarity search (fallback when LSA can't be built)."""
         query_vec = self._vectorizer.transform([query])
         tfidf_matrix = self._index_matrix  # raw TF-IDF when no LSA
@@ -339,7 +338,7 @@ class MemPalace:
 
     def _embedding_search(
         self, query: str, candidate_ids: set, k: int
-    ) -> List[Tuple[MemoryCard, float]]:
+    ) -> list[tuple[MemoryCard, float]]:
         """Sentence-transformer embedding search (strongest semantic match)."""
         query_emb = self._st_model.encode([query], normalize_embeddings=True)[0]
 
@@ -363,7 +362,7 @@ class MemPalace:
 
     def _keyword_search(
         self, query: str, candidate_ids: set, k: int
-    ) -> List[Tuple[MemoryCard, float]]:
+    ) -> list[tuple[MemoryCard, float]]:
         """Simple keyword overlap fallback (tiny corpus)."""
         query_words = set(query.lower().split())
         scored = []
@@ -382,7 +381,7 @@ class MemPalace:
 
     # ── Room operations ──────────────────────────────────────
 
-    def relevant_rooms(self, query: str) -> List[Tuple[str, float]]:
+    def relevant_rooms(self, query: str) -> list[tuple[str, float]]:
         """Find which rooms are most relevant to a query.
 
         Returns rooms ranked by relevance score.
@@ -392,7 +391,7 @@ class MemPalace:
 
         # Search broadly, then aggregate scores by room
         results = self.search(query, k=len(self.cards))
-        room_scores: Dict[str, float] = {}
+        room_scores: dict[str, float] = {}
         for card, score in results:
             room_scores[card.room] = max(
                 room_scores.get(card.room, 0.0), score
@@ -401,15 +400,15 @@ class MemPalace:
         ranked = sorted(room_scores.items(), key=lambda x: -x[1])
         return ranked
 
-    def list_rooms(self) -> Dict[str, int]:
+    def list_rooms(self) -> dict[str, int]:
         """Return room name -> card count."""
         return {room: len(ids) for room, ids in self.rooms.items()}
 
-    def get_room_cards(self, room: str) -> List[MemoryCard]:
+    def get_room_cards(self, room: str) -> list[MemoryCard]:
         """Get all cards in a room."""
         return [self.cards[cid] for cid in self.rooms.get(room, []) if cid in self.cards]
 
-    def get_card(self, card_id: str) -> Optional[MemoryCard]:
+    def get_card(self, card_id: str) -> MemoryCard | None:
         return self.cards.get(card_id)
 
     # ── Context builder ──────────────────────────────────────
@@ -418,7 +417,7 @@ class MemPalace:
         self,
         query: str,
         max_tokens: int = 800,
-        room: Optional[str] = None,
+        room: str | None = None,
     ) -> str:
         """Build a context injection string relevant to a query.
 
@@ -468,7 +467,7 @@ class MemPalace:
 
 def build_palace_from_store(
     memory_dir: Path,
-    store_path: Optional[Path] = None,
+    store_path: Path | None = None,
 ) -> MemPalace:
     """Factory: build a MemPalace from a memory directory + optional MemoryStore.
 

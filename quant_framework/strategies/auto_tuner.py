@@ -7,30 +7,31 @@
 
 Integrates with sensitivity.py and optimizer.py."""
 
-import numpy as np
-from typing import Dict, List, Callable, Tuple
-from dataclasses import dataclass, field
 import logging
+from collections.abc import Callable
+from dataclasses import dataclass, field
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
 class TuneResult:
-    best_params: Dict[str, float]
-    baseline_params: Dict[str, float]
+    best_params: dict[str, float]
+    baseline_params: dict[str, float]
     best_score: float
     baseline_score: float
     improvement_pct: float
     n_iterations: int
-    tuned_params: List[str]
-    history: List[Dict] = field(default_factory=list)
+    tuned_params: list[str]
+    history: list[dict] = field(default_factory=list)
 
 
 def auto_tune(
-    fn: Callable[..., Dict],
-    base_params: Dict[str, float],
-    param_bounds: Dict[str, Tuple[float, float]],
+    fn: Callable[..., dict],
+    base_params: dict[str, float],
+    param_bounds: dict[str, tuple[float, float]],
     output_key: str = "sharpe",
     n_calls: int = 50,
     elasticity_threshold: float = 0.1,

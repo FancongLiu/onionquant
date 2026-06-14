@@ -4,12 +4,13 @@ Output: E:/HVAC_PDF_search/HANDOFF_REMAINING_NOT_FOUND.md
 """
 
 import json
-import openpyxl
 from collections import defaultdict
+
+import openpyxl
 
 # Load manifest
 with open(
-    "e:/2026_AgentStudy/Python_code/hvac_manuals/manifest.json", "r", encoding="utf-8"
+    "e:/2026_AgentStudy/Python_code/hvac_manuals/manifest.json", encoding="utf-8"
 ) as f:
     manifest = json.load(f)
 

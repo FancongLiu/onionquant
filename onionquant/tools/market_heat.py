@@ -21,7 +21,7 @@ Usage:
 import json
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import requests
@@ -298,7 +298,7 @@ class MarketHeat:
                 r'<a[^>]*class="screener-link"[^>]*>(\w+)</a>', html
             )
             # 找 volume 列 (第5列数字)
-            vol_matches = re.findall(
+            re.findall(
                 r'<td[^>]*class="screener-body-table-nw"[^>]*>([\d,]+)</td>',
                 html,
             )
@@ -396,7 +396,7 @@ class MarketHeat:
 
         elapsed = time.time() - start
         snapshot = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "volume_heat": vol_results,
             "unusual_count": len(unusual),
             "options_flow": options_results,

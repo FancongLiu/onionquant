@@ -16,7 +16,6 @@ Usage:
 
 import argparse
 import warnings
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -126,7 +125,7 @@ FACTOR_GROUPS = {
 
 
 def compute_all_factors(
-    df: pd.DataFrame, factors: Optional[list] = None
+    df: pd.DataFrame, factors: list | None = None
 ) -> pd.DataFrame:
     """安全计算所有因子（无 eval()）。
 

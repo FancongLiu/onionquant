@@ -1,6 +1,7 @@
 """Risk management routes — limit checks, enhanced risk."""
 
 from datetime import datetime
+
 from fastapi import APIRouter
 
 from .shared import PROJECT_ROOT, RISK_LIMITS, notify_all
@@ -17,11 +18,12 @@ async def risk_limit_check():
     if price_files:
         try:
             import pandas as pd
+
             from quant_framework.risk.risk_metrics import (
-                var_historical,
                 ann_vol,
                 max_drawdown,
                 sharpe_ratio,
+                var_historical,
             )
 
             df = pd.concat([pd.read_parquet(f) for f in price_files[:5]])

@@ -4,15 +4,15 @@
 Uses pandas/numpy for all calculations. Integrates with the factor engine
 and factor combiner for end-to-end factor evaluation."""
 
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Optional, Tuple
-from datetime import datetime
 
 
 def rolling_ic(
     factor_df: pd.DataFrame,
-    factor_cols: List[str],
+    factor_cols: list[str],
     forward_returns: pd.Series,
     window: int = 21,
 ) -> pd.DataFrame:
@@ -90,7 +90,7 @@ def _estimate_decay(series: pd.Series, max_lag: int = 60) -> float:
 
 def factor_turnover(
     factor_df: pd.DataFrame,
-    factor_cols: List[str],
+    factor_cols: list[str],
     window: int = 21,
 ) -> pd.DataFrame:
     """Compute factor turnover — how much factor decile rankings change period-to-period.
@@ -159,7 +159,7 @@ def quantile_returns(
 
 def quantile_spread_summary(
     factor_df: pd.DataFrame,
-    factor_cols: List[str],
+    factor_cols: list[str],
     returns: pd.Series,
     top_q: int = 4,
     bottom_q: int = 0,
@@ -198,7 +198,7 @@ def quantile_spread_summary(
 
 def factor_correlation_heatmap(
     factor_df: pd.DataFrame,
-    factor_cols: List[str],
+    factor_cols: list[str],
 ) -> pd.DataFrame:
     """Compute factor correlation matrix for redundancy detection."""
     valid = [c for c in factor_cols if c in factor_df.columns]
@@ -210,10 +210,10 @@ def factor_correlation_heatmap(
 def full_analysis(
     factor_df: pd.DataFrame,
     returns: pd.Series,
-    factor_cols: Optional[List[str]] = None,
+    factor_cols: list[str] | None = None,
     ic_window: int = 21,
     n_quantiles: int = 5,
-) -> Dict:
+) -> dict:
     """Run complete factor performance analysis.
 
     Returns dict with ic_summary, turnover_summary, quantile_spread, correlation_matrix.
@@ -275,7 +275,7 @@ def full_analysis(
     }
 
 
-def report_markdown(analysis: Dict) -> str:
+def report_markdown(analysis: dict) -> str:
     """Generate a markdown report from full_analysis output."""
     assess = analysis.get("assessment", {})
     lines = [
@@ -338,7 +338,7 @@ def report_markdown(analysis: Dict) -> str:
 
 def _make_demo_data(
     n: int = 504, n_factors: int = 5, seed: int = 42
-) -> Tuple[pd.DataFrame, pd.Series]:
+) -> tuple[pd.DataFrame, pd.Series]:
     rng = np.random.default_rng(seed)
     factor_data = {}
     for i in range(n_factors):

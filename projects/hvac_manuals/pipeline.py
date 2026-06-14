@@ -11,14 +11,14 @@ Complete workflow:
 Verification is script-based (pdfplumber), not AI. Only edge cases get flagged.
 """
 
-import sys
 import io
-import re
 import json
+import re
 import subprocess
-from pathlib import Path
+import sys
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from pathlib import Path
 
 import openpyxl
 import requests
@@ -117,7 +117,7 @@ session.headers.update(
 
 
 def _ts():
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+    return datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -179,7 +179,7 @@ def normalize_brand(brand_label: str) -> str:
 def build_manifest(rows):
     """Group rows into unique manuals. Returns (manifest, row_to_manual)."""
     if MANIFEST_PATH.exists():
-        with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
+        with open(MANIFEST_PATH, encoding="utf-8") as f:
             manifest = json.load(f)
     else:
         manifest = {}
@@ -192,7 +192,7 @@ def build_manifest(rows):
         query = str(r.get("Suggested_Manual_Query", ""))
         series = model_series(model)
         ref_id = str(r.get("ReferenceId", ""))
-        pdf_link_col = str(r.get("pdf_link", "")).strip() if r.get("pdf_link") else ""
+        str(r.get("pdf_link", "")).strip() if r.get("pdf_link") else ""
 
         # Deduplicate: brand + series = one manual
         manual_id = f"{brand}__{series}"
@@ -298,7 +298,7 @@ def fetch_url(url: str, timeout: int = 30) -> str | None:
 def extract_pdf_links_from_html(html: str, brand: str) -> list[dict]:
     """Extract DocumentURL / PDF links from product page HTML."""
     results = []
-    cfg = BRAND_CONFIG.get(brand, {})
+    BRAND_CONFIG.get(brand, {})
 
     # Pattern 1: DocumentURL JSON-like embedded data (Rheem style)
     # "DocumentURL":"https://files.myrheem.com/..."
@@ -458,7 +458,6 @@ def verify_pdf_against_row(pdf_text: str, row: dict) -> dict:
 
     evidence_parts = []
     score = 0
-    max_score = 25  # brand(5) + model(5) + refrigerant(5) + capacity(3) + EER(3) + IEER(3) + bonus(1)
 
     text_upper = pdf_text.upper()
 

@@ -12,7 +12,6 @@ Usage:
 
 import argparse
 import warnings
-from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -23,7 +22,7 @@ warnings.filterwarnings("ignore")
 
 def detect_regimes(
     returns: pd.Series, n_regimes: int = 2, switch_variance: bool = True, **kwargs
-) -> Dict:
+) -> dict:
     """使用 Markov Switching 模型检测市场状态。
 
     Args:
@@ -101,7 +100,7 @@ def _regime_label(ann_ret: float, ann_vol: float) -> str:
         return "sideways"
 
 
-def classify_current(returns: pd.Series, n_regimes: int = 2) -> Dict:
+def classify_current(returns: pd.Series, n_regimes: int = 2) -> dict:
     """快速分类当前市场状态 (使用最近 252 个交易日)。"""
     r = returns.dropna().tail(252)
     if len(r) < 60:
@@ -121,7 +120,7 @@ def classify_current(returns: pd.Series, n_regimes: int = 2) -> Dict:
     }
 
 
-def regime_transition_matrix(result: Dict) -> Optional[pd.DataFrame]:
+def regime_transition_matrix(result: dict) -> pd.DataFrame | None:
     """从 fitted 结果提取状态转移矩阵 (需重新拟合提取 params)."""
     if "error" in result:
         return None

@@ -8,7 +8,6 @@ import logging
 import os
 import time
 from pathlib import Path
-from typing import Optional
 
 import pandas as pd
 import requests
@@ -37,10 +36,10 @@ def get_api_key() -> str:
 def fetch_news_sentiment(
     tickers: str,
     api_key: str,
-    time_from: Optional[str] = None,
-    time_to: Optional[str] = None,
+    time_from: str | None = None,
+    time_to: str | None = None,
     limit: int = 50,
-) -> Optional[pd.DataFrame]:
+) -> pd.DataFrame | None:
     """Fetch news sentiment for given tickers from Alpha Vantage."""
     params = {
         "function": "NEWS_SENTIMENT",

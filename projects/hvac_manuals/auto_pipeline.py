@@ -11,19 +11,19 @@ Usage:
   python auto_pipeline.py --resume # resume from checkpoint
 """
 
-import sys
-import io
-import re
-import json
-import time
-import logging
 import argparse
-from pathlib import Path
-from datetime import datetime, timezone
+import io
+import json
+import logging
+import re
+import sys
+import time
 from collections import defaultdict
+from datetime import UTC, datetime
+from pathlib import Path
 
-import requests
 import openpyxl
+import requests
 from ddgs import DDGS
 
 # --- Setup ---
@@ -352,13 +352,6 @@ def search_bosch(entry: dict) -> list[dict]:
     token = model_token(models[0]) if models else series
 
     # Strategy 1: Try known CDN paths
-    cdn_base = "https://www.bosch-homecomfort.com/us/media/country_pool/documents"
-    cdn_patterns = [
-        f"{cdn_base}/engineering-submittal-sheets/",
-        f"{cdn_base}/installation-manuals/",
-        f"{cdn_base}/downloads-for-bosch-products/heat-pumps-manuals/",
-        f"{cdn_base}/downloads-for-bosch-products/",
-    ]
 
     # Strategy 2: Web search for bosch-homecomfort.com PDFs
     for model in models[:2]:
@@ -795,7 +788,7 @@ def build_manifest(rows):
 
 def load_checkpoint():
     if CHECKPOINT_PATH.exists():
-        with open(CHECKPOINT_PATH, "r", encoding="utf-8") as f:
+        with open(CHECKPOINT_PATH, encoding="utf-8") as f:
             return json.load(f)
     return {"processed": [], "failed": [], "started_at": None}
 
@@ -806,7 +799,7 @@ def save_checkpoint(manifest):
     cp = {
         "processed": processed,
         "failed": failed,
-        "started_at": datetime.now(timezone.utc).isoformat(),
+        "started_at": datetime.now(UTC).isoformat(),
         "total_manuals": len(manifest),
         "found_count": len(processed),
     }
@@ -907,7 +900,7 @@ def run_pipeline(resume: bool = False):
     """Main pipeline — process all manuals."""
     log.info("=" * 60)
     log.info("HVAC PDF MANUAL SEARCH — AUTONOMOUS PIPELINE")
-    log.info(f"Start: {datetime.now(timezone.utc).isoformat()}")
+    log.info(f"Start: {datetime.now(UTC).isoformat()}")
     log.info("=" * 60)
 
     checkpoint = (

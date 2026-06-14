@@ -123,7 +123,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--quick", action="store_true")
-    args = parser.parse_args()
+    parser.parse_args()
 
     print(f"Sentiment push — {datetime.now().strftime('%Y-%m-%d %H:%M')}")
     snapshots = [fetch_snapshot(t) for t in WATCH_TICKERS]

@@ -40,13 +40,12 @@ if sys.platform == "win32":
     sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
     sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
-import threading
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from sse_starlette.sse import EventSourceResponse
 
 from infrastructure.api_proxy import TokenBucket
-from sse_starlette.sse import EventSourceResponse
 
 app = FastAPI(title="OnionQuant Dashboard")
 
@@ -190,25 +189,24 @@ async def auth_middleware(request: Request, call_next):
 
 # ─── Shared state imports ────────────────────────────
 
+from onionquant.api.dashboard import router as dashboard_router
+
+# ─── Include route modules ───────────────────────────
+from onionquant.api.quant import router as quant_router
+from onionquant.api.risk import router as risk_router
+from onionquant.api.sentiment import router as sentiment_router
 from onionquant.api.shared import (
     INBOX_DIR,
-    PROCESSED_DIR,
     OUTBOX_DIR,
-    subscribers,
-    notify_all,
-    wechat_status,
+    PROCESSED_DIR,
+    WECHAT_AGENT_ID,
     WECHAT_CONFIGURED,
     WECHAT_CORP_ID,
     WECHAT_SECRET,
-    WECHAT_AGENT_ID,
+    notify_all,
+    subscribers,
+    wechat_status,
 )
-
-# ─── Include route modules ───────────────────────────
-
-from onionquant.api.quant import router as quant_router
-from onionquant.api.risk import router as risk_router
-from onionquant.api.dashboard import router as dashboard_router
-from onionquant.api.sentiment import router as sentiment_router
 from onionquant.api.wechat import router as wechat_router
 
 app.include_router(quant_router)
@@ -762,12 +760,12 @@ def _parse_outbox_message(filename: str, text: str) -> dict:
     # Fallback: use file modification time when content timestamp is unparseable
     if not ts_iso:
         try:
-            from datetime import datetime, timezone, timedelta
+            from datetime import datetime, timedelta, timezone
 
             fp = OUTBOX_DIR / filename
             if fp.exists():
                 mtime = fp.stat().st_mtime
-                from datetime import datetime, timezone, timedelta
+                from datetime import datetime, timedelta, timezone
 
                 dt = datetime.fromtimestamp(mtime)
                 ts_iso = dt.isoformat()
@@ -1043,11 +1041,10 @@ def _factor_alert_thread():
 
     while True:
         try:
-            from quant_framework.strategies.factor_decay import check_decay_alerts
-            from quant_framework.strategies.factor_combiner import _cs_ic_series
-            from scripts.run_pipeline import step1_fetch, step2_factors
-
             from onionquant.api.shared import QUANT_TICKERS
+            from quant_framework.strategies.factor_combiner import _cs_ic_series
+            from quant_framework.strategies.factor_decay import check_decay_alerts
+            from scripts.run_pipeline import step1_fetch, step2_factors
 
             tickers = QUANT_TICKERS[:15]
             df = step1_fetch(tickers, "2025-01-01")
@@ -1167,7 +1164,7 @@ async def api_alpaca_account():
 @app.get("/api/market/snapshot")
 async def api_market_snapshot():
     """Compact market snapshot for sidebar — MU, INTC, SOX."""
-    from datetime import datetime, timezone, timedelta
+    from datetime import datetime, timedelta, timezone
 
     tz_cn = timezone(timedelta(hours=8))
     result = {"ok": True, "updated": datetime.now(tz_cn).strftime("%H:%M:%S")}
@@ -1209,7 +1206,7 @@ async def sse_endpoint():
                 try:
                     msg = await asyncio.wait_for(queue.get(), timeout=30)
                     yield msg
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     yield {
                         "event": "heartbeat",
                         "data": json.dumps({"ts": datetime.now().isoformat()}),
@@ -1341,7 +1338,7 @@ async def api_research_dxyz():
 
         tk = yf.Ticker("DXYZ")
         info = tk.info or {}
-        hist = tk.history(period="5d")
+        tk.history(period="5d")
         price = info.get("currentPrice") or info.get("regularMarketPrice") or 0
         prev_close = (
             info.get("regularMarketPreviousClose") or info.get("previousClose") or price
@@ -1520,8 +1517,8 @@ if static_dir.exists():
 
 def start_watchdog():
     try:
-        from watchdog.observers import Observer
         from watchdog.events import FileSystemEventHandler
+        from watchdog.observers import Observer
 
         class ChangeHandler(FileSystemEventHandler):
             def on_modified(self, event):

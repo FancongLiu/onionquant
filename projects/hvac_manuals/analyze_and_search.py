@@ -5,16 +5,17 @@ Reads the Excel task list, groups rows by shared manual,
 searches manufacturer portals, and downloads PDFs.
 """
 
-import sys
 import io
+import sys
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 
-from pathlib import Path
-from collections import defaultdict
-import openpyxl
-import re
 import json
+import re
+from collections import defaultdict
+from pathlib import Path
+
+import openpyxl
 
 EXCEL_PATH = r"E:\HVAC_PDF_search\Unitary_pdf_manual_search_0519_lite.xlsx"
 PDF_DIR = Path(__file__).parent / "pdf_downloads"

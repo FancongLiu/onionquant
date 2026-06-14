@@ -3,14 +3,15 @@ Fast pipeline with sitemap caching + CDN patterns. No web search.
 Saves manifest.json after every brand.
 """
 
-import sys
 import io
-import re
 import json
-import time
 import logging
-from pathlib import Path
+import re
+import sys
+import time
 from collections import defaultdict
+from pathlib import Path
+
 import requests
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
@@ -58,7 +59,7 @@ def safe_fn(n):
 
 
 def load_m():
-    return json.loads(open(MANIFEST_PATH, "r", encoding="utf-8").read())
+    return json.loads(open(MANIFEST_PATH, encoding="utf-8").read())
 
 
 def save_m(m):

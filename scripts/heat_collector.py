@@ -17,10 +17,10 @@ heat_collector.py — 热度数据持续采集器 (零 AI token, 纯 Python)
 """
 
 import json
+import signal
 import sys
 import time
-import signal
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -150,7 +150,7 @@ def collect_market_heat() -> dict | None:
 
 def collect_round() -> dict:
     """执行一轮完整采集."""
-    ts = datetime.now(timezone.utc)
+    ts = datetime.now(UTC)
     ts_str = ts.strftime("%Y-%m-%d %H:%M UTC")
     print(f"\n{'=' * 55}")
     print(f"  [COLLECT] {ts_str}")

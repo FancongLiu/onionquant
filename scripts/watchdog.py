@@ -8,15 +8,17 @@
 """
 
 import os
+import socket
 import subprocess
 import sys
 import time
-import socket
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
+
+from scripts._subprocess_utils import Popen, run
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(PROJECT_ROOT / ".env")
@@ -94,7 +96,7 @@ def _check_port(port: int) -> bool:
 def _check_process_name(name: str) -> bool:
     """Check if a process name contains the given string."""
     try:
-        result = subprocess.run(
+        result = run(
             [
                 "powershell.exe",
                 "-NoProfile",
@@ -115,7 +117,7 @@ def _check_process_name(name: str) -> bool:
 def _check_python_script(script_name: str) -> bool:
     """Check if a Python script is running by inspecting command lines."""
     try:
-        result = subprocess.run(
+        result = run(
             [
                 "powershell.exe",
                 "-NoProfile",
@@ -136,11 +138,12 @@ def _check_python_script(script_name: str) -> bool:
 def _start_process(args: list) -> bool:
     """Start a background process and return True if successful."""
     try:
-        subprocess.Popen(
+        Popen(
             args,
             cwd=str(PROJECT_ROOT),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            encoding="utf-8",
             creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
         )
         return True
@@ -160,7 +163,7 @@ def _start_cloudflared() -> bool:
             "cloudflared",
         ]:
             try:
-                result = subprocess.run(
+                result = run(
                     [path, "--version"],
                     capture_output=True,
                     text=True,
@@ -178,7 +181,7 @@ def _start_cloudflared() -> bool:
         return False
 
     try:
-        subprocess.Popen(
+        Popen(
             [
                 CLOUDFLARED_BIN,
                 "tunnel",
@@ -191,6 +194,7 @@ def _start_cloudflared() -> bool:
             ],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            encoding="utf-8",
             creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
         )
         return True
@@ -202,7 +206,7 @@ def _start_cloudflared() -> bool:
 def _check_wsl_tmux() -> bool:
     """Check if WSL tmux ceo-24x7 is running."""
     try:
-        result = subprocess.run(
+        result = run(
             ["wsl", "-e", "bash", "-c", "tmux has-session -t ceo-24x7 2>&1"],
             capture_output=True,
             text=True,
@@ -218,7 +222,7 @@ def _check_wsl_tmux() -> bool:
 def _start_wsl_tmux() -> bool:
     """Start WSL tmux with Claude Code inbox relay."""
     try:
-        subprocess.Popen(
+        Popen(
             [
                 "wsl",
                 "-e",
@@ -228,6 +232,7 @@ def _start_wsl_tmux() -> bool:
             ],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            encoding="utf-8",
         )
         return True
     except Exception as e:
@@ -244,7 +249,7 @@ def start_backup_tunnel():
     if not CLOUDFLARED_BIN:
         return None
     try:
-        proc = subprocess.Popen(
+        proc = Popen(
             [CLOUDFLARED_BIN, "tunnel", "--url", "http://localhost:8765"],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
@@ -333,7 +338,7 @@ def main():
         "cloudflared",
     ]:
         try:
-            result = subprocess.run(
+            result = run(
                 [path, "--version"],
                 capture_output=True,
                 text=True,

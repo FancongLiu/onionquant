@@ -10,11 +10,11 @@ Usage:
     orders = bridge.get_orders(status="open")
 """
 
-import os
 import logging
-from typing import Dict, List, Optional, Literal
+import os
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Literal
 
 from dotenv import load_dotenv
 
@@ -39,18 +39,18 @@ class OrderResult:
     order_type: OrderType
     status: str
     filled_qty: float = 0.0
-    filled_avg_price: Optional[float] = None
+    filled_avg_price: float | None = None
     submitted_at: str = field(default_factory=lambda: datetime.now().isoformat())
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass
 class Position:
     symbol: str
     qty: float
-    market_value: Optional[float] = None
-    avg_entry_price: Optional[float] = None
-    unrealized_pl: Optional[float] = None
+    market_value: float | None = None
+    avg_entry_price: float | None = None
+    unrealized_pl: float | None = None
 
 
 class BrokerBridge:
@@ -62,8 +62,8 @@ class BrokerBridge:
 
     def __init__(
         self,
-        api_key: Optional[str] = None,
-        secret_key: Optional[str] = None,
+        api_key: str | None = None,
+        secret_key: str | None = None,
         paper: bool = True,
     ):
         self.api_key = api_key or os.getenv("ALPACA_API_KEY", "")
@@ -71,7 +71,7 @@ class BrokerBridge:
         self.paper = paper if self.api_key else True
         self._client = None
         self._connected = False
-        self._order_log: List[Dict] = []  # fallback recorder
+        self._order_log: list[dict] = []  # fallback recorder
 
         if self.api_key and self.secret_key:
             self._connect()
@@ -111,8 +111,8 @@ class BrokerBridge:
         qty: float,
         side: OrderSide = "buy",
         order_type: OrderType = "market",
-        limit_price: Optional[float] = None,
-        stop_price: Optional[float] = None,
+        limit_price: float | None = None,
+        stop_price: float | None = None,
         time_in_force: TimeInForce = "day",
     ) -> OrderResult:
         """Place an order. Falls back to recording if not connected."""
@@ -120,11 +120,13 @@ class BrokerBridge:
             return self._record_order(symbol, qty, side, order_type)
 
         try:
-            from alpaca.trading.requests import MarketOrderRequest, LimitOrderRequest
             from alpaca.trading.enums import (
                 OrderSide as AlpacaSide,
+            )
+            from alpaca.trading.enums import (
                 TimeInForce as AlpacaTIF,
             )
+            from alpaca.trading.requests import LimitOrderRequest, MarketOrderRequest
 
             side_enum = AlpacaSide.BUY if side == "buy" else AlpacaSide.SELL
 
@@ -180,7 +182,7 @@ class BrokerBridge:
                 error=str(e),
             )
 
-    def get_positions(self) -> List[Position]:
+    def get_positions(self) -> list[Position]:
         """Get current positions."""
         if not self.is_connected:
             return []
@@ -203,14 +205,14 @@ class BrokerBridge:
             logger.error(f"get_positions failed: {e}")
             return []
 
-    def get_orders(self, status: str = "open", limit: int = 50) -> List[OrderResult]:
+    def get_orders(self, status: str = "open", limit: int = 50) -> list[OrderResult]:
         """Query orders by status (open, closed, all)."""
         if not self.is_connected:
             return self._order_log  # type: ignore
 
         try:
-            from alpaca.trading.requests import GetOrdersRequest
             from alpaca.trading.enums import QueryOrderStatus
+            from alpaca.trading.requests import GetOrdersRequest
 
             status_map = {
                 "open": QueryOrderStatus.OPEN,
@@ -248,7 +250,7 @@ class BrokerBridge:
             logger.error(f"Cancel order failed: {e}")
             return False
 
-    def get_account_summary(self) -> Dict:
+    def get_account_summary(self) -> dict:
         """Get account summary (buying power, portfolio value, etc.)."""
         if not self.is_connected:
             return {"connected": False, "mode": "recorder"}

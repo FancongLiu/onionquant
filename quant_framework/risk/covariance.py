@@ -6,10 +6,10 @@ factor-model-based (PCA + known factors), and robust MCD estimation.
 
 All methods use sklearn/scipy — no hand-rolled covariance math."""
 
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Optional, Tuple
-from datetime import datetime
 
 
 def sample_cov(returns: pd.DataFrame) -> pd.DataFrame:
@@ -71,7 +71,7 @@ def oas(returns: pd.DataFrame) -> pd.DataFrame:
 def exponentially_weighted(
     returns: pd.DataFrame,
     span: int = 63,
-    halflife: Optional[int] = None,
+    halflife: int | None = None,
 ) -> pd.DataFrame:
     """Exponentially weighted moving covariance (RiskMetrics style).
 
@@ -93,8 +93,8 @@ def exponentially_weighted(
 def factor_model_cov(
     returns: pd.DataFrame,
     n_factors: int = 3,
-    factor_returns: Optional[pd.DataFrame] = None,
-) -> Tuple[pd.DataFrame, Dict]:
+    factor_returns: pd.DataFrame | None = None,
+) -> tuple[pd.DataFrame, dict]:
     """Factor model covariance decomposition.
 
     Σ = B Σ_f B' + D
@@ -242,7 +242,7 @@ def rolling_covariance(
     window: int = 252,
     method: str = "ledoit_wolf",
     step: int = 21,
-) -> Dict[pd.Timestamp, pd.DataFrame]:
+) -> dict[pd.Timestamp, pd.DataFrame]:
     """Rolling covariance estimation.
 
     Returns dict of date → covariance DataFrame.
@@ -272,7 +272,7 @@ def cov_to_corr(cov: pd.DataFrame) -> pd.DataFrame:
 
 def compare_estimators(
     returns: pd.DataFrame,
-    methods: Optional[List[str]] = None,
+    methods: list[str] | None = None,
 ) -> pd.DataFrame:
     """Compare multiple covariance estimators.
 

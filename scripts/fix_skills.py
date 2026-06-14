@@ -119,6 +119,7 @@ print(f'{len(dept_skills)} department SKILL.md files written')
 
 # Clean up old SOUL.md and MASTER_PROMPT.md files
 import glob
+
 for old in glob.glob(os.path.join(base, '**/SOUL.md'), recursive=True):
     os.remove(old)
     print(f'Removed: {old}')

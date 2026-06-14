@@ -1,4 +1,9 @@
-import yfinance as yf, sys, io, numpy as np
+import io
+import sys
+
+import numpy as np
+import yfinance as yf
+
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 mu = yf.download('MU', period='1mo', interval='1h', progress=False)
@@ -110,7 +115,7 @@ print(f'CMF(21): {latest_cmf:+.3f} | {"资金流入-机构吸筹" if latest_cmf>
 
 # Price position vs MAs
 latest = float(dc.iloc[-1])
-print(f'\n价格 vs 均线:')
+print('\n价格 vs 均线:')
 for ma_name, ma_val in [('20MA', ma20), ('50MA', ma50)]:
     pct = (latest/ma_val-1)*100
     print(f'  vs {ma_name}: {pct:+.1f}%')

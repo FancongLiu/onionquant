@@ -15,10 +15,10 @@ This script is intentionally simple (no external deps). Run it in background
 while you edit files in VS Code to automatically commit changes.
 """
 
+import argparse
 import os
 import subprocess
 import time
-import argparse
 
 
 def run(cmd, cwd=None):
@@ -26,8 +26,7 @@ def run(cmd, cwd=None):
         cmd,
         cwd=cwd,
         check=False,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         text=True,
         encoding="utf-8",
     )

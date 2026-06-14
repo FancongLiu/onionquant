@@ -2,13 +2,14 @@
 Targeted Ruud processor — fetches known product pages, extracts PDF links, downloads spec sheets.
 """
 
-import sys
 import io
-import re
 import json
-import time
 import logging
+import re
+import sys
+import time
 from pathlib import Path
+
 import requests
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
@@ -53,7 +54,7 @@ def safe_fn(n):
 
 
 def load_m():
-    return json.loads(open(MANIFEST_PATH, "r", encoding="utf-8").read())
+    return json.loads(open(MANIFEST_PATH, encoding="utf-8").read())
 
 
 def save_m(m):
@@ -82,10 +83,10 @@ def extract_pdfs_from_html(html):
         if url not in results:
             results.append(url)
     # Prefer spec sheets over warranty cards
-    spec_sheets = [
+    [
         u for u in results if "warranty" not in u.lower() and "spec" not in u.lower()
     ]
-    warranty = [u for u in results if "warranty" in u.lower()]
+    [u for u in results if "warranty" in u.lower()]
     # Just return all (prefer non-warranty first)
     ordered = [u for u in results if "warranty" not in u.lower()]
     ordered += [u for u in results if "warranty" in u.lower()]
@@ -123,7 +124,7 @@ def process_ruud():
     for mid, entry in ruud_pending:
         series = entry["series"]
         brand = entry["brand"]
-        models = entry.get("models", [])
+        entry.get("models", [])
         parent_url = RUUD_PRODUCT_PAGES.get(series)
 
         log.info(

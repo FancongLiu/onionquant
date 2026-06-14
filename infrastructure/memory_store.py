@@ -11,12 +11,11 @@ Key patterns from agentmemory:
   - Token budget: select top-k entries within context window budget
 """
 
-import json
 import hashlib
-from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Tuple
+import json
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from pathlib import Path
 
 import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -35,7 +34,7 @@ class MemoryEntry:
     last_accessed: str = ""  # ISO timestamp
     created_at: str = ""  # ISO timestamp
     source_file: str = ""  # Which MEMORY.md or index file
-    supersedes: List[str] = field(default_factory=list)
+    supersedes: list[str] = field(default_factory=list)
     is_active: bool = True
 
     def access(self):
@@ -81,14 +80,14 @@ class MemoryStore:
         store.decay_all()  # call periodically (weekly cron)
     """
 
-    def __init__(self, store_path: Path, memory_dir: Optional[Path] = None):
+    def __init__(self, store_path: Path, memory_dir: Path | None = None):
         self.store_path = Path(store_path)
         self.memory_dir = memory_dir
-        self.entries: Dict[str, MemoryEntry] = {}
-        self._vectorizer: Optional[TfidfVectorizer] = None
+        self.entries: dict[str, MemoryEntry] = {}
+        self._vectorizer: TfidfVectorizer | None = None
         self._tfidf_matrix = None
-        self._corpus: List[str] = []
-        self._corpus_ids: List[str] = []
+        self._corpus: list[str] = []
+        self._corpus_ids: list[str] = []
         self._load()
 
     # ── CRUD ───────────────────────────────────────────────
@@ -142,7 +141,7 @@ class MemoryStore:
         self._save()
         return fingerprint
 
-    def get(self, entry_id: str) -> Optional[MemoryEntry]:
+    def get(self, entry_id: str) -> MemoryEntry | None:
         e = self.entries.get(entry_id)
         if e:
             e.access()
@@ -199,7 +198,7 @@ class MemoryStore:
 
     def search(
         self, query: str, k: int = 5, min_strength: float = 0.0
-    ) -> List[Tuple[MemoryEntry, float]]:
+    ) -> list[tuple[MemoryEntry, float]]:
         """Search memories by TF-IDF cosine similarity. Returns (entry, score)."""
         if self._vectorizer is None or self._tfidf_matrix is None:
             # Fallback: keyword match
@@ -260,7 +259,7 @@ class MemoryStore:
         max_tokens: int = 2000,
         recency_weight: float = 0.3,
         strength_weight: float = 0.4,
-        category_boost: Optional[List[str]] = None,
+        category_boost: list[str] | None = None,
     ) -> str:
         """Build a context injection string within token budget.
 

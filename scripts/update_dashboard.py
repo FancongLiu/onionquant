@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Apply compact grid, Teams org tree, and zoomable mermaid to chairman_dashboard.html."""
 
-with open("company/chairman_dashboard.html", "r", encoding="utf-8") as f:
+with open("company/chairman_dashboard.html", encoding="utf-8") as f:
     content = f.read()
 
 changes = 0

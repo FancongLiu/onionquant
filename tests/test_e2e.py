@@ -13,7 +13,6 @@ sys.path.insert(0, str(PROJECT_ROOT))
 import numpy as np
 import pandas as pd
 
-
 # ── Helpers ─────────────────────────────────────────────────
 
 
@@ -70,17 +69,17 @@ def test_pipeline_data_to_factor():
 
 def test_pipeline_factor_to_signal():
     """Step 2→3: Factors → alpha combination → signals."""
-    from quant_framework.strategies.qlib_factor_engine import (
-        compute_all_factors,
-        neutralize_and_standardize,
+    from quant_framework.strategies.alpha_combiner import (
+        CombineConfig,
+        combine_alphas,
     )
     from quant_framework.strategies.factor_combiner import (
         equal_weighted_combine,
         generate_signals,
     )
-    from quant_framework.strategies.alpha_combiner import (
-        combine_alphas,
-        CombineConfig,
+    from quant_framework.strategies.qlib_factor_engine import (
+        compute_all_factors,
+        neutralize_and_standardize,
     )
 
     df = _make_demo_ohlcv(n_tickers=5, n_dates=200, seed=2)
@@ -109,16 +108,16 @@ def test_pipeline_factor_to_signal():
 
 def test_pipeline_signal_to_backtest():
     """Step 3→4: Signals → backtest execution."""
-    from quant_framework.strategies.qlib_factor_engine import (
-        compute_all_factors,
-        neutralize_and_standardize,
-    )
+    from quant_framework.execution.order_simulator import simulate_orders
+    from quant_framework.execution.position_sizer import size_positions
     from quant_framework.strategies.factor_combiner import (
         equal_weighted_combine,
         generate_signals,
     )
-    from quant_framework.execution.order_simulator import simulate_orders
-    from quant_framework.execution.position_sizer import size_positions
+    from quant_framework.strategies.qlib_factor_engine import (
+        compute_all_factors,
+        neutralize_and_standardize,
+    )
 
     df = _make_demo_ohlcv(n_tickers=5, n_dates=200, seed=3)
     factors = compute_all_factors(df)
@@ -147,7 +146,7 @@ def test_pipeline_signal_to_backtest():
 
 def test_pipeline_backtest_to_risk():
     """Step 4→5: Backtest results → risk analysis."""
-    from quant_framework.backtest.harness import vectorized_backtest, _make_demo_data
+    from quant_framework.backtest.harness import _make_demo_data, vectorized_backtest
     from quant_framework.risk.risk_metrics import risk_metrics_summary
     from quant_framework.risk.stress_testing import portfolio_stress_test
 
@@ -176,18 +175,20 @@ def test_pipeline_backtest_to_risk():
 
 def test_pipeline_risk_to_report():
     """Step 5→6: Risk/performance → report generation."""
+    from quant_framework.risk.covariance import (
+        compare_estimators,
+        estimate_covariance,
+    )
     from quant_framework.risk.performance_attribution import (
+        _make_demo_data,
         factor_regression,
         report_markdown,
-        _make_demo_data,
     )
-    from quant_framework.risk.covariance import (
-        estimate_covariance,
-        compare_estimators,
+    from quant_framework.strategies.factor_analysis import (
+        _make_demo_data as _fa_demo,
     )
     from quant_framework.strategies.factor_analysis import (
         full_analysis,
-        _make_demo_data as _fa_demo,
     )
 
     # Performance attribution report
@@ -217,17 +218,17 @@ def test_pipeline_risk_to_report():
 
 def test_full_e2e_workflow():
     """Complete end-to-end: data → factors → alpha → signals → backtest → risk → report."""
-    from quant_framework.strategies.qlib_factor_engine import (
-        compute_all_factors,
-        neutralize_and_standardize,
-    )
+    from quant_framework.execution.order_simulator import simulate_orders
+    from quant_framework.execution.position_sizer import size_positions
+    from quant_framework.risk.risk_metrics import risk_metrics_summary
     from quant_framework.strategies.factor_combiner import (
         equal_weighted_combine,
         generate_signals,
     )
-    from quant_framework.execution.position_sizer import size_positions
-    from quant_framework.execution.order_simulator import simulate_orders
-    from quant_framework.risk.risk_metrics import risk_metrics_summary
+    from quant_framework.strategies.qlib_factor_engine import (
+        compute_all_factors,
+        neutralize_and_standardize,
+    )
 
     # 1. Data
     df = _make_demo_ohlcv(n_tickers=8, n_dates=200, seed=42)

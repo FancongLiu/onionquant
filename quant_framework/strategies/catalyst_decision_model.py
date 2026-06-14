@@ -6,7 +6,6 @@
 """
 
 from dataclasses import dataclass
-from typing import Optional
 
 
 @dataclass
@@ -106,7 +105,7 @@ def evaluate_position(
     catalysts: list[Catalyst],
     max_position_pct: float = 1.0,
     max_loss_pct: float = -0.15,
-    nav_premium_pct: Optional[float] = None,
+    nav_premium_pct: float | None = None,
 ) -> DecisionOutput:
     """
     核心入口：给定标的+催化 → 输出交易决策。
@@ -126,7 +125,7 @@ def evaluate_position(
     -------
     DecisionOutput: 完整决策
     """
-    position_value = shares * current_price
+    shares * current_price
     cost_value = shares * cost_basis
 
     # 1. 构建情景矩阵
@@ -139,7 +138,7 @@ def evaluate_position(
     # 3. 识别极端情景
     best_scenario = max(scenarios, key=lambda s: s.price_target)
     worst_scenario = min(scenarios, key=lambda s: s.price_target)
-    max_upside = (best_scenario.price_target / current_price - 1) * 100
+    (best_scenario.price_target / current_price - 1) * 100
     max_downside = (worst_scenario.price_target / current_price - 1) * 100
 
     # 4. Kelly 仓位计算 (基于 EV 和胜率)

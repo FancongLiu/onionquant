@@ -9,8 +9,8 @@ Pattern from: anthropics/financial-services agent.yaml + steering-examples.json
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 from pathlib import Path
+
 import yaml
 
 
@@ -19,7 +19,7 @@ class WorkerAgent:
     name: str
     role: str = ""
     permissions: str = "read"  # read | write | approve
-    skills: List[str] = field(default_factory=list)
+    skills: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -41,27 +41,27 @@ class AgentManifest:
     status: str = "active"  # active | draft | deprecated
 
     system_prompt: str = ""  # Core system prompt (Markdown)
-    skills: List[SkillRef] = field(default_factory=list)
-    workers: List[WorkerAgent] = field(default_factory=list)
-    steering_examples: List[str] = field(default_factory=list)
+    skills: list[SkillRef] = field(default_factory=list)
+    workers: list[WorkerAgent] = field(default_factory=list)
+    steering_examples: list[str] = field(default_factory=list)
 
     # Permission model: allow | deny | ask
-    tool_permissions: Dict[str, str] = field(default_factory=dict)
+    tool_permissions: dict[str, str] = field(default_factory=dict)
     bash_permission: str = "ask"  # allow | deny | ask
     write_permission: str = "allow"  # allow | deny | ask
     api_permission: str = "ask"  # allow | deny | ask
 
     # Operational
-    schedule: Optional[str] = None  # cron expression for autonomous runs
+    schedule: str | None = None  # cron expression for autonomous runs
     max_retries: int = 3
     timeout_seconds: int = 300
-    requires_approval: List[str] = field(
+    requires_approval: list[str] = field(
         default_factory=list
     )  # actions needing chairman
 
     # Memory & context
     context_budget_tokens: int = 4000
-    memory_categories: List[str] = field(
+    memory_categories: list[str] = field(
         default_factory=list
     )  # relevant memory categories
 
@@ -124,7 +124,7 @@ class ManifestRegistry:
 
     def __init__(self, manifests_dir: Path):
         self.dir = Path(manifests_dir)
-        self.manifests: Dict[str, AgentManifest] = {}
+        self.manifests: dict[str, AgentManifest] = {}
         self._load()
 
     def _load(self):
@@ -135,16 +135,16 @@ class ManifestRegistry:
             except Exception as e:
                 print(f"[WARN] Failed to load {yaml_file}: {e}")
 
-    def get(self, name: str) -> Optional[AgentManifest]:
+    def get(self, name: str) -> AgentManifest | None:
         return self.manifests.get(name)
 
-    def list_active(self) -> List[AgentManifest]:
+    def list_active(self) -> list[AgentManifest]:
         return [m for m in self.manifests.values() if m.status == "active"]
 
-    def by_department(self, dept: str) -> List[AgentManifest]:
+    def by_department(self, dept: str) -> list[AgentManifest]:
         return [m for m in self.manifests.values() if m.department == dept]
 
-    def validate_all(self) -> Dict[str, List[str]]:
+    def validate_all(self) -> dict[str, list[str]]:
         """Validate all manifests, return {name: [errors]}."""
         errors = {}
         for name, m in self.manifests.items():

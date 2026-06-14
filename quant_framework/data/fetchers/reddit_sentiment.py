@@ -1,15 +1,16 @@
 """Reddit 情绪抓取 — PRAW + requests fallback → FinBERT → Parquet"""
 
-import os
-import sys
 import argparse
 import logging
-from datetime import datetime, timezone
-from typing import Optional
+import os
+import sys
+from datetime import UTC, datetime
+
 import pandas as pd
+
 from quant_framework.data.fetchers.sentiment_utils import (
-    batch_score,
     aggregate_sentiments,
+    batch_score,
 )
 
 logger = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ def _get_praw():
         return None
 
 
-def _fetch_requests(subreddit: str, limit: int, ua: Optional[str]) -> pd.DataFrame:
+def _fetch_requests(subreddit: str, limit: int, ua: str | None) -> pd.DataFrame:
     ua = ua or os.getenv("REDDIT_USER_AGENT", "sentiment-bot/0.1")
     try:
         import requests
@@ -58,7 +59,7 @@ def _fetch_requests(subreddit: str, limit: int, ua: Optional[str]) -> pd.DataFra
                 upvote_ratio=d.get("upvote_ratio", 0.5),
                 num_comments=d.get("num_comments", 0),
                 created_utc=datetime.fromtimestamp(
-                    d.get("created_utc", 0), tz=timezone.utc
+                    d.get("created_utc", 0), tz=UTC
                 ),
                 subreddit=subreddit,
                 source=f"r/{subreddit}",
@@ -70,7 +71,7 @@ def _fetch_requests(subreddit: str, limit: int, ua: Optional[str]) -> pd.DataFra
 def fetch_hot_posts(
     subreddit: str = "wallstreetbets",
     limit: int = 100,
-    user_agent: Optional[str] = None,
+    user_agent: str | None = None,
 ) -> pd.DataFrame:
     praw_inst = _get_praw()
     if praw_inst is not None:
@@ -86,7 +87,7 @@ def fetch_hot_posts(
                         upvote_ratio=getattr(s, "upvote_ratio", 0.5),
                         num_comments=s.num_comments,
                         created_utc=datetime.fromtimestamp(
-                            s.created_utc, tz=timezone.utc
+                            s.created_utc, tz=UTC
                         ),
                         subreddit=subreddit,
                         source=f"r/{subreddit}",
@@ -119,7 +120,7 @@ def _demo(subreddit: str, limit: int) -> pd.DataFrame:
                 score=max(1, 100 - i * 2),
                 upvote_ratio=0.6 + (i % 3) * 0.1,
                 num_comments=max(0, 30 - i),
-                created_utc=datetime.now(timezone.utc),
+                created_utc=datetime.now(UTC),
                 subreddit=subreddit,
                 source=f"r/{subreddit}",
             )
@@ -131,7 +132,7 @@ def _demo(subreddit: str, limit: int) -> pd.DataFrame:
 def build_daily_index(df: pd.DataFrame) -> pd.DataFrame:
     scores = batch_score(df["title"].tolist())
     agg = aggregate_sentiments(scores, weights=df["score"].clip(lower=1).tolist())
-    agg["date"] = pd.to_datetime(datetime.now(timezone.utc).date())
+    agg["date"] = pd.to_datetime(datetime.now(UTC).date())
     agg["subreddit"] = df["subreddit"].iloc[0] if not df.empty else "unknown"
     agg["post_count"] = len(df)
     return pd.DataFrame([agg])

@@ -171,14 +171,8 @@ def generate_decision(results: list) -> dict:
         return {"action": "HOLD", "reason": "无评分数据"}
 
     ranked = sorted(results, key=lambda r: r["composite"], reverse=True)
-    best = ranked[0]
+    ranked[0]
 
-    action_map = {
-        (True, True): "STRONG_BUY",
-        (True, False): "BUY",
-        (False, True): "REDUCE",
-        (False, False): "SELL",
-    }
 
     decisions = []
     for r in ranked:

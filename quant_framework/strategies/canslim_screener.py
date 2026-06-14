@@ -29,7 +29,6 @@ Usage:
 import argparse
 import logging
 import warnings
-from typing import Dict, Tuple
 
 import numpy as np
 import pandas as pd
@@ -150,7 +149,7 @@ def level3_momentum_technical(
 # ──────────────────────────────────────────────
 # Scoring
 # ──────────────────────────────────────────────
-DEFAULT_WEIGHTS: Dict[str, float] = {
+DEFAULT_WEIGHTS: dict[str, float] = {
     "eps_growth_quarterly": 0.20,
     "eps_growth_annual_3y": 0.15,
     "rs_rating": 0.15,
@@ -163,7 +162,7 @@ DEFAULT_WEIGHTS: Dict[str, float] = {
 }
 
 
-def compute_score(row: pd.Series, weights: Dict[str, float] = None) -> float:
+def compute_score(row: pd.Series, weights: dict[str, float] = None) -> float:
     """Composite score based on key CAN SLIM metrics (percentile-based)."""
     if weights is None:
         weights = DEFAULT_WEIGHTS
@@ -179,7 +178,7 @@ def run_screener(
     sp500_return: float = 0.0,
     verbose: bool = True,
     config: dict = None,
-) -> Tuple[pd.DataFrame, Dict[str, int]]:
+) -> tuple[pd.DataFrame, dict[str, int]]:
     """Run the full 3-level CAN SLIM screener with optional YAML config.
 
     Parameters
@@ -207,7 +206,7 @@ def run_screener(
     funnel_cfg = cfg.get("funnel", {})
     industry_neutral = cfg.get("industry_neutral", False)
 
-    counts: Dict[str, int] = {}
+    counts: dict[str, int] = {}
     total = len(df)
     counts["total"] = total
 

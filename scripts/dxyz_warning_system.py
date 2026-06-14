@@ -12,7 +12,7 @@ Usage:
 import argparse
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
@@ -292,11 +292,11 @@ def write_alert(alerts: list[dict], price: float) -> Path | None:
 
     outbox_dir = PROJECT_ROOT / "company" / "chairman_outbox"
     outbox_dir.mkdir(parents=True, exist_ok=True)
-    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M")
+    ts = datetime.now(UTC).strftime("%Y%m%d_%H%M")
 
     lines = [
         f"# 🚨 DXYZ 预警 — {len(alerts)} 项触发",
-        f"**时间**: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}",
+        f"**时间**: {datetime.now(UTC).strftime('%Y-%m-%d %H:%M UTC')}",
         f"**DXYZ 价格**: ${price:.2f}",
         f"**NAV 溢价**: {(price / NAV_PER_SHARE - 1) * 100:.0f}%",
         "",
@@ -311,7 +311,7 @@ def write_alert(alerts: list[dict], price: float) -> Path | None:
     lines += [
         "",
         "---",
-        f"**Starship V3 发射**: 5/19 22:30 UTC (倒计时~{(datetime(2026, 5, 19, 22, 30, tzinfo=timezone.utc) - datetime.now(timezone.utc)).total_seconds() / 3600:.0f}h)",
+        f"**Starship V3 发射**: 5/19 22:30 UTC (倒计时~{(datetime(2026, 5, 19, 22, 30, tzinfo=UTC) - datetime.now(UTC)).total_seconds() / 3600:.0f}h)",
         "**NVDA 财报**: 5/20 盘后",
         "",
         "*DXYZ预警系统 T981 自动生成*",

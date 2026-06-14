@@ -18,20 +18,18 @@ from __future__ import annotations
 import enum
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional
 
 import numpy as np
 
-
 # ─── Enums ──────────────────────────────────────────────────
 
-class MarketRegime(str, enum.Enum):
+class MarketRegime(enum.StrEnum):
     RISK_ON = "RISK_ON"
     RISK_OFF = "RISK_OFF"
     NEUTRAL = "NEUTRAL"
 
 
-class TradeDecision(str, enum.Enum):
+class TradeDecision(enum.StrEnum):
     DEPLOY = "DEPLOY"
     HOLD = "HOLD"
     REDUCE = "REDUCE"
@@ -168,7 +166,7 @@ class RiskThresholdEngine:
         ann_vol = float(ep.annual_volatility(r, annualization=252))
         sharpe = float(ep.sharpe_ratio(r, risk_free=0.02 / 252, annualization=252))
         max_dd = float(ep.max_drawdown(r)) if len(r) >= 2 else 0.0
-        calmar = float(ep.calmar_ratio(r, annualization=252)) if max_dd < 0 else 0.0
+        float(ep.calmar_ratio(r, annualization=252)) if max_dd < 0 else 0.0
 
         # Translate financial metrics to 0-100 scores
         volatility_score = max(0, min(100, 100 - ann_vol * 120))       # vol 0% -> 100, vol 60% -> 28

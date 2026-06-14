@@ -19,7 +19,6 @@ import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional
 
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -39,16 +38,16 @@ POSITION_MEMORY = Path(
 )
 
 # ─── 真实工具导入 ──────────────────────────────────
-from risk_threshold_engine import RiskThresholdEngine, FactorScores
+from quant_framework.knowledge_graph.quant_graph_builder import SECTOR_MAP
+from quant_framework.strategies.catalyst_decision_model import (
+    dxyz_catalysts,
+    evaluate_position,
+)
 from quant_framework.strategies.regime_detector import (
     classify_current,
     rolling_regime_simple,
 )
-from quant_framework.strategies.catalyst_decision_model import (
-    evaluate_position,
-    dxyz_catalysts,
-)
-from quant_framework.knowledge_graph.quant_graph_builder import SECTOR_MAP
+from risk_threshold_engine import FactorScores, RiskThresholdEngine
 
 # ─── 配置 ─────────────────────────────────────────
 
@@ -796,7 +795,7 @@ def run_once(force_push: bool = False):
     return analysis, decision
 
 
-def check_inbox_commands() -> Optional[int]:
+def check_inbox_commands() -> int | None:
     """扫描 inbox 中是否有董事长发来的监控频率指令。
 
     识别关键词:

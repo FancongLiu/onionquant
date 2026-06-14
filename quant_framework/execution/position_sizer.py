@@ -5,9 +5,9 @@ Integrates with Riskfolio-Lib for Kelly/risk-parity. All sizers take a
 signals DataFrame + prices and return position weights or share counts."""
 
 import logging
+
 import numpy as np
 import pandas as pd
-from typing import Dict, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -165,7 +165,7 @@ def size_positions(
     max_positions: int = 10,
     max_position_pct: float = 0.20,
     **kwargs,
-) -> Dict:
+) -> dict:
     """Convert signals + capital into sized orders.
 
     Parameters
@@ -272,7 +272,7 @@ def size_positions(
 
 def _make_demo_data(
     n: int = 252, n_tickers: int = 5, seed: int = 42
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2024-01-01", periods=n, freq="B")
     tickers = [f"STK{i}" for i in range(n_tickers)]

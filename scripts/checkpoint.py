@@ -12,7 +12,7 @@ Usage:
 
 import argparse
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 STATE_FILE = (
@@ -35,7 +35,7 @@ def _default_state():
         "version": "1.0",
         "protocol": "Context Persistence Protocol",
         "description": "Cron sessions read this file first to restore context, then update it after work.",
-        "last_updated": datetime.now(timezone.utc).isoformat(),
+        "last_updated": datetime.now(UTC).isoformat(),
         "pending_actions": [],
         "key_context": {},
         "session_stack": [],
@@ -43,7 +43,7 @@ def _default_state():
 
 
 def save(state):
-    state["last_updated"] = datetime.now(timezone.utc).isoformat()
+    state["last_updated"] = datetime.now(UTC).isoformat()
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
     STATE_FILE.write_text(
         json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8"

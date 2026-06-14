@@ -23,7 +23,7 @@ Usage:
 import json
 import os
 import re
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -363,7 +363,7 @@ def distill_skill(task_description: str, tool_calls_used: int, task_output: str,
         skill_title=task_description[:80],
         trigger_conditions=f"用户请求涉及: {task_description[:100]}",
         steps="\n".join(f"{i+1}. {s}" for i, s in enumerate(steps_taken or [])) or "见原始任务执行轨迹",
-        success_indicators=f"- 输出通过 Fresh Evaluator 审查\n- 任务完成标记为 completed",
+        success_indicators="- 输出通过 Fresh Evaluator 审查\n- 任务完成标记为 completed",
         notes=f"自动生成于 {now_iso()}。原始工具调用: {tool_calls_used} 次。",
     )
 
@@ -438,7 +438,7 @@ class HarnessEngine:
                 steps_taken=eval_result.get("findings", [])[:5]
             )
             if skill_file:
-                progress = read_progress()
+                read_progress()
                 update_progress(
                     self.current_task or task_id, status, duration,
                     evaluator_result=f"{eval_result['verdict']} ({eval_result['score']}/10)",

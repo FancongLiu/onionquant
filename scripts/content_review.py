@@ -20,7 +20,7 @@ Usage:
 import os
 import re
 import sys
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -52,8 +52,8 @@ def extract_img_srcs(html: str) -> list[str]:
 
 def check_broken_links() -> list[str]:
     """Check if any external links are broken."""
-    from urllib.request import Request, urlopen
     from urllib.error import URLError
+    from urllib.request import Request, urlopen
 
     findings = []
     urls_to_check = [
@@ -153,7 +153,7 @@ def check_freshness() -> list[str]:
         html = HOMEPAGE.read_text(encoding="utf-8")
         current_year = str(now.year)
         if current_year not in html:
-            findings.append(f"Homepage: copyright year may be outdated")
+            findings.append("Homepage: copyright year may be outdated")
     # Check timeline for future-dated entries
     if HOMEPAGE.exists():
         html = HOMEPAGE.read_text(encoding="utf-8")

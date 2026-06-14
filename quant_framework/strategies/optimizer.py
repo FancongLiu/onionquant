@@ -4,18 +4,20 @@
 Uses scikit-optimize for Bayesian optimization. Walk-forward cross-validation
 ensures time-series-aware evaluation (no lookahead bias)."""
 
+import logging
+import warnings
+from collections.abc import Callable
+from dataclasses import dataclass, field
+from typing import Any
+
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Callable, Tuple, Any
-from dataclasses import dataclass, field
-import warnings
-import logging
 
 logger = logging.getLogger(__name__)
 
 try:
     from skopt import gp_minimize
-    from skopt.space import Real, Integer, Categorical
+    from skopt.space import Categorical, Integer, Real
     from skopt.utils import use_named_args
 
     HAS_SKOPT = True
@@ -29,10 +31,10 @@ class ParamSpec:
     type: str  # "real" | "integer" | "categorical"
     low: float = 0
     high: float = 1
-    choices: List[Any] = field(default_factory=list)
+    choices: list[Any] = field(default_factory=list)
 
 
-def _build_space(params: List[ParamSpec]) -> List:
+def _build_space(params: list[ParamSpec]) -> list:
     """Convert ParamSpec list to skopt space."""
     space = []
     for p in params:
@@ -47,13 +49,13 @@ def _build_space(params: List[ParamSpec]) -> List:
     return space
 
 
-def _params_to_dict(params: List[ParamSpec], values: List[Any]) -> Dict[str, Any]:
+def _params_to_dict(params: list[ParamSpec], values: list[Any]) -> dict[str, Any]:
     return {p.name: v for p, v in zip(params, values)}
 
 
 def walk_forward_splits(
     dates: pd.DatetimeIndex, n_splits: int = 5, train_frac: float = 0.6
-) -> List[Tuple[pd.DatetimeIndex, pd.DatetimeIndex]]:
+) -> list[tuple[pd.DatetimeIndex, pd.DatetimeIndex]]:
     """Generate walk-forward train/test splits (expanding window)."""
     n = len(dates)
     test_size = int(n * (1 - train_frac) / n_splits)
@@ -69,14 +71,14 @@ def walk_forward_splits(
 
 
 def optimize(
-    objective_fn: Callable[[Dict[str, Any]], float],
-    params: List[ParamSpec],
+    objective_fn: Callable[[dict[str, Any]], float],
+    params: list[ParamSpec],
     n_calls: int = 50,
     n_random_starts: int = 10,
     maximize: bool = True,
     random_state: int = 42,
     verbose: bool = False,
-) -> Dict:
+) -> dict:
     """Bayesian optimization of strategy parameters.
 
     Parameters
@@ -99,7 +101,7 @@ def optimize(
     space = _build_space(params)
     sign = -1 if maximize else 1
 
-    trace: List[Tuple[Dict, float]] = []
+    trace: list[tuple[dict, float]] = []
 
     @use_named_args(space)
     def _objective(**kwargs):
@@ -194,16 +196,16 @@ def _grid_search_fallback(objective_fn, params, maximize, verbose):
 
 
 def optimize_walk_forward(
-    strategy_fn: Callable[[pd.DataFrame, Dict[str, Any]], pd.DataFrame],
+    strategy_fn: Callable[[pd.DataFrame, dict[str, Any]], pd.DataFrame],
     objective_fn: Callable[[pd.DataFrame, pd.DataFrame], float],
     data: pd.DataFrame,
-    params: List[ParamSpec],
+    params: list[ParamSpec],
     n_splits: int = 4,
     n_calls: int = 40,
     maximize: bool = True,
     random_state: int = 42,
     verbose: bool = False,
-) -> Dict:
+) -> dict:
     """Optimize strategy parameters with walk-forward cross-validation.
 
     Parameters
@@ -275,7 +277,7 @@ def optimize_walk_forward(
     }
 
 
-def convergence_plot_data(result: Dict) -> Dict[str, List]:
+def convergence_plot_data(result: dict) -> dict[str, list]:
     """Extract convergence data for plotting (use with visualization module)."""
     return {
         "convergence": result.get("convergence", []),
@@ -306,11 +308,11 @@ def _make_demo_data(n: int = 504, seed: int = 42) -> pd.DataFrame:
 
 def main():
     """Demo: optimize a simple momentum strategy."""
-    from quant_framework.strategies.qlib_factor_engine import compute_all_factors
     from quant_framework.strategies.factor_combiner import (
         equal_weighted_combine,
         generate_signals,
     )
+    from quant_framework.strategies.qlib_factor_engine import compute_all_factors
 
     data = _make_demo_data(252, seed=7)
 

@@ -14,15 +14,15 @@ Pure Python, integrates with existing quant_framework modules.
 """
 
 import json
-from pathlib import Path
-from datetime import datetime
-from typing import Any, Callable, Dict, List, Optional
+from collections.abc import Callable
 from dataclasses import dataclass, field
+from datetime import datetime
 from functools import wraps
+from pathlib import Path
+from typing import Any
 
 import numpy as np
 import pandas as pd
-
 
 # ── Evidence Record ────────────────────────────────────────
 
@@ -43,7 +43,7 @@ class Evidence:
     timestamp: str = ""  # when this evidence was collected
     loop_iteration: int = 0  # which reasoning loop iteration
     ttl_seconds: int = 300  # how long this evidence is valid
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self):
         if not self.timestamp:
@@ -114,10 +114,10 @@ class SeedContext:
     """
 
     def __init__(self, max_evidence: int = 20):
-        self.evidence: List[Evidence] = []
+        self.evidence: list[Evidence] = []
         self.max_evidence = max_evidence
         self.loop_iteration = 0
-        self.errors: List[Dict] = []
+        self.errors: list[dict] = []
 
     def seed(
         self,
@@ -126,8 +126,8 @@ class SeedContext:
         source: str = "unknown",
         category: str = "market_data",
         ttl_seconds: int = 300,
-        metadata: Optional[Dict[str, Any]] = None,
-    ) -> Optional[Evidence]:
+        metadata: dict[str, Any] | None = None,
+    ) -> Evidence | None:
         """Deterministically fetch data and record as evidence.
 
         Args:
@@ -177,21 +177,21 @@ class SeedContext:
         fetch_fn: Callable[[], Any],
         max_age_seconds: int = 300,
         **kwargs,
-    ) -> Optional[Evidence]:
+    ) -> Evidence | None:
         """Seed data only if existing evidence for this key is stale or missing."""
         existing = self.get(key)
         if existing and existing.age_seconds < max_age_seconds:
             return existing
         return self.seed(key, fetch_fn, **kwargs)
 
-    def get(self, key: str) -> Optional[Evidence]:
+    def get(self, key: str) -> Evidence | None:
         """Retrieve evidence by key."""
         for e in self.evidence:
             if e.key == key:
                 return e
         return None
 
-    def get_category(self, category: str) -> List[Evidence]:
+    def get_category(self, category: str) -> list[Evidence]:
         return [e for e in self.evidence if e.category == category]
 
     def build_context(self, max_tokens: int = 4000, include_raw: bool = False) -> str:
@@ -326,7 +326,7 @@ class QuantSeedContext(SeedContext):
     """
 
     def seed_market_data(
-        self, tickers: List[str], fetcher=None, lookback_days: int = 252
+        self, tickers: list[str], fetcher=None, lookback_days: int = 252
     ) -> bool:
         """Seed OHLCV + returns for tickers."""
         from quant_framework.data.fetchers.yfinance_fetcher import fetch_ohlcv
@@ -352,7 +352,7 @@ class QuantSeedContext(SeedContext):
         return evidence is not None
 
     def seed_factors(
-        self, df: pd.DataFrame, factor_columns: Optional[List[str]] = None
+        self, df: pd.DataFrame, factor_columns: list[str] | None = None
     ) -> bool:
         """Seed factor values and basic stats."""
         if factor_columns is None:
@@ -391,10 +391,10 @@ class QuantSeedContext(SeedContext):
     def seed_risk_metrics(self, returns: pd.Series) -> bool:
         """Seed risk metrics from returns."""
         from quant_framework.risk.risk_metrics import (
-            var_historical,
             cvar,
             sharpe_ratio,
             sortino_ratio,
+            var_historical,
         )
 
         def _fetch():
@@ -415,7 +415,7 @@ class QuantSeedContext(SeedContext):
         return evidence is not None
 
     def seed_all(
-        self, tickers: List[str], lookback_days: int = 252, include_risk: bool = True
+        self, tickers: list[str], lookback_days: int = 252, include_risk: bool = True
     ) -> str:
         """Run full seed pipeline for typical quant decision.
 

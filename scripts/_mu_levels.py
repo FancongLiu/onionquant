@@ -1,4 +1,9 @@
-import yfinance as yf, sys, io, numpy as np
+import io
+import sys
+
+import numpy as np
+import yfinance as yf
+
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
 
 mu = yf.download('MU', period='3mo', progress=False)

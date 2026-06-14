@@ -4,10 +4,10 @@
 Uses vectorized NumPy/Pandas for performance. No hand-rolled math —
 all models reference standard industry formulas (Almgren-Chriss, etc.)."""
 
+from dataclasses import dataclass
+
 import numpy as np
 import pandas as pd
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
 
 
 @dataclass
@@ -57,10 +57,10 @@ def simulate_orders(
     signals: pd.DataFrame,
     initial_cash: float = 1_000_000,
     commission_per_share: float = 0.005,
-    slippage: Optional[SlippageModel] = None,
+    slippage: SlippageModel | None = None,
     execution_schedule: str = "next_open",
     max_position_pct: float = 0.20,
-) -> Dict:
+) -> dict:
     """Simulate order execution from signals.
 
     Parameters
@@ -230,10 +230,10 @@ def simulate_orders(
     }
 
 
-def _compute_metrics(equity: pd.Series, returns: pd.Series) -> Dict:
+def _compute_metrics(equity: pd.Series, returns: pd.Series) -> dict:
     ppy = 252
     try:
-        from empyrical import sharpe_ratio, sortino_ratio, calmar_ratio, max_drawdown
+        from empyrical import calmar_ratio, max_drawdown, sharpe_ratio, sortino_ratio
 
         sr = sharpe_ratio(returns.values)
         so = sortino_ratio(returns.values)
@@ -266,8 +266,8 @@ def _compute_metrics(equity: pd.Series, returns: pd.Series) -> Dict:
 
 
 def execution_quality_report(
-    prices: pd.DataFrame, trades: List[Dict], schedule: str = "VWAP"
-) -> Dict:
+    prices: pd.DataFrame, trades: list[dict], schedule: str = "VWAP"
+) -> dict:
     """Compute execution quality metrics: implementation shortfall, VWAP slippage."""
     if not trades:
         return {"error": "No trades"}
@@ -303,7 +303,7 @@ def execution_quality_report(
 
 def _make_demo_data(
     n_dates: int = 252, n_tickers: int = 5, seed: int = 42
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
+) -> tuple[pd.DataFrame, pd.DataFrame]:
     """Generate demo prices and signals for testing."""
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2024-01-01", periods=n_dates, freq="B")

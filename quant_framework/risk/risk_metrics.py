@@ -3,9 +3,9 @@
 使用 empyrical-reloaded (https://github.com/stefan-jansen/empyrical-reloaded)
 替代手搓实现。"""
 
-import numpy as np
-from scipy.stats import norm, skew, kurtosis
 import empyrical as ep
+import numpy as np
+from scipy.stats import kurtosis, norm, skew
 
 
 def _excess_kurtosis(x):

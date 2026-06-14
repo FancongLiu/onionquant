@@ -3,13 +3,14 @@ Fast structured-source pipeline — no web search, just sitemaps + CDNs + known 
 Continuously saves manifest.json so progress is always visible.
 """
 
-import sys
 import io
-import re
 import json
-import time
 import logging
+import re
+import sys
+import time
 from pathlib import Path
+
 import requests
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
@@ -74,7 +75,7 @@ def safe_fn(n):
 
 
 def load_manifest():
-    with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
+    with open(MANIFEST_PATH, encoding="utf-8") as f:
         return json.load(f)
 
 
@@ -291,7 +292,7 @@ def process_carrier(entry):
     series = entry.get("series", "")
     token = model_token(models[0]) if models else series
     model_full = models[0] if models else ""
-    brand = entry.get("brand", "CARRIER")
+    entry.get("brand", "CARRIER")
 
     results = []
     cdn_patterns = [

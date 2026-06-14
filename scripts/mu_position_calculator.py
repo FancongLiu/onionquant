@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 MU Position Calculator - Stop-Loss Ladder, Pyramid Add-On, Trailing Stop
 109 shares MU @ $995.74 cost, ~$39,500 equity, IBKR broker
 Output: EXACT IBKR order tickets with verified math.
 """
 
+import io
 import math
 import sys
-import io
 
 # Force UTF-8 output on Windows
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
@@ -160,7 +159,7 @@ for price, label in stop_design:
 
     # Check if margin call would trigger before this tier
     mc_price = cur_l / (cur_s * (1 - 0.35))
-    mc_warning = " *** MARGIN CALL AT ${:,.2f} - STOP IS BELOW MC! ***".format(mc_price) if price < mc_price else ""
+    mc_warning = f" *** MARGIN CALL AT ${mc_price:,.2f} - STOP IS BELOW MC! ***" if price < mc_price else ""
 
     print(f"{label}:")
     print(f"  Trigger: ${price:,.2f} ({drop:.1f}% drop, {atr_dist:.2f} ATR from prev)")
@@ -184,7 +183,7 @@ print("=" * 80)
 print("SECTION 3: PYRAMID ADD-ON (Formula: unrealized_gain / 0.35 * 70%)")
 print("=" * 80)
 print(f"Min equity ratio after add: {TARGET_EQ_PYRAMID*100:.0f}%")
-print(f"Start from: $1,050+")
+print("Start from: $1,050+")
 print()
 
 pyramid_prices = [1050, 1090, 1130, 1170, 1210, 1250]
@@ -251,7 +250,7 @@ print(f"Current Price:          ${CURRENT_PRICE:,.2f}")
 if hf_current > CURRENT_PRICE:
     print(f"  >>> NOTE: Hard floor (${hf_current:,.2f}) is ABOVE current price.")
     print(f"  >>> Position is already below 37% equity ratio (at {equity_ratio*100:.2f}%).")
-    print(f"  >>> Hard floor is MOOT - already breached. Trail stop takes precedence.")
+    print("  >>> Hard floor is MOOT - already breached. Trail stop takes precedence.")
 print()
 
 print(f"{'Peak':>7}  {'10% Trail':>10}  {'37% HardFlr':>11}  {'Active Stop':>11}  {'Shares':>7}  {'Loan':>12}")
@@ -369,19 +368,19 @@ for i, t in enumerate(stop_results):
     print(f"{'─'*60}")
     print(f"STOP-LOSS #{i+1}: {t['label']}")
     print(f"{'─'*60}")
-    print(f"  Action:        SELL")
-    print(f"  Order Type:    STP (Stop)")
+    print("  Action:        SELL")
+    print("  Order Type:    STP (Stop)")
     print(f"  Stop Price:    ${t['price']:,.2f}")
     print(f"  Quantity:      {t['sell']} shares")
-    print(f"  Time-in-Force: GTC")
-    print(f"  Route:         SMART")
+    print("  Time-in-Force: GTC")
+    print("  Route:         SMART")
     print(f"  Post-fill:     {t['shares_after']} shares, Eq Ratio {t['ratio_after']*100:.2f}%")
     print()
 
 print("=" * 80)
 print("IBKR ORDER TICKETS -- PYRAMID ADD-ON (GTC, Conditional)")
 print("=" * 80)
-print(f"""
+print("""
 NOTE: These are STOP-LIMIT BUY orders. Each triggers only if price
       closes above the specified level. Orders are INDEPENDENT;
       cancel unfilled lower-tier orders once a higher tier fills.
@@ -398,11 +397,11 @@ for pr in pyramid_results:
         print(f"PYRAMID ADD @ ${pr['price']:,} ({pr['gain_pct']:+.1f}% from entry)")
         print(f"{'─'*60}")
         print(f"  Condition:     MU closes above ${pr['price']:,} (daily)")
-        print(f"  Action:        BUY")
+        print("  Action:        BUY")
         print(f"  Order Type:    STP LMT (Stop: ${pr['price']:,}, Limit: ${pr['price']+5:,.2f})")
         print(f"  Quantity:      {pr['add']} shares")
-        print(f"  Time-in-Force: GTC")
-        print(f"  Route:         SMART")
+        print("  Time-in-Force: GTC")
+        print("  Route:         SMART")
         print(f"  Before:        {pr['shares_before']} sh, Eq Ratio {pr['ratio_before']*100:.2f}%")
         print(f"  After:         {pr['shares_after']} sh, Eq Ratio {pr['ratio_after']*100:.2f}%")
         print(f"  New Loan:      ${pr['loan_after']:,.0f}")

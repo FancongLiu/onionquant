@@ -140,7 +140,6 @@ class TwitterScanner:
             ).flatten(limit=max_results)
 
             # Build author lookup map
-            users = {}
             # Paginator doesn't return includes directly, we collect manually
 
             all_tweets = []

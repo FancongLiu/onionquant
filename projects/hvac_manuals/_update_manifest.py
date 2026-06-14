@@ -134,9 +134,6 @@ def get_series_mapping():
 
     # Bosch OEM R-454B PDFs (already in manifest for KB, KJ, etc.)
     # We'll reference them for R-410A equivalents
-    bosch_oem_note = (
-        "JCI-Bosch OEM overlap. Bosch PDF for R-454B version. Product is R-410A."
-    )
 
     mapping = {
         # === CHOICE Product Line (12.5-27.5T R-410A) ===
@@ -376,7 +373,7 @@ def get_series_mapping():
 
 
 def update_manifest():
-    with open(MANIFEST_PATH, "r", encoding="utf-8") as f:
+    with open(MANIFEST_PATH, encoding="utf-8") as f:
         manifest = json.load(f)
 
     mapping = get_series_mapping()

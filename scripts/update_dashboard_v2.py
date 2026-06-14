@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Add anime game-like Live Stage + vis.js Knowledge Graph to dashboard."""
 
-with open("company/chairman_dashboard.html", "r", encoding="utf-8") as f:
+with open("company/chairman_dashboard.html", encoding="utf-8") as f:
     c = f.read()
 
 changes = 0

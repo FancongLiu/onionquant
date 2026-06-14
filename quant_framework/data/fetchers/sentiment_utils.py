@@ -1,9 +1,9 @@
 """情绪分析工具：FinBERT 加载/缓存，批量评分，聚合统计，中英文支持"""
 
-import os
 import logging
-from typing import List, Dict, Optional
+import os
 from functools import lru_cache
+
 import numpy as np
 import pandas as pd
 
@@ -29,7 +29,7 @@ def has_chinese(text: str) -> bool:
     return any("一" <= ch <= "鿿" for ch in text)
 
 
-def score_chinese_text(text: str) -> Dict[str, float]:
+def score_chinese_text(text: str) -> dict[str, float]:
     """中文金融文本情绪评分 — SnowNLP 优先 + 金融关键词增强。
 
     与 score_text() 互补：score_text() 走 FinBERT (英文优先)，
@@ -73,7 +73,7 @@ def _get_finbert():
         return None
 
 
-def score_text(text: str) -> Dict[str, float]:
+def score_text(text: str) -> dict[str, float]:
     pipe = _get_finbert()
     if pipe is not None:
         try:
@@ -87,7 +87,7 @@ def score_text(text: str) -> Dict[str, float]:
     return _fallback(text)
 
 
-def _fallback(text: str) -> Dict[str, float]:
+def _fallback(text: str) -> dict[str, float]:
     if has_chinese(text):
         return score_chinese_text(text)
     pos_w = {
@@ -104,7 +104,7 @@ def _fallback(text: str) -> Dict[str, float]:
     return {k: round(v / total, 4) for k, v in hits.items()} | {"neutral": 0.0}
 
 
-def batch_score(texts: List[str], batch_size: int = 32) -> List[Dict[str, float]]:
+def batch_score(texts: list[str], batch_size: int = 32) -> list[dict[str, float]]:
     return [
         score_text(t)
         for i in range(0, len(texts), batch_size)
@@ -113,8 +113,8 @@ def batch_score(texts: List[str], batch_size: int = 32) -> List[Dict[str, float]
 
 
 def aggregate_sentiments(
-    scores: List[Dict[str, float]], weights: Optional[List[float]] = None
-) -> Dict[str, float]:
+    scores: list[dict[str, float]], weights: list[float] | None = None
+) -> dict[str, float]:
     df = pd.DataFrame(scores)
     n = len(df)
     if n == 0:

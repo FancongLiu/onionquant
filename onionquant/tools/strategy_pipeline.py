@@ -27,12 +27,12 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from onionquant.tools.social_scanner import scan as social_scan
 from onionquant.tools.expert_filter import (
-    get_expert_signal,
-    filter_hot_stocks,
     EXPERT_DATABASE,
+    filter_hot_stocks,
+    get_expert_signal,
 )
+from onionquant.tools.social_scanner import scan as social_scan
 
 # ─── AI Supply Chain Position Map ─────────────────────────
 # 来源: TrendForce 2026, Morgan Stanley 2026/05, JPMorgan

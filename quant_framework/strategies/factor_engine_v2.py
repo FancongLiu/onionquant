@@ -19,7 +19,6 @@ Usage:
 import argparse
 import warnings
 from datetime import datetime
-from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -28,8 +27,8 @@ warnings.filterwarnings("ignore")
 
 # ─── Import existing safe factor engine ───
 from quant_framework.strategies.qlib_factor_engine import (
-    FACTOR_REGISTRY,
     FACTOR_GROUPS,
+    FACTOR_REGISTRY,
     compute_all_factors,
 )
 
@@ -63,7 +62,7 @@ _TICKER_ALIASES = {
 
 # Special cases: tickers that need exchange suffix normalization
 # OpenBB strips suffixes, yfinance keeps them — we canonicalize to yfinance format
-_TICKER_EXCHANGE_NORMALIZE: Dict[str, str] = {
+_TICKER_EXCHANGE_NORMALIZE: dict[str, str] = {
     # Korean stocks: always append .KS for KOSPI, .KQ for KOSDAQ
     "005930": "005930.KS",  # Samsung Electronics
     "000660": "000660.KS",  # SK Hynix
@@ -121,14 +120,14 @@ def normalize_ticker(ticker: str, target_source: str = "yfinance") -> str:
 
 
 def normalize_ticker_batch(
-    tickers: List[str],
+    tickers: list[str],
     target_source: str = "yfinance",
-) -> List[str]:
+) -> list[str]:
     """Batch-normalize a list of tickers."""
     return [normalize_ticker(t, target_source) for t in tickers]
 
 
-def detect_source_mismatch(ticker: str) -> Optional[str]:
+def detect_source_mismatch(ticker: str) -> str | None:
     """Detect if a ticker appears to be from an unexpected source format.
 
     Returns the likely source, or None if ambiguous.
@@ -153,7 +152,7 @@ def pca_concentration_check(
     factor_returns: pd.DataFrame,
     variance_threshold: float = 0.80,
     n_top_components: int = 3,
-) -> Dict:
+) -> dict:
     """Check if top N principal components explain > threshold of factor return variance.
 
     High PCA concentration means most factors are driven by a few common sources —
@@ -250,7 +249,7 @@ def pca_concentration_check(
     }
 
 
-def pca_concentration_report(result: Dict) -> str:
+def pca_concentration_report(result: dict) -> str:
     """Generate a markdown report from PCA check results."""
     lines = [
         "## PCA Concentration Risk Check",
@@ -331,9 +330,9 @@ SUPPLY_CHAIN_CLUSTERS = {
 
 def build_correlation_matrix(
     returns_df: pd.DataFrame,
-    tickers: Optional[List[str]] = None,
+    tickers: list[str] | None = None,
     min_obs: int = 30,
-) -> Tuple[pd.DataFrame, Dict]:
+) -> tuple[pd.DataFrame, dict]:
     """Build cross-ticker daily return correlation matrix and identify hidden concentration.
 
     Args:
@@ -462,7 +461,7 @@ def build_correlation_matrix(
     return corr_matrix, concentration_report
 
 
-def correlation_matrix_report(corr_matrix: pd.DataFrame, report: Dict) -> str:
+def correlation_matrix_report(corr_matrix: pd.DataFrame, report: dict) -> str:
     """Generate markdown report for supply chain correlation analysis."""
     if report.get("error"):
         return f"## Supply Chain Correlation\n\n**Error**: {report['error']}"
@@ -541,7 +540,7 @@ def verify_all_factors(
     returns: pd.Series,
     ic_abs_threshold: float = 0.02,
     decay_threshold: float = 0.20,
-) -> Dict:
+) -> dict:
     """One-click verification: run all 39 factors, output IC ranking, flag weak factors.
 
     Args:
@@ -670,7 +669,7 @@ def verify_all_factors(
     }
 
 
-def verification_report(result: Dict) -> str:
+def verification_report(result: dict) -> str:
     """Generate markdown verification report."""
     if result.get("error"):
         return f"## Factor Verification\n\n**Error**: {result['error']}"
@@ -758,9 +757,9 @@ def verification_report(result: Dict) -> str:
 
 def run_full_suite(
     df: pd.DataFrame,
-    returns: Optional[pd.Series] = None,
-    tickers: Optional[List[str]] = None,
-) -> Dict:
+    returns: pd.Series | None = None,
+    tickers: list[str] | None = None,
+) -> dict:
     """Run all 4 T1050 enhancements and return combined results.
 
     Args:

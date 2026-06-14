@@ -9,10 +9,11 @@ pre-commit hook scans for secrets before every commit.
 """
 
 import subprocess
-from scripts._subprocess_utils import run as _sp_run, Popen as _sp_Popen
 import sys
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+from scripts._subprocess_utils import run as _sp_run
 
 # Fix Windows GBK encoding for emoji in commit messages
 sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -136,7 +137,7 @@ def verify_no_secrets_staged() -> bool:
     ]
     for pattern in secret_patterns:
         if re.search(pattern, content):
-            print(f"  [BLOCKED] Secret pattern detected in staged files!", flush=True)
+            print("  [BLOCKED] Secret pattern detected in staged files!", flush=True)
             return False
     return True
 
@@ -175,7 +176,7 @@ def main():
             return 0
         # Pre-commit hook passed but wrote to stderr — not an error
         if "pre-commit" in combined.lower() and "pass" in combined.lower():
-            print(f"Committed (pre-commit passed)", flush=True)
+            print("Committed (pre-commit passed)", flush=True)
         else:
             print(f"git commit warning: {err}", flush=True)
             # Don't fail on pre-commit hook messages

@@ -4,17 +4,17 @@
 Uses statsmodels OLS for factor regression (Fama-French style attribution).
 Separates alpha (idiosyncratic) from beta (factor-driven) returns."""
 
+from datetime import datetime
+
 import numpy as np
 import pandas as pd
-from typing import Dict, Optional, Tuple
-from datetime import datetime
 
 
 def factor_regression(
     portfolio_returns: pd.Series,
     factor_returns: pd.DataFrame,
     intercept: bool = True,
-) -> Dict:
+) -> dict:
     """Regress portfolio returns on factor returns (Fama-French style).
 
     Parameters
@@ -114,7 +114,7 @@ def rolling_attribution(
     return df
 
 
-def contribution_summary(attribution: Dict) -> pd.DataFrame:
+def contribution_summary(attribution: dict) -> pd.DataFrame:
     """Summarize factor contributions as a DataFrame."""
     if "error" in attribution:
         return pd.DataFrame()
@@ -152,8 +152,8 @@ def brinson_attribution(
     portfolio_weights: pd.DataFrame,
     benchmark_weights: pd.DataFrame,
     asset_returns: pd.DataFrame,
-    group_mapping: Optional[Dict[str, str]] = None,
-) -> Dict:
+    group_mapping: dict[str, str] | None = None,
+) -> dict:
     """Brinson performance attribution: allocation + selection + interaction.
 
     Parameters
@@ -221,7 +221,7 @@ def brinson_attribution(
     }
 
 
-def report_markdown(attribution: Dict) -> str:
+def report_markdown(attribution: dict) -> str:
     """Generate markdown attribution report."""
     lines = [
         "# Performance Attribution Report",
@@ -265,7 +265,7 @@ def report_markdown(attribution: Dict) -> str:
 
 def _make_demo_data(
     n: int = 504, n_factors: int = 4, seed: int = 42
-) -> Tuple[pd.Series, pd.DataFrame]:
+) -> tuple[pd.Series, pd.DataFrame]:
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2022-01-01", periods=n, freq="B")
 

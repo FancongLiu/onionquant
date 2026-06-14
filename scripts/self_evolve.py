@@ -13,10 +13,10 @@ Cycle:
 Uses Claude Code persistent session for full context.
 """
 import subprocess
-from scripts._subprocess_utils import run, Popen
-import sys
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
+from scripts._subprocess_utils import run
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 BEIJING_TZ = timezone(timedelta(hours=8))
@@ -58,7 +58,7 @@ def main():
         print(f"  Output: {output[:200]}...", flush=True)
         print(f"[{now.isoformat()}] Self-Evolution Cycle complete", flush=True)
     except subprocess.TimeoutExpired:
-        print(f"  TIMEOUT: Evolution cycle exceeded 5 min", flush=True)
+        print("  TIMEOUT: Evolution cycle exceeded 5 min", flush=True)
     except Exception as e:
         print(f"  ERROR: {e}", flush=True)
     finally:

@@ -10,10 +10,11 @@ Zero AI token consumption — pure Python subprocess.
 """
 
 import subprocess
-from scripts._subprocess_utils import run, Popen
 import time
 from datetime import datetime
 from pathlib import Path
+
+from scripts._subprocess_utils import run
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 

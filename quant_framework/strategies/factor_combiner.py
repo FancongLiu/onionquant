@@ -10,7 +10,6 @@ Usage:
 
 import argparse
 import warnings
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -339,7 +338,7 @@ def factor_correlation_matrix(
 
 def evaluate_with_alphalens(
     factor_df: pd.DataFrame, factor_names: list, price_series: pd.Series
-) -> Optional[str]:
+) -> str | None:
     """使用 Alphalens-Reloaded 评估因子。返回 markdown 报告。"""
     report = [
         "## Alphalens Factor Evaluation",

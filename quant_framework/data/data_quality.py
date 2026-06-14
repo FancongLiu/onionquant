@@ -4,11 +4,11 @@
 Checks: NaN ratio, data freshness, lookahead bias, outlier detection, completeness.
 Uses pandas/sklearn for statistical checks — no hand-rolled detection logic."""
 
-import numpy as np
-import pandas as pd
-from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass
 from datetime import datetime
+
+import numpy as np
+import pandas as pd
 
 
 @dataclass
@@ -26,8 +26,8 @@ class QualityConfig:
 def check_nan_ratio(
     df: pd.DataFrame,
     max_nan_ratio: float = 0.3,
-    group_col: Optional[str] = "ticker",
-) -> Dict:
+    group_col: str | None = "ticker",
+) -> dict:
     """Check NaN ratio per column and per ticker.
 
     Returns dict with per-column NaN ratios and flag for excessive NaN.
@@ -66,7 +66,7 @@ def check_freshness(
     df: pd.DataFrame,
     date_col: str = "date",
     max_staleness_days: int = 5,
-) -> Dict:
+) -> dict:
     """Check if data is recent enough for trading decisions.
 
     Returns dict with last date, staleness days, and flag.
@@ -94,11 +94,11 @@ def check_freshness(
 
 def check_lookahead_bias(
     df: pd.DataFrame,
-    factor_cols: List[str],
+    factor_cols: list[str],
     forward_return_col: str = "forward_return",
     window: int = 21,
-    group_col: Optional[str] = "ticker",
-) -> Dict:
+    group_col: str | None = "ticker",
+) -> dict:
     """Detect potential lookahead bias.
 
     For each factor, compute contemporaneous correlation with forward returns.
@@ -147,9 +147,9 @@ def check_lookahead_bias(
 
 def check_outliers(
     df: pd.DataFrame,
-    columns: Optional[List[str]] = None,
+    columns: list[str] | None = None,
     z_threshold: float = 5.0,
-) -> Dict:
+) -> dict:
     """Detect outlier values using Z-score method.
 
     Uses sklearn.preprocessing.StandardScaler for standardization.
@@ -199,11 +199,11 @@ def check_outliers(
 
 def check_completeness(
     df: pd.DataFrame,
-    expected_tickers: Optional[List[str]] = None,
+    expected_tickers: list[str] | None = None,
     ticker_col: str = "ticker",
     date_col: str = "date",
     min_rows_per_ticker: int = 20,
-) -> Dict:
+) -> dict:
     """Check data completeness: rows per ticker, date coverage, gaps."""
     if df.empty:
         return {"error": "Empty DataFrame"}
@@ -259,13 +259,13 @@ def check_completeness(
 
 def run_quality_checks(
     df: pd.DataFrame,
-    factor_cols: Optional[List[str]] = None,
-    expected_tickers: Optional[List[str]] = None,
+    factor_cols: list[str] | None = None,
+    expected_tickers: list[str] | None = None,
     forward_return_col: str = "forward_return",
     group_col: str = "ticker",
     date_col: str = "date",
-    config: Optional[QualityConfig] = None,
-) -> Dict:
+    config: QualityConfig | None = None,
+) -> dict:
     """Run all data quality checks and return comprehensive report.
 
     Returns dict with individual check results and overall pass/fail summary.
@@ -313,7 +313,7 @@ def run_quality_checks(
 # ── Markdown Report ───────────────────────────────────────
 
 
-def quality_report_markdown(result: Dict) -> str:
+def quality_report_markdown(result: dict) -> str:
     """Generate markdown data quality report."""
     lines = [
         "# Data Quality Report",
@@ -401,7 +401,7 @@ def quality_report_markdown(result: Dict) -> str:
 
 def _make_demo_data(
     n: int = 252, n_tickers: int = 8, seed: int = 42
-) -> Tuple[pd.DataFrame, List[str]]:
+) -> tuple[pd.DataFrame, list[str]]:
     rng = np.random.default_rng(seed)
     dates = pd.date_range("2024-01-01", periods=n, freq="B")
     tickers = [f"STK{i}" for i in range(n_tickers)]

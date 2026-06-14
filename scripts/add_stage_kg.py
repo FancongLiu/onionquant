@@ -5,7 +5,7 @@ import sys
 
 sys.stdout.reconfigure(encoding="utf-8")
 
-with open("company/chairman_dashboard.html", "r", encoding="utf-8") as f:
+with open("company/chairman_dashboard.html", encoding="utf-8") as f:
     c = f.read()
 
 idx = c.find("function collapseAllDepts()")

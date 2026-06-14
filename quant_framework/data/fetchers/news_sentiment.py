@@ -1,12 +1,13 @@
 """新闻情绪聚合（Alpha Vantage NEWS_SENTIMENT API）→ Parquet"""
 
-import os
-import sys
 import argparse
 import logging
-from datetime import datetime, timezone, timedelta
-from typing import List, Optional
+import os
+import sys
+from datetime import UTC, datetime, timedelta
+
 import pandas as pd
+
 from quant_framework.data.fetchers.sentiment_utils import aggregate_sentiments
 
 logger = logging.getLogger(__name__)
@@ -15,7 +16,7 @@ DEFAULT_TICKERS = ["SPY", "QQQ", "AAPL", "TSLA", "NVDA", "GME"]
 
 
 def fetch_news_sentiment(
-    tickers: List[str], days: int = 7, api_key: Optional[str] = None
+    tickers: list[str], days: int = 7, api_key: str | None = None
 ) -> pd.DataFrame:
     key = api_key or os.getenv("ALPHA_VANTAGE_KEY")
     if not key:
@@ -45,7 +46,7 @@ def fetch_news_sentiment(
     records = []
     for article in feeds:
         ts = _parse_ts(article.get("time_published", ""))
-        if ts and ts < datetime.now(timezone.utc) - timedelta(days=days):
+        if ts and ts < datetime.now(UTC) - timedelta(days=days):
             continue
         for ts_item in article.get("ticker_sentiment", []):
             records.append(
@@ -63,9 +64,9 @@ def fetch_news_sentiment(
     return pd.DataFrame(records) if records else _demo_data(tickers, days)
 
 
-def _parse_ts(s: str) -> Optional[datetime]:
+def _parse_ts(s: str) -> datetime | None:
     try:
-        return datetime.strptime(s, "%Y%m%dT%H%M%S").replace(tzinfo=timezone.utc)
+        return datetime.strptime(s, "%Y%m%dT%H%M%S").replace(tzinfo=UTC)
     except (ValueError, TypeError):
         return None
 
@@ -121,11 +122,11 @@ _FALLBACK_HEADLINES = {
 }
 
 
-def _demo_data(tickers: List[str], days: int) -> pd.DataFrame:
+def _demo_data(tickers: list[str], days: int) -> pd.DataFrame:
     logger.info("无API key — 使用 FinBERT fallback 分析市场标题")
     from quant_framework.data.fetchers.sentiment_utils import score_text
 
-    base = datetime.now(timezone.utc)
+    base = datetime.now(UTC)
     records = []
     for sym in tickers[:6]:
         headlines = _FALLBACK_HEADLINES.get(sym, _FALLBACK_HEADLINES["SPY"])
