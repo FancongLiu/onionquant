@@ -61,7 +61,7 @@ def run_goal(prompt: str, timeout: int = 600) -> str:
             result = subprocess.run(
                 ["claude", "-p", prompt],
                 cwd=str(PROJECT_ROOT), capture_output=True,
-                encoding="utf-8", errors="replace", timeout=timeout,
+                text=True, timeout=timeout,
                 env={**os.environ, "CLAUDE_CODE_MODEL": "deepseek-v4-pro"},
             )
         else:
@@ -72,7 +72,7 @@ def run_goal(prompt: str, timeout: int = 600) -> str:
                  f'claude -p "$(cat {wsl_path})" '
                  f"--model deepseek-v4-pro --dangerously-skip-permissions 2>&1"],
                 cwd=str(PROJECT_ROOT), capture_output=True,
-                encoding="utf-8", errors="replace", timeout=timeout,
+                text=True, timeout=timeout,
             )
         return (result.stdout or "").strip()
     except subprocess.TimeoutExpired:
@@ -277,15 +277,15 @@ def main():
                            skills_distilled=1 if skill_file else 0)
 
             log("COMMIT: Staging...")
-            subprocess.run(["git", "add", "-A"], cwd=str(PROJECT_ROOT), capture_output=True, timeout=30)
-            r = subprocess.run(["git", "diff", "--cached", "--quiet"],
-                               cwd=str(PROJECT_ROOT), capture_output=True, timeout=10)
+            run(["git", "add", "-A"], cwd=str(PROJECT_ROOT), capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
+            r = run(["git", "diff", "--cached", "--quiet"],
+                               cwd=str(PROJECT_ROOT), capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10)
             if r.returncode != 0:
-                subprocess.run(
+                run(
                     ["git", "commit", "--no-verify", "-m", f"evolve: {task[:80]}"],
-                    cwd=str(PROJECT_ROOT), capture_output=True, timeout=30)
-                subprocess.run(["git", "push", "origin", "main"],
-                               cwd=str(PROJECT_ROOT), capture_output=True, timeout=60)
+                    cwd=str(PROJECT_ROOT), capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
+                run(["git", "push", "origin", "main"],
+                               cwd=str(PROJECT_ROOT), capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=60)
                 log("  Pushed")
 
         log(f"Cooldown: {CYCLE_COOLDOWN}s...")
