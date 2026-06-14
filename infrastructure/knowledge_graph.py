@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 """knowledge_graph.py — OnionQuant Neo4j 知识图谱引擎 (方案A: Neo4j + LangChain)
 
 Usage:

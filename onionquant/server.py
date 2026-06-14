@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# ruff: noqa: E402
 """
 OnionQuant — Chairman Dashboard Server
 FastAPI + SSE + watchdog file monitoring + WeChat notifications

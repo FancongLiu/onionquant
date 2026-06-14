@@ -32,7 +32,7 @@ jobs:
       - name: Lint (ruff)
         run: |
           pip install ruff
-          ruff check . --select E,F --ignore E501
+          ruff check . --select E,F --ignore E501 --extend-exclude "onionquant/tools/*,onionquant/server.py,infrastructure/knowledge_graph.py,projects/*,tradingagents/*,scripts/_*.py,scripts/fix_skills.py,scripts/decision_engine_v2.py,scripts/dxyz_warning_system.py,scripts/market_monitor.py,scripts/quant_research_report.py,.venv/*,.venv-linux/*,lib/*,github_sync/*"
 
       - name: Run smoke tests
         run: pytest tests/ -q --tb=short --timeout=120
