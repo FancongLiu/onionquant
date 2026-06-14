@@ -16,6 +16,7 @@ Usage:
 
 import os
 import subprocess
+from scripts._subprocess_utils import run, Popen
 import sys
 import time
 from datetime import datetime, timezone, timedelta
@@ -74,7 +75,7 @@ def kill_zombie_port():
     """Kill any zombie processes on port 8765."""
     log("Killing zombie processes on port 8765...")
     try:
-        subprocess.run(
+        run(
             [
                 "powershell.exe",
                 "-NoProfile",
@@ -103,7 +104,7 @@ def recover_critical_files() -> list[str]:
             continue
         log(f"Recovering missing file: {filepath}")
         try:
-            result = subprocess.run(
+            result = run(
                 ["git", "show", f"{RECOVERY_REF}:{filepath}"],
                 capture_output=True,
                 text=True,
@@ -137,11 +138,12 @@ def start_server():
     """Start the server as a background process."""
     log("Starting server...")
     try:
-        subprocess.Popen(
+        Popen(
             [VENV_PYTHON, str(PROJECT_ROOT / "company" / "server.py")],
             cwd=str(PROJECT_ROOT),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            encoding="utf-8",
             creationflags=subprocess.CREATE_NO_WINDOW if sys.platform == "win32" else 0,
         )
         return True

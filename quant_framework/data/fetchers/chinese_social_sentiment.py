@@ -82,7 +82,7 @@ def _ar_available() -> bool:
     try:
         subprocess.run(
             [sys.executable, "-m", "pip", "show", "agent-reach"],
-            capture_output=True, text=True, encoding="utf-8", timeout=10,
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10,
         )
         return True
     except Exception:
@@ -113,6 +113,7 @@ def _run_ar_search(
             capture_output=True,
             text=True,
             encoding="utf-8",
+            errors="replace",
             timeout=timeout,
             env={**os.environ, "PYTHONIOENCODING": "utf-8"},
         )

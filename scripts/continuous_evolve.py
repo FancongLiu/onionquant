@@ -21,6 +21,7 @@ import os
 import platform as _platform
 import re
 import subprocess
+from scripts._subprocess_utils import run, Popen
 import sys
 import time
 from datetime import datetime, timezone, timedelta
@@ -61,7 +62,7 @@ def run_goal(prompt: str, timeout: int = 600) -> str:
             result = subprocess.run(
                 ["claude", "-p", prompt],
                 cwd=str(PROJECT_ROOT), capture_output=True,
-                text=True, timeout=timeout,
+                text=True, encoding="utf-8", errors="replace", timeout=timeout,
                 env={**os.environ, "CLAUDE_CODE_MODEL": "deepseek-v4-pro"},
             )
         else:
@@ -72,7 +73,7 @@ def run_goal(prompt: str, timeout: int = 600) -> str:
                  f'claude -p "$(cat {wsl_path})" '
                  f"--model deepseek-v4-pro --dangerously-skip-permissions 2>&1"],
                 cwd=str(PROJECT_ROOT), capture_output=True,
-                text=True, timeout=timeout,
+                text=True, encoding="utf-8", errors="replace", timeout=timeout,
             )
         return (result.stdout or "").strip()
     except subprocess.TimeoutExpired:

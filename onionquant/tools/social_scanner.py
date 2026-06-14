@@ -53,7 +53,7 @@ def run_hypefinder_scan(
     ]
     try:
         result = subprocess.run(
-            cmd, capture_output=True, text=True, encoding="utf-8", timeout=120, cwd=str(HYPEFINDER_DIR)
+            cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120, cwd=str(HYPEFINDER_DIR)
         )
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
         print(f"[warn] HypeFinder failed: {e}")

@@ -10,6 +10,7 @@ import io
 import json
 import os
 import subprocess
+from scripts._subprocess_utils import run, Popen
 import sys
 
 # Fix Windows GBK encoding for emoji output
@@ -52,14 +53,14 @@ def check(name, severity="🟡"):
 @check("WSL tmux 会话", severity="🔴")
 def check_tmux():
     try:
-        r = subprocess.run(
-            ["tmux", "has-session", "-t", "onionquant"], capture_output=True, timeout=10
+        r = run(
+            ["tmux", "has-session", "-t", "onionquant"], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10
         )
         if r.returncode != 0:
             return False, "onionquant 会话不存在"
 
         # Check if claude process is running inside tmux
-        r2 = subprocess.run(
+        r2 = run(
             ["bash", "-c", "ps aux | grep -c '[c]laude'"],
             capture_output=True, text=True, encoding="utf-8", errors="replace",
             timeout=10,
@@ -184,7 +185,7 @@ def check_deepseek_api():
     # Primary check: if Claude CLI is running, API is almost certainly working
     # (Claude CLI depends on it for every response)
     try:
-        r = subprocess.run(
+        r = run(
             ["bash", "-c", "ps aux | grep -c '[c]laude'"],
             capture_output=True, text=True, encoding="utf-8", errors="replace",
             timeout=10,
@@ -222,7 +223,7 @@ def check_deepseek_api():
 @check("Cloudflared 隧道", severity="🟡")
 def check_tunnels():
     try:
-        r = subprocess.run(
+        r = run(
             ["bash", "-c", "pgrep -a cloudflared 2>/dev/null"],
             capture_output=True, text=True, encoding="utf-8", errors="replace",
             timeout=10,
@@ -259,21 +260,23 @@ def recover_stale_locks():
 def restart_hermes():
     """Attempt to restart Hermes."""
     try:
-        subprocess.run(["pkill", "-f", "hermes gateway"], timeout=5)
+        run(["pkill", "-f", "hermes gateway"], encoding="utf-8", timeout=5)
         time.sleep(2)
-        subprocess.run(
+        run(
             [
                 "rm",
                 "-f",
                 os.path.expanduser("~/.hermes/gateway.lock"),
                 os.path.expanduser("~/.hermes/gateway.pid"),
             ],
+            encoding="utf-8",
             timeout=5,
         )
-        subprocess.Popen(
+        Popen(
             ["nohup", "hermes", "gateway", "run", "--replace"],
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            encoding="utf-8",
         )
         time.sleep(3)
         # Verify

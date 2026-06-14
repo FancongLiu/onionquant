@@ -9,6 +9,7 @@ Usage:
 """
 
 import subprocess
+from scripts._subprocess_utils import run, Popen
 import sys
 import re
 from pathlib import Path
@@ -19,7 +20,7 @@ BOARD = "onionquant"
 
 def run_kanban(*args):
     cmd = ["hermes", "kanban", "--board", BOARD] + list(args)
-    result = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
+    result = run(cmd, capture_output=True, text=True, encoding="utf-8")
     if result.returncode != 0:
         return f"ERR: {result.stderr.strip()[:100]}"
     return result.stdout.strip()

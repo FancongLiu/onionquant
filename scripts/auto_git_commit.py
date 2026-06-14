@@ -9,6 +9,7 @@ pre-commit hook scans for secrets before every commit.
 """
 
 import subprocess
+from scripts._subprocess_utils import run as _sp_run, Popen as _sp_Popen
 import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -41,10 +42,13 @@ SENSITIVE_PATTERNS = [
 
 def run(cmd: list, cwd: str = None) -> tuple[int, str, str]:
     try:
-        r = subprocess.run(
+        r = _sp_run(
             cmd,
             cwd=cwd or str(PROJECT_ROOT),
             capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
             timeout=120,
             env={
                 **__import__("os").environ,
@@ -52,9 +56,8 @@ def run(cmd: list, cwd: str = None) -> tuple[int, str, str]:
                 "GIT_ASKPASS": "echo",
             },
         )
-        # Decode manually — git outputs UTF-8 on all platforms
-        out = r.stdout.decode("utf-8", errors="replace") if r.stdout else ""
-        err = r.stderr.decode("utf-8", errors="replace") if r.stderr else ""
+        out = r.stdout or ""
+        err = r.stderr or ""
         # Only rstrip — leading whitespace in git status output is meaningful
         return r.returncode, out.rstrip(), err.rstrip()
     except subprocess.TimeoutExpired:

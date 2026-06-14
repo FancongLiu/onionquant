@@ -10,6 +10,7 @@ Zero AI token consumption — pure Python subprocess.
 """
 
 import subprocess
+from scripts._subprocess_utils import run, Popen
 import time
 from datetime import datetime
 from pathlib import Path
@@ -34,12 +35,13 @@ def run_script(script_name: str, args: list = None, timeout: int = 120) -> bool:
     try:
         cmd = [VENV_PYTHON, str(script_path)] + (args or [])
         env = {**__import__("os").environ, "PYTHONIOENCODING": "utf-8"}
-        result = subprocess.run(
+        result = run(
             cmd,
             cwd=str(PROJECT_ROOT),
             capture_output=True,
             text=True,
             encoding="utf-8",
+            errors="replace",
             timeout=timeout,
             env=env,
         )

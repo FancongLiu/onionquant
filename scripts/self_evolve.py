@@ -13,6 +13,7 @@ Cycle:
 Uses Claude Code persistent session for full context.
 """
 import subprocess
+from scripts._subprocess_utils import run, Popen
 import sys
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
@@ -44,7 +45,7 @@ def main():
     wsl_path = "/mnt/e/2026_AgentStudy/Python_code/company/.evolve_prompt.txt"
 
     try:
-        result = subprocess.run(
+        result = run(
             ["wsl", "-e", "bash", "-c",
              f'cd /mnt/e/2026_AgentStudy/Python_code && '
              f'claude -p "$(cat {wsl_path})" '
