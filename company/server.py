@@ -112,6 +112,7 @@ READ_ONLY_PATHS = {
     "/api/wechat/status",
     "/api/paper/portfolio",
     "/api/paper/history",
+    "/api/rag/search",
     "/api/research/reports",
 }
 
