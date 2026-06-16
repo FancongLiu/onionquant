@@ -239,6 +239,19 @@ async def get_status():
     }
 
 
+@app.get("/api/rag/search")
+async def rag_search(q: str = "", top_k: int = 5):
+    """Semantic search over historical research reports."""
+    if not q.strip():
+        return JSONResponse({"ok": False, "error": "empty query"}, status_code=400)
+    try:
+        from onionquant.rag.engine import search_reports
+        results = search_reports(q, top_k=min(top_k, 20))
+        return {"ok": True, "query": q, "results": results, "count": len(results)}
+    except Exception as e:
+        return JSONResponse({"ok": False, "error": str(e)}, status_code=500)
+
+
 @app.get("/api/departments")
 async def get_departments():
     import re

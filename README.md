@@ -116,6 +116,7 @@ Data Sources (yfinance/Reddit/News) → quant_framework/
 | **Quant Engine** | statsmodels, sklearn, empyrical, Riskfolio-Lib, Alphalens | Regime detection, factor IC, portfolio optimization |
 | **Data Pipeline** | pandas, yfinance, PRAW, newspaper3k | Multi-source data ingestion + ETL |
 | **Knowledge Graph** | NetworkX (303 nodes, 850+ edges) | Ticker ↔ Factor ↔ Industry ↔ Catalyst graph |
+| **RAG (Semantic Search)** | BGE-M3 + ChromaDB + BM25 | Hybrid retrieval over 70+ historical research reports |
 | **API Server** | FastAPI + SSE (EventSourceResponse) | REST API + real-time push notifications |
 | **LLM Backend** | DeepSeek V4-Pro, SiliconFlow GLM | Cost-aware routing (120:1 cache price ratio) |
 | **Infrastructure** | Cloudflare Tunnel, Watchdog (30s heartbeat), Docker, background_scheduler | 24/7 deployment with auto-recovery |
