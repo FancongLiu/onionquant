@@ -18,5 +18,21 @@
   "github.copilot.chat.cli.showExternalSessions": true,
   "github.copilot.chat.executionSubagent.enabled": true,
   "editor.fontFamily": "'Cascadia Code', 'Fira Code', Consolas, 'Courier New', monospace",
-  "editor.fontLigatures": true
+  "editor.fontLigatures": true,
+  "editor.quickSuggestions": {
+    "other": false,
+    "comments": false,
+    "strings": false
+  },
+  "editor.suggestOnTriggerCharacters": false,
+  "editor.acceptSuggestionOnEnter": "off",
+  "editor.wordBasedSuggestions": "off",
+  "editor.parameterHints.enabled": false,
+  "editor.hover.enabled": "off",
+  "github.copilot.enable": {
+    "*": false
+  },
+  "github.copilot.inlineSuggest.enable": false,
+  "github.copilot.chat.enable": false,
+  "python.analysis.autoImportCompletions": false
 }
