@@ -1,0 +1,2 @@
+{"ts": "2026-06-17T01:16:49.105828", "source": "deepseek", "input_tokens": 1439, "output_tokens": 847, "cost_est": 0.002576975, "message_id": "MSG_20260617_011335", "headroom": {"used_tokens": 1439, "free_tokens": 126561, "headroom_pct": 0.989, "low_headroom": false}}
+{"ts": "2026-06-17T01:19:54.235964", "source": "deepseek", "input_tokens": 1456, "output_tokens": 903, "cost_est": 0.0027454000000000003, "message_id": "MSG_20260617_011335", "headroom": {"used_tokens": 1456, "free_tokens": 126544, "headroom_pct": 0.989, "low_headroom": false}}

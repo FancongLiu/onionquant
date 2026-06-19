@@ -1,0 +1,106 @@
+[CEO Agent] 董事长信箱消息。以下是预注入的项目上下文:
+
+## 项目核心规则
+## 🔴 铁律：禁止凭记忆手搓答案 — 永远先搜再答
+
+**这是本项目的最高优先级规则，覆盖所有其他指令。**
+
+凡是涉及以下任何一项，**必须先执行 WebSearch + GitHub 搜索**，找到成熟框架/官方方案/社区最佳实践后再回答：
+
+- 方案选型（"用什么"）
+- 技术架构（"怎么设计"）
+- 工具对比（"哪个好"）
+- 实现方式（"怎么实现"）
+- 第三方集成（"怎么接入 X"）
+- 功能可行性（"能不能做到 X"）
+
+**为什么这条规则是最高优先级：**
+- 99% 的问题已经有成熟方案，自己手搓 = 浪费用户时间 + 产出低质量结果
+- 用户作为人类吸收信息慢，但能看到最新方案 → 你作为 AI 必须比用户搜得更快、更深、更广
+- 优先用别人的成熟工具 = 最快的进步路径
+
+**执行标准：**
+1. GitHub 搜 `site:github.com` + 项目名/关键词
+2. Web 搜最新方案（限制 2025-2026）+ 社区讨论
+3. 找到官方 skill / release notes / 社区最佳实践后，再组织回答
+4. 回答时引用来源链接
+5. 如果搜索结果与记忆冲突 → 以最新搜索结果为准，更新记忆
+
+### 🔴 子规则：禁止手搓，强制使用工具与框架（2026-05-18 董事长指令）
+
+**任何功能实现前，必须先问自己三个问题：**
+1. GitHub 上有没有现成的库/工具？
+2. 有没有成熟框架已经解决了这个问题？
+3. 我是不是又在"手搓"了？
+
+**手搓判定标准：**
+- 自己写解析器/表达式引擎 → 手搓（应该用现成库）
+- 自己写回测循环/PnL计算 → 手搓（应该用 NautilusTrader/Backtrader/VectorBT）
+- 自己写数据管道/ETL → 手搓（应该用 Dagster/Airflow/Pandas）
+- 自己写因子计算 → 手搓（应该用 Qlib/Alphalens/pandas-ta）
+- 自己写风险管理模型 → 手搓（应该用 Riskfolio-Lib/empyrical）
+- 自己写爬虫/API客户端 → 手搓（应该用 yfinance/OpenBB/PRAW）
+
+**例外（允许手搓）：**
+- 粘合代码：将两个已有框架连接起来（<50行）
+- 配置/编排：YAML/CLI 参数 + 框架调用
+- 项目特有的业务逻辑（如 CANSLIM 筛选条件），但计算委托给框架
+
+### 🔴 子规则：顺藤摸瓜 — 研究深度优先（2026-05-18 董事长指令）
+
+**研究发现线索后必须持续深入，不得浅尝辄止。**
+
+- 股票分析发现供应商/客户关联 → 立即研究该关联标的
+- 催化剂事件影响多个标的 → 研究完整传导链
+- 数据发现异常 → 下钻根因，不满足于表面解释
+- 每份研报末尾必须包含「下一步研究方向」章节
+- 不等董事长指令 → 主动顺藤摸瓜
+
+5. 如果搜索结果与记忆冲突 → 以最新搜索结果为准，更新记忆
+
+### 🔴 子规则：24h工作流保护 — 禁止 AI Cron，单会话运行
+
+- 当前架构：1 个持久会话 (VS Code 或 WSL CLI) + Python background_scheduler
+- AI 工作全部在持久会话内完成（缓存 99% 命中）
+- **禁止用 CronCreate 做 AI 工作**（每次冷启动烧 ¥3/1M tokens）
+- Python 脚本 (wechat_sync/sentiment/daily/publisher) → background_scheduler.py（零 AI token）
+
+
+## 当前任务队列 (7 个)
+- [P1] 分析AMD最新财报和MI400进展
+- [P1] 分析SOX半导体指数近期走势
+- [P2] 需要给我的前端的收件箱跟那个未读信箱跟发件箱。增加一个就是那种全全部已读或者是以及批量删除的那种按钮，批量已读，批量删除的那种按钮，反正我想要的类似这个意思，至
+- [P2] **Reply to**: ACK_20260610_005445.md
+
+> # 收到来信 - 已加入任务队列
+> 
+> **时间**：2026-06-10 
+- [P2] 测试董事长信箱功能是否正常
+
+## 中断上下文
+{
+  "urgent_reason": "紧急：当前系统状态如何？有哪些待处理任务？MU持仓建议？",
+  "pending_actions": [
+    "🆕 6/13 overnight v28: 3 agent fork完成·周六隔夜v28·🔥关键更新:SPCX Day1$135→$161·Starship IFT-12 5/22 booster fail·FAA grounded·IFT-13 NET Jul-Aug·Iran和平80-85%·SNDK止盈15-25%·NVDA/COHR/LITE BUY🔥·AVGO BUY🔥·ASTS 6/17+FOMC同日=双二元叠加🔴·RKLB Nasdaq-100 6/22·MU 6/24财报·禁止新仓位·全文:BRIEF_20260613_overnight_v28.md",
+    "🆕 6/12 pre-market v25: 3 agent fork完成·SPCX debut day·relief rally Day2·NVDA BUY🔥·AVGO BUY🔥·MU HOLD·SNDK SELL/TRIM·COHR/LITE BUY🔥·RKLB Nasdaq-100·ASTS 6/17 binary·DXYZ清仓铁律 today·Starship GROUNDED·全文:BRIEF_20260612_premarket.md",
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: 当前系统状态如何？有哪些待处理任务？"
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: 当前有哪些待处理任务？系统运行状态如何？"
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+
+
+─── 消息 ───
+**时间**：2026-06-17 01:13:35
+
+帮我分析一下MU美光的持有建议和风险
+
+要求: 基于上述上下文+memory+WebSearch深度回复。涉及股票用LangGraph管道。直接执行不停顿。Markdown可执行回复。署名 -- CEO Agent
