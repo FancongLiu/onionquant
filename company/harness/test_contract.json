@@ -212,6 +212,58 @@
       "evaluator_findings": [],
       "created_at": "2026-06-13 14:20:43",
       "resolved_at": "2026-06-13 14:21:05"
+    },
+    {
+      "task_id": "task-20260617_011649",
+      "criteria": [
+        {
+          "name": "task_completed",
+          "passes": true,
+          "evidence_required": "task output exists",
+          "evidence": "reply 1465 chars"
+        },
+        {
+          "name": "progress_updated",
+          "passes": false,
+          "evidence_required": "PROGRESS.md updated"
+        },
+        {
+          "name": "evaluator_passed",
+          "passes": true,
+          "evidence_required": "fresh evaluator review",
+          "evidence": "score 9.0/10"
+        }
+      ],
+      "evaluator_verdict": null,
+      "evaluator_findings": [],
+      "created_at": "2026-06-17 01:16:49",
+      "resolved_at": "2026-06-17 01:16:54"
+    },
+    {
+      "task_id": "task-20260617_011954",
+      "criteria": [
+        {
+          "name": "task_completed",
+          "passes": true,
+          "evidence_required": "task output exists",
+          "evidence": "reply 1635 chars"
+        },
+        {
+          "name": "progress_updated",
+          "passes": false,
+          "evidence_required": "PROGRESS.md updated"
+        },
+        {
+          "name": "evaluator_passed",
+          "passes": true,
+          "evidence_required": "fresh evaluator review",
+          "evidence": "score 9.0/10"
+        }
+      ],
+      "evaluator_verdict": null,
+      "evaluator_findings": [],
+      "created_at": "2026-06-17 01:19:54",
+      "resolved_at": "2026-06-17 01:19:56"
     }
   ]
 }

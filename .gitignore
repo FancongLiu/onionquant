@@ -29,6 +29,7 @@ Thumbs.db
 
 # Claude AI 辅助文件
 .claude/
+.codex/
 
 # 任务认领锁运行时文件（目录结构已通过 .gitkeep 提交）
 company/task_claims/*/.claim/
