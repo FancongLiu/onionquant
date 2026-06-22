@@ -35,6 +35,17 @@ DEEPSEEK_CHAT_WINDOW = 128_000  # deepseek-chat model
 HEADROOM_TARGET_RATIO = 0.6  # aim for 60% free context window
 MAX_ASSEMBLED_CONTEXT_TOKENS = int(DEEPSEEK_CHAT_WINDOW * (1 - HEADROOM_TARGET_RATIO) * 0.5)  # ~25K for context
 
+# ── Token audit (CLAUDE.md strategy reference values) ─────────
+# Pricing in ¥/1M tokens. DeepSeek API: input (cache-miss) ¥2→¥3 tier historically,
+# code-path uses ¥3/M output and ¥0.025/M input (per _call_deepseek legacy literal).
+# These are the *code-measured* baseline; CLAUDE.md's ¥5-8/day & 120:1 cache spread
+# targets are aspirational and tagged as such in the audit report.
+DEEPSEEK_INPUT_PRICE = 0.025       # ¥/M, cache-miss input (code-measured baseline)
+DEEPSEEK_OUTPUT_PRICE = 3.0        # ¥/M, output
+DEEPSEEK_CACHE_HIT_INPUT_PRICE = DEEPSEEK_INPUT_PRICE / 120  # 120:1 spread per CLAUDE.md
+DAILY_BUDGET_YUAN = 8.0            # CLAUDE.md daily-cost ceiling (target, not hard limit)
+CACHE_HIT_TARGET = 0.98            # CLAUDE.md cache-hit target (aspirational)
+
 # Per-section token budgets (for _assemble_context)
 SECTION_BUDGETS = {
     "claude_md": 800,      # CLAUDE.md core rules
@@ -257,11 +268,17 @@ def setup(project_root: Path, task_queue_file: Path, outbox_dir: Path,
 
 
 def _log_token_usage(source: str, input_tokens: int, output_tokens: int, cost_est: float,
-                     message_id: str = "", headroom: dict | None = None):
+                     message_id: str = "", headroom: dict | None = None,
+                     cache_hit_tokens: int | None = None,
+                     cache_miss_tokens: int | None = None):
     """Log token usage per inbox message for observability. Appends JSON line to token log.
 
     When headroom is provided, includes context window headroom metrics
     (used/free tokens, headroom percentage, low-headroom warning flag).
+
+    cache_hit_tokens / cache_miss_tokens: DeepSeek prompt-cache breakdown of input_tokens.
+    Omitted (None) for sources/providers that don't report it (e.g. Claude Code subprocess,
+    which returns no usage object). When present, enables the cache-hit audit dimension.
     """
     import json as _json
     from datetime import datetime as _dt
@@ -270,6 +287,10 @@ def _log_token_usage(source: str, input_tokens: int, output_tokens: int, cost_es
              "cost_est": cost_est, "message_id": message_id}
     if headroom:
         entry["headroom"] = headroom
+    if cache_hit_tokens is not None:
+        entry["cache_hit_tokens"] = cache_hit_tokens
+    if cache_miss_tokens is not None:
+        entry["cache_miss_tokens"] = cache_miss_tokens
     try:
         with open(globals().get("_TOKEN_LOG"), "a", encoding="utf-8") as f:
             f.write(_json.dumps(entry, ensure_ascii=False) + "\n")
@@ -409,10 +430,20 @@ def _call_deepseek(message: str, message_id: str = "") -> str | None:
         if usage:
             input_tok = usage.prompt_tokens or 0
             output_tok = usage.completion_tokens or 0
-            cost = (input_tok * 0.025 + output_tok * 3) / 1_000_000
+            # DeepSeek reports prompt-cache hits via prompt_cache_hit_tokens.
+            # getattr fallback: older SDKs / non-DeepSeek OpenAI-compatible endpoints may lack it.
+            cache_hit = getattr(usage, "prompt_cache_hit_tokens", 0) or 0
+            cache_miss = max(input_tok - cache_hit, 0)
+            # Cache-miss input at full price, cache-hit input at 120:1 discounted price,
+            # output at full price. (See DEEPSEEK_*_PRICE constants.)
+            cost = (cache_miss * DEEPSEEK_INPUT_PRICE
+                    + cache_hit * DEEPSEEK_CACHE_HIT_INPUT_PRICE
+                    + output_tok * DEEPSEEK_OUTPUT_PRICE) / 1_000_000
             headroom = _measure_headroom(input_tok, 0, DEEPSEEK_CHAT_WINDOW)
             _log_token_usage("deepseek", input_tok, output_tok, cost, message_id,
-                           headroom=headroom)
+                           headroom=headroom,
+                           cache_hit_tokens=cache_hit,
+                           cache_miss_tokens=cache_miss)
         return reply
     except Exception:
         return None
@@ -462,10 +493,12 @@ def _call_claude_code(message: str, message_id: str = "") -> str | None:
             pass
         if not reply or len(reply) < 20:
             return _call_deepseek(message, message_id)
-        # Estimate token usage (Claude Code via subprocess doesn't return usage)
+        # Estimate token usage (Claude Code via subprocess doesn't return usage,
+        # so no cache-hit dimension — assume all cache-miss input at full price).
         est_input = _estimate_tokens(prompt)
         est_output = _estimate_tokens(reply)
-        est_cost = (est_input * 0.025 + est_output * 3) / 1_000_000
+        est_cost = (est_input * DEEPSEEK_INPUT_PRICE
+                    + est_output * DEEPSEEK_OUTPUT_PRICE) / 1_000_000
         _log_token_usage("claude_code", est_input, est_output, est_cost, message_id,
                        headroom=headroom)
         return reply

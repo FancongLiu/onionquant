@@ -1,0 +1,239 @@
+{
+  "version": "2.7",
+  "last_updated": "2026-06-13T12:30:00+08:00",
+  "session_id": "vs-code-main-ceo-session",
+  "ceo_status": "ACTIVE — 🔴FOMC SUPER WEEK(6/17 Warsh首秀)·SPCX Day1$135→$161(+19%)$2.1T·Iran和平80-85%(周末签MOU·Oil$85)·MU$981 HOLD(CEO卖31笔$942-979·6/24财报)·SNDK HOLD/TRIM(+858%6月·止盈15-25%)·NVDA$205 BUY🔥(FwdP/E19.7x<S&P·$80B回购)·AVGO$382 BUY🔥(-17%ATH·AI$10.8B+143%)·AMD$511 HOLD(EPYC record share·等$440-450)·INTC$124 HOLD(共识PT$90 below)·SK Hynix BUY(P/E6.8x absurd)·COHR$358-375 BUY🔥(NVDA$2B·4:1 B2B)·LITE$859-895 BUY🔥(sold out 2028·JPM$1130)·RKLB$114-130 HOLD(Nasdaq-100 6/22)·ASTS$82-104 HOLD🔴🔴(6/17 BB8-10+FOMC同日·双二元叠加·禁止新仓)·LUNR$26-38 HOLD(LTV丢标)·RDW$16 CAUTIOUS(ATM+降级)·SPCX WAIT(94xP/S)·Starship GROUNDED(IFT-12 fail·IFT-13 NET Jul-Aug)·禁止新仓位至FOMC clear·净值~$32K",
+  "wechat_push_note": "2026-06-13 12:30: BRIEF_20260613_overnight_v28.md written. 3 agent fork. 🔥关键:Starship IFT-12 booster fail→停飞·IFT-13 NET Jul-Aug. Iran和平80-85%. SPCX$161($2.1T). ASTS 6/17+FOMC同日=双二元叠加🔴. AVGO BUY🔥. NVDA/COHR/LITE BUY🔥. 禁止新仓位至FOMC clear.",
+  "token_optimization": {
+    "architecture": "2 AI crons (research :07 + inbox :37 per hour). 48 sessions/day. Agent forks within session share cache prefix (~92% hit). Python scripts via background_scheduler.py — ZERO AI tokens.",
+    "daily_ai_calls": "~48 (was ~983, -95%)",
+    "estimated_daily_cost": "¥5-8 (vs ¥30-50 before)",
+    "cache_mechanism": "Agent fork: 5-dim cache key alignment — 92-93% hit."
+  },
+  "pending_actions": [
+    "🆕 6/13 overnight v28: 3 agent fork完成·周六隔夜v28·🔥关键更新:SPCX Day1$135→$161·Starship IFT-12 5/22 booster fail·FAA grounded·IFT-13 NET Jul-Aug·Iran和平80-85%·SNDK止盈15-25%·NVDA/COHR/LITE BUY🔥·AVGO BUY🔥·ASTS 6/17+FOMC同日=双二元叠加🔴·RKLB Nasdaq-100 6/22·MU 6/24财报·禁止新仓位·全文:BRIEF_20260613_overnight_v28.md",
+    "🆕 6/12 pre-market v25: 3 agent fork完成·SPCX debut day·relief rally Day2·NVDA BUY🔥·AVGO BUY🔥·MU HOLD·SNDK SELL/TRIM·COHR/LITE BUY🔥·RKLB Nasdaq-100·ASTS 6/17 binary·DXYZ清仓铁律 today·Starship GROUNDED·全文:BRIEF_20260612_premarket.md",
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: 当前系统状态如何？有哪些待处理任务？"
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: 当前有哪些待处理任务？系统运行状态如何？"
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: **Reply to**: ACK_20260612_162510.md\n\n> # 收到来信 - 已融合到现有任务\n> \n> **时间**：2026-06-12"
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: **Reply to**: URGENT_REPLY_20260612_161632.md\n\n> # [URGENT] CEO Agent 紧急回复\n> \n> "
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: **Reply to**: URGENT_REPLY_20260612_161426.md\n\n> # [URGENT] CEO Agent 紧急回复\n> \n> "
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: **Reply to**: URGENT_REPLY_20260612_161025.md\n\n> # [URGENT] CEO Agent 紧急回复\n> \n> "
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: **Reply to**: URGENT_REPLY_20260612_160813.md\n\n> # [URGENT] CEO Agent 紧急回复\n> \n> "
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: **Reply to**: URGENT_REPLY_20260612_160330.md\n\n> # [URGENT] CEO Agent 紧急回复\n> \n> "
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: **Reply to**: URGENT_REPLY_20260612_155936.md\n\n> # [URGENT] CEO Agent 紧急回复\n> \n> "
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: **Reply to**: URGENT_REPLY_20260612_153801.md\n\n> # [URGENT] CEO Agent 紧急回复\n> \n> "
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: **Reply to**: URGENT_REPLY_20260612_140725.md\n\n> # [URGENT] CEO Agent 紧急回复\n> \n> "
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: 海力士三星被限制杠杆的新闻看了吗，看看怎么办，我的美光"
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: **Reply to**: SENTINEL_hourly_20260612_0309.md\n\n> # 📡 每小时舆情快报\n> > 2026-06-12 03:"
+    },
+    "🆕 6/12 post-market v23: 3 agent fork完成·relief rally(Trump cancel Iran strike)·SPCX LIVE $135·SNDK SELL→SELL/TRIM(ATH$1863 +570%YTD)·AVGO$375 more BUY🔥(-24%·-5%背离·$370支撑)·INTC→HOLD·LUNR→BUY watch·RDW→AVOID·Samsung strike RESOLVED·ASTS 6/17 binary·FOMC 6/16-17·全文:BRIEF_20260612_postmarket.md",
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: 分析AMD目标价 风险和催化剂"
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: 分析 NVDA 目标价和风险因素"
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: **Reply to**: URGENT_REPLY_20260610_005340.md\n\n> # [URGENT] CEO Agent 紧急回复\n> \n> "
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: **Reply to**: URGENT_REPLY_20260610_005302.md\n\n> # [URGENT] CEO Agent 紧急回复\n> \n> "
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: **Reply to**: URGENT_REPLY_20260610_005225.md\n\n> # [URGENT] CEO Agent 紧急回复\n> \n> "
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: 先测试一下，看这个紧急按钮是否有效。"
+    },
+    {
+      "action": "resume_interrupted",
+      "task": null,
+      "note": "恢复被紧急消息打断的任务: 紧急：立刻查NVDA当前目标价和风险"
+    },
+    "🆕🔴 6/11 pre-market v22: 3 agent fork completed·futures bouncing +0.8-1.2%·INTC SELL→HOLD(BofA double-upgrade Buy PT$135·Google TPU 3M+·NVDA testing 18A)·NVDA HOLD→BUY(FwdP/E19.7x BELOW S&P·Vera Rubin Q3)·MU BUY→HOLD(HBM4 Rubin exclusion risk·SemiAnalysis·等6/24财报)·AVGO$372 even cheaper($30B bookings·-23% ATH)·Hormuz declared CLOSED by Iran·Oil$90-93·PPI 8:30am today est+0.7%·ECB +25bp today·DXYZ清仓明天前·全文:BRIEF_20260611_premarket.md",
+    "🆕🔴 6/11 overnight v21: SPCX TOMORROW 6/12·$135 $1.75T·DXYZ清仓铁律·AVGO UPGRADE→BUY(20% overreaction)·SNDK UPGRADE→BUY(P/E9.6x)·NVDA DOWNGRADE→HOLD(Senate hearing binary)·COHR$355 BUY🔥(in zone)·CPI 4.2% stagflation·PPI 6.4%+ today·NVDA Senate hearing TODAY·FOMC 6/17",
+    "🆕🔴 6/11: NVDA Senate hearing TODAY — Jensen faces Warren re China export compliance. Binary event for all semis.",
+    "🆕🔴 6/11: AVGO BUY upgrade — 20% post-earnings overreaction at $385-398. 6 hyperscalers locked through 2031. $100B+ FY27 AI target unchanged. Best R/R in semis.",
+    "🆕 6/11: SNDK BUY upgrade — $1559(-16% ATH). P/E 9.6x forward. NAND structural shortage to 2028. $42B committed revenue via multi-year contracts.",
+    "🆕 6/11: COHR dropped to $355(-19% ATH) — now IN buy zone $360-380. NVDA$2B investment. Booked through 2028.",
+    "🆕 6/11: ASTS June 17 BB8-10 Falcon9 launch = binary catalyst. Success→PT gap closes. Fail→more pain.",
+    "🆕🔴 DXYZ: SPCX明日上市=proxy存在的唯一理由消失·历史sell the news pattern·水下~10-16%·考虑盘前退出",
+    "🆕 MU$935 BUY: Q3财报6/24·Fwd P/E 18x·AI memory super-cycle·SK Hynix NH investment sees 20% upside·最佳dip-buy标的",
+    "🆕 NVDA$201 BUY: Vera Rubin量产·$81.6B季收·$80B回购护盘·NVDA参院听证会6/11(Jensen today)",
+    "🆕 AVGO$398 HOLD: -15% post-earnings·200MA$397守住·但VMware weakness+insider selling(CFO/CLO/Samueli)·等CPI+FOMC",
+    "🆕 COHR$388-417 BUY: Jensen Computex endorsement·NVDA$2B投资·光学订单至2028·LITE$820-860 BUY: +90%YoY rev·NVDA$2B",
+    "🔴 P0: MRVL危机管理·471股成本$300-306·$275硬止损已破(intraday$269.40)·确认当前价格·不破$275继续持有但反弹至$295-300减仓一半·净值~$32K",
+    "🔴 P0: 禁止新交易维持·NFP+gamma余震未完·等6/10 CPI后再评估新仓位",
+    "P0: AVGO $410已至BUY zone·200MA $397支撑·但等NFP落地+gamma过期再动手·目标25-35%上行",
+    "P0: DXYZ清仓加速·SPCX路演中(6/4-8)·6/12前清仓铁律",
+    "P0: SPCX 6/12上市·$135/股·Morningstar公允$780B低55%·丹麦养老金黑名单·警惕",
+    "P1: COHR/LITE CPO强势·等回调COHR $360-380·LITE不加仓>$1000",
+    "P1: SK Hynix US ADR催化剂·估值重估机会·10-14B上市",
+    "P1: 热度采集器排查·latest.json 10天未更新(5/26→6/5)·heat=null",
+    "P2: WeChat推送修复·IP白名单问题",
+    "🆕 董事长交易危机: MU逃顶赚$36K→FOMO全仓MRVL→AVGO暴雷割肉亏$16K→报复性交易→净值$32K",
+    "🆕 已写BRIEF_20260605_MRVL_trade_analysis.md·memory三文件更新·交易自检清单建立"
+  ],
+  "key_context": {
+    "overnight_20260613_v28": "3 agent fork·周六隔夜v28·SPCX Day1$135→$161(+19%)$2.1T·space siphon(RKLB$114-130-10.8%·ASTS$82-9.1%·LUNR$26-38-13%·RDW$16-11%)·SPCX 94xP/S Morningstar$780B公允·Iran Islamabad MOU 80-85%概率(周末签·Oil$84.88 2月低点·若签→oil↓risk-on↑)·FOMC Super Week(6/16 BOJ+25bp至1.0%·6/17 FOMC Warsh首秀·6/19 Juneteenth休市)·VIX 18.92表面平静·VIX9D 23.92 5pt溢价=近端恐惧·死亡交叉912 vs 860金叉·暗池$335M流出distribution·恐惧贪婪40 Fear·MU$981 HOLD(-30%ATH·CEO 5/29卖31笔$942-979·6/24财报·Polymarket 34%概率>$1000·期权大单卖Put$600-620看涨)·SNDK HOLD/LIGHT TRIM(+858%6月·建议止盈15-25%·NAND售罄至2028·Citi$2025)·NVDA$205 BUY🔥(FwdP/E19.7x<S&P21.8x·历史错配·Vera Rubin Q3·PT$305+47%·$80B回购·Wedbush$330·Baird$500)·AVGO$382 BUY🔥(-17%ATH·chips$10.8B+143%·30Buy/0Sell·ASIC 60-70%份额·AI backlog$73B+)·AMD$511 HOLD(EPYC 46.2% share record·MI400 Q3·108xP/E·等$440-450)·INTC$124 HOLD(Google TPU 3M+ + NVDA 18A·但共识PT$90=-28%·141xP/E)·SK Hynix BUY(HBM4E·FwdP/E6.8x absurd·市值$942B超三星)·Samsung BUY(strike resolved✅·HBM tripling·7xPE)·COHR$358-375 BUY🔥(-19%ATH·4:1 B2B·JPM$380·NVDA$2B anchor)·LITE$859-895 BUY🔥(-18%peak·+90%YoY·sold out to 2028·JPM$1130·InP短缺至2030·最强R/R optical)·RKLB$114-130 HOLD(Nasdaq-100 6/22·Neutron Q4·被动买入)·ASTS$82-104 HOLD🔴🔴(6/17 BB8-10 F9=FOMC同日·双二元叠加=年度最大风险日·BB7失败阴影·禁止新仓位)·LUNR$26-38 HOLD(IM-3 Q4·LTV丢标+$500M ATM+$5.5M insider)·RDW$16 CAUTIOUS($500M ATM+Jefferies降级+不盈利)·SPCX WAIT(94xP/S·CFRA Sell$115·$4.3B/季亏损·Starship停飞)·Starship IFT-12:5/22 Ship39✅ Booster B19❌·FAA 5/27 mishap·停飞·IFT-13 NET 7-8月·Samsung strike RESOLVED✅(5/20·6/3批准74%·零影响)·DRAM Q2+64%QoQ·NAND+60%·INTC BofA→Buy$135·下周:BOJ 6/16·FOMC+ASTS 6/17·Juneteenth 6/19·RKLB Nasdaq-100 6/22·MU 6/24·禁止新仓位至FOMC clear·净值~$32K·全文:BRIEF_20260613_overnight_v28.md",
+    "postmarket_20260613_v26": "3 agent fork·SPCX Day1$135→$165(+22%)$2.1T·space siphon(RKLB$101-12%·ASTS$82-16%·LUNR$26-16%·RDW$16-11%)·NVDA$206 BUY🔥(FwdP/E19.7x<S&P·PT$305·47%upside)·AVGO$385 BUY🔥(-20%ATH·analysts raised PTs·best entry)·AMD→BUY🔥(Citi upgrade·Meta MI450·0sell)·MU$900 HOLD(CEO sold$92.5M·6/24财报)·SNDK$1700 HOLD(5000%+run·limited upside)·INTC$116 HOLD(consensusPT$90-93 below)·SK Hynix BUY(7xPE·Nasdaq ADR Aug)·Samsung BUY(strike resolved·HBM tripling)·COHR$375 BUY🔥(-19%ATH·NVDA$2B)·LITE$875 BUY🔥(+90-105%YoY·JPM$1130)·RKLB$101 HOLD(Nasdaq-100 6/22)·ASTS$82 HOLD🔴(6/17 BB8-10 binary)·LUNR$26 HOLD(NASA LTV loss+$500M ATM)·RDW$16 AVOID(short-seller)·SPCX WAIT(CFRA Sell$115·$4.3B/qtr loss)·Starship IFT-13 NET Jul·Iran peace hopes(Oil$85-3%·Gold$4240+3%)·FOMC 6/16-17 Warsh首秀·禁止新仓位至FOMC clear·全文:BRIEF_20260613_postmarket.md",
+	    "premarket_20260612_v25": "3 agent fork·SPCX debut day·S&P7394+1.75%·Nasdaq29446+3.29%·SOX+7.91% relief·Trump cancel Iran strikes·Oil$86-89(-5.9%)·Gold$4235(+3%)·10Y4.48%·DXY<100·Futures+0.7%·CPI4.2%PPI6.5% stagflation·FOMC 6/16-17 Warsh·NVDA$208 BUY🔥(FwdP/E19.7x<S&P·Vera Rubin Q3·PT$305)·AVGO$375-390 BUY🔥(-24%ATH·$30B AI bookings·92%Buy)·MU$1025 HOLD(HBM4 Rubin risk·6/24财报)·SNDK$1863 SELL/TRIM(+570%YTD ATH)·AMD$475 HOLD($500 call wall)·INTC$116-127 HOLD(BofA Buy PT$135)·SK Hynix BUY(4.4xP/E absurd)·COHR$358 BUY🔥(-19%ATH·NVDA$2B·JPM OW)·LITE$859 BUY🔥(-18%peak·JPM$1130)·RKLB$127AH+11% HOLD(Nasdaq-100 inclusion·SPCX竞争)·ASTS$88-96 HOLD🔴(6/17 BB8-10 binary)·LUNR$29.83 BUY watch(-36%ATH·SPCX day entry)·RDW AVOID·Starship GROUNDED(IFT-12 booster fail·FAA 5/27)·Samsung RESOLVED✅·DXYZ清仓铁律 today·SPCX MSCI 6/13 forced buy$35-50B·禁止新仓位至FOMC clear·全文:BRIEF_20260612_premarket.md",
+    "chairman_position": "🔴MRVL 471股(219@$305.80+252@~$296)·INTC少量·2x杠杆·净值~$32K·从$50K+高点回撤~36%·6/3 MU逃顶$1061赚$36K→全仓MRVL$331→AVGO暴雷割肉$284亏$16K→报复性交易重入MRVL·今日非农+gamma双风险·MRVL跌至$275=再亏$14K·爆仓线~$230",
+    "mu": "🔴~$864(-20%2天·从ATH$1079-20%·周五-13.3%)·跌穿$950-980买区·SemiAnalysis SOCAMM报告: NVDA砍Vera Rubin DRAM 55TB→28TB(利空HBM需求·待核实)·Forward P/E~11x看似便宜但价值陷阱争论加剧·RJ PT$1100·6/24财报=下一催化剂·DRAM Q3减速:PC+8-13%(Q2+46%)·周期peak mid-2026·CEO卖$57M@ATH·董事长空仓·不做左侧等财报",
+    "mu_computex_binary": "✅已解决·Jensen命名ALL3 HBM4供应商(SK+三星+MU)·消除最大不确定性·非VR200旗舰独占·供Rubin全系列·MU周涨+22%→ATH$1079 6/3→AVGO砸盘+NFP双重打击-8~11%",
+    "nvda_computex": "✅已解决·6/1 Jensen主题演讲·Vera Rubin NVL576量产(3.6 exaFLOPS/rack·5x推理·10x agentic throughput)·N1X=RTX Spark:20核Grace+Blackwell GPU·秋季2026·Dell/HP/Lenovo/MS/ASUS 30+笔记本10+台式·ALL3 HBM4供应商命名·Spectrum-X CPO switch量产·Jensen+Marvell Murphy同台·NVDA 6/5收~$218(+1.82%·NFP日唯一涨的半导体·flight-to-quality+$80B回购护盘)",
+    "avgo": "✅已解决·6/3 Q2财报·$385-411(周五-8%·2天-20%)·200MA$397已测试守住·29Buy/0 Sell·HSBC PT$600·GS$525/MS$485·Q3 AI guide$16B miss whisper$17.2B·FY2026$56B AI target重申未上调·Google TPU分流MediaTek gradual·6家hyperscaler·AI bookings>$30B·post-earnings dip=高确定买入机会(等CPI后)",
+    "crdo": "✅已解决·6/1 Q4财报·Triple beat:Rev $437M(+157%YoY)·EPS $1.16(共识$1.02)·Q1指引$465-475M超共识·全年收入翻三倍至$1.33B·DustPhotonics $750M关闭·光学目标>$600M FY2027·仍跌4-12%至$220-226·分析师维持Buy PT 215-300·BofA PT↑$252",
+    "dxyz": "~$40.43·2周暴跌-37%($65→$40)·NAV$24.56=~63%溢价(从659%peak压缩)·$1B ATM+$500M残留稀释·GBTC类比实时演绎·SPCX 6/12上市+DXYZ同日财报=爆炸波动·6/12清仓铁律不变·Fidelity散户最低$2000(从$100K降)·Polymarket 73%>$2T首日",
+    "spacex_ipo": "S-1 5/20·路演6/4-8 D2进行中·insatiable demand·JPMorgan CEO亲自路演·BofA火箭主题5000+客户·Fidelity最低$2000·5家零售券商参与·定价6/11·上市6/12 Nasdaq(SPCX)·$135/股·$1.75-1.78T估值·$75B史上最大IPO·30%散户配售·Musk 85.1%投票权·Q1亏$4.28B·Morningstar DCF$780B(低55%)·丹麦养老金黑名单·Polymarket 73%首日>$2T",
+    "spcx_roadshow": "路演6/4-8 D3-4进行中·$135/股一口价(无区间·美国mega-IPO史无前例)·2x超额认购~$150B demand·$1.75-1.78T估值·$75B史上最大IPO·30%散户配售·Musk零卖出全部一级·366天锁定期·<0.75%承销费·Morningstar DCF公允$780B(低55%)·丹麦养老金黑名单·6/11定价·6/12上市Nasdaq·Polymarket 73%首日>$2T",
+    "us_iran_stalled": "🆕更正:非final stage·谈判几乎无进展·Kuwait机场遭导弹袭击(周三)·UK/France准备扫雷但等协议·Hormuz仍在关闭·WTI~$93(周跌3.1%·远距离停火希望)·黄金$4475(200DMA反弹)·BTC$62165(恐惧贪婪指数12极度恐惧)",
+    "rdw_margin_correction": "🆕更正:RDW利润率非崩溃·Q1 2026毛利率26.6%(从14.7% YoY改善)·Q4 2025为9.6%·Q1 rev$97M(+58%YoY)略低于共识·净亏$(76.5M)主要因$42.5M一次性non-cash vesting·$498M backlog创新高·利润率轨迹正向·等待Q2确认",
+    "aerospace_sector": "6/1-2暴跌:ASTS -21%·RKLB -15%(SPCX流动性抽取)·RKLB 115-122(-24%从$151高峰·117x sales·$2.2B backlog·Neutron Q4)·ASTS~126(F9 BB8-10 6月中)·LUNR/RDW双位数下跌·NewGlenn:BO CEO誓年底RTF·NASA署长称发射台修复或至2028·SpaceForce授首单NSSL",
+    "optical": "COHR~410(B2B>4x·高于$360-380入口区·等回调)·LITE~935(🆕挪威主权基金$474.5M·2027售罄·<$1000买区·173xPE极端)·InP短缺结构性护城河(需求150-200万vs供应60-70万片·缺口扩大)·NVDA$6.5B光子学5家:COHR$2B+LITE$2B+Marvell$2B+Corning$500M+Ayar Labs$500M·CPO 2026产业化元年·COHR共识PT$380低于现价",
+    "samsung": "罢工5/27投票73.7%通过·5/28签署10年协议·6/3出货首批HBM4E 12层样品(48GB·14Gbps·3.6TB/s·+16%能效)·HBM5预览·HBM3E 5月终获NVDA认证·HBM份额SK57%/Sam22%/MU21%·三星HBM收入+105%YoY",
+    "sk_hynix": "$1T市值突破·Jensen在HBM4E晶圆写Please Make More·SK崔泰源4次见Jensen·HBM4E 48GB 16H样品·HBM份额57%领先",
+    "n1x_impact": "N1X=RTX Spark发布·INTC -5%·QCOM -8.8%·ARM +16% ATH·MediaTek联合开发TSMC 3nm·Dell XPS/Lenovo Legion7 245W/ASUS ProArt/MS Surface·NVDA+MSFT+Arm联合预告PC新时代·结束高通WoA 18月独占",
+    "macro": "🔴6/5 NFP 172K beat·加息概率68%(12月)·10Y>4.5%·30Y>5%·6/10 CPI Nowcast 4.18%·Hartnett Yardeni hawkish·US-Iran死锁(Kuwait/Bahrain导弹周五)·WTI~$93·黄金$4475·BTC$60735(-18%周·恐惧贪婪12)·VIX 15.77·Anthropic秘密IPO·GOOGL$85B AI股票·对冲基金最快速度买美股·S&P终结9周连涨",
+    "sox": "SOX 6/5收~13617(-2.15%·-299pts·日内-6%)·6/3 ATH~13890·YTD+~87%·RSI~76·BofA 73%基金经理最拥挤(历史极值)·Hartnett密西西比泡沫·Burry SOXX看跌·NFP 172K beat后high beta crushed·NVDA独涨+1.82%",
+    "bofa_sell_signal": "🆕B&B 8.0已触发(第17次·~60%准确率)·现金3.9%(<4%)·73%基金经理半导体最拥挤(上月24%→+49pp调查史最大)·对冲基金4月下旬开始净卖出·Hartnett:1880s铁路以来最大泡沫(SOX 62%>200MA vs Mississippi 73%)·建议等CPI 4-5%+SpaceX/OpenAI IPO后再卖·策略:long AI芯片+long超卖周期股",
+    "gamma_risk": "✅已过期·6/5 gamma到期已过·70% SOXX/SMH看涨期权expired·NFP+gamma双重打击下high beta crushed·SOX日内-6%→收-2.15%·但未崩盘(VIX仅15.77)·dealer short gamma放大抛售但系统性恐慌未触发",
+    "market_hotspots": "6/5 post-NFP·NFP 172K beat·SOX~13617日内-6%→收-2.15%·VIX 15.77 complacent·High beta crushed:AVGO-12.6%ARM-8%MRVL-8%MU-6.25%AMD-4.4%INTC-5.7%·NVDA独涨+1.82%(flight-to-quality+$80B buyback)·Rotation:Healthcare XLV+3.06%·Financials XLF+2.29%·DJIA+874 ATH·66%个股收红·not panic·🆕US-Iran STALLED(导弹袭击Kuwait机场)·CPI 6/10 Nowcast 4.2%·NFP好数据=加息恐惧=高beta承压已验证",
+    "cpi_610_nowcast": "Cleveland Fed Nowcast 4.18% YoY(2023年4月以来首次4-handle)·能源+17.9%YoY驱动·华尔街共识3.8-4.2%·Yardeni:>4%→7月加息25bp·Hartnett:4%+CPI=dragon domain S&P 3月-4% 6月-7%",
+    "bofa_sell_signal_v2": "🆕BofA B&B 8.0(第17次触发·~60%准确率)·现金3.9%(<4%)·73%基金经理半导体最拥挤(单月最大跳升)·Hartnett:1880s铁路以来最大泡沫·SOX 62%>200MA vs Mississippi 73%·建议:还不要卖·等CPI 4-5%+SpaceX/OpenAI IPO定价后·策略:long AI芯片+long超卖周期股/原材料",
+    "cross_market_pairs": "SK Hynix(000660.KS)→MU 0.8-0.9(最强)·Kioxia(285A.T)→SNDK 11日领先·Furukawa(5801.T)→COHR/LITE 0.6-0.7·TSMC(2330.TW)→NVDA 0.7-0.8",
+    "amd": "~504·SELL·YTD+109%·P/E 154x·共识PT $410低于现价~19%下跌·$106M内部卖出·Goldman升级但Daiwa/Jefferies降级·分歧严重·N1X对x86笔记本份额直接威胁",
+    "intc": "~111·SELL·YTD+212%·共识PT $68-82→30-41%下跌·BofA售出PT $96·GF intrinsic $28·Forward P/E 102x vs 历史12x·N1X冲击-5%",
+    "sndk": "~1610·HOLD·YTD+600%·12月+4000%极端·NBM合同$42B锁定至2031·零负债$3.7B现金·NAND ASP+75-100%QoQ·PT Susq $3250",
+    "kioxia_signal": "Kioxia(285A.T)~51840·距ATH-3%·关键信号:Kioxia→SNDK 11日领先·若Kioxia破新高→SNDK跟涨",
+    "space_sector": "SPCX 6/12上市($1.75-1.8T)·路演D2 insatiable demand·RKLB$119.95(内部卖出$68M/90d但挪威主权基金建仓)·ASTS~$107(DB降级·F9 BB8-10 6月中·New Glenn依赖→2026部署存疑)·LUNR$29.36(-31%周·$500M ATM稀释·$6.24B Space Force IDIQ托底·24%空头)·RDW$21.57(50%高于共识·毛利率崩溃9%→24%)·DXYZ$40.43清仓加速·Blue Origin CEO:年底前复飞vs NASA署长:或至2028·SpaceX 4天拿$6.45B军事合同(Golden Dome)",
+    "tunnel_url": "https://onionoffice.xyz",
+    "week_calendar": "✅6/5非农172K beat落地·6/4-8 SPCX路演D2·6/8 Jensen须确认参议院出席·6/10 CPI·6/11 SPCX定价+NVDA参议院听证会·6/12 SPCX上市+DXYZ财报(爆炸日)·6/16-17 FOMC(Warsh首秀)·6/24 MU财报·6/26 Russell生效",
+    "research_iteration_status": "v20 overnight(6/7晨)·3 agent fork完成·SOX-10.3%周五(2020最差)·Nasdaq-4.2%·NFP 172K→加息71%·AVGO$386 analysts全Buy dip·MU$864 SOCAMM未核实·NVDA$205最强·Samsung罢工正式解除✅·CPI 6/10 Wed consensus 4.3%·SPCX 6/12 2x超额$135·Starship停飞至Q3·US-Iran Hormuz关·COHR$377 LITE$864 BUY·空间股全线SELL/HOLD·禁止新仓位至CPI后·全文:BRIEF_20260607_overnight_v20.md",
+    "pipeline_tickers": "INTC,DXYZ,MU,000660.KS,WDC,SNDK,STX,ANET,NVDA,RKLB,ASTS,LUNR,LITE,COHR,RDW,AVGO,MRVL,AMD,BABA,JD,TSEM,CIEN,AAOI,VRT,CRDO",
+    "anrthropic_xai_contract": "Anthropic签~$40B xAI算力合同至2029·SpaceX S-1披露·xAI为SpaceX主要AI客户·利好AVGO(Anthropic定制芯片$2.5B)·利空DXYZ(xAI亏$4.28B拖累SpaceX盈利)",
+    "hedge_fund_flows": "对冲基金4月下旬开始净卖出半导体·75%基金经理最拥挤·SOX+89%YTD·63%>$200MA·Hartnett密西西比泡沫·BofA B&B 7.8·现金<4%·聪明钱先行·散户尚未跟随",
+    "spacex_financials": "Q1 2026亏$4.28B(较2025亏$4.94B改善)·累计亏$41.3B·Starlink营收$11.4B(61%总收入)·Subscribers 10.3M·运营利润$4.4B唯一盈利·xAI Q1亏$2.5B为主要亏损源·AI芯片短缺S-1披露·Musk计划Texas Terafab自产AI芯片·Anthropic$40B xAI算力合同($1.25B/月)·🆕SpaceX 4天拿$6.45B军事合同:5/26$2.29B(Space Data Network)+5/29$4.16B(SB-AMTI Golden Dome)·Total $185B Golden Dome program",
+    "mu_hbm4_confirmed": "✅Computex 6/1·Jensen命名ALL3 HBM4供应商:三星+SK Hynix+美光·消除最大不确定性·非旗舰VR200独占·供Rubin全系列·HBM4E 48GB 16H样品已出·TrendForce:三家HBM4 Q2全验证·UBS PT $1625·DA Davidson $1500",
+    "avgo_google_tpu_risk": "Google分流TPU至MediaTek(成本优化)·MediaTek TPU7e延迟→AVGO保持100%份额至2026·但Google adopt COT model·MediaTek targeting 30-40% long-term·AVGO仍为Google主要ASIC合作伙伴至2031·Macquarie降级唯一看空·AVGO 6 ASIC客户·Anthropic$2.5B定制芯片·AI bookings>$30B",
+    "nfp_confirmed": "✅已落地·6/5 20:30 CST·实际172K vs共识85-95K·大幅beat·ADP已预示122K·JOLTS 7.6M beat·>100K=hawkish=高beta承压已验证·High beta crushed·NVDA唯一逆势+1.82%·Gamma同日到期=双重波动·dealer翻short gamma→放大抛售→SOX日内-6%",
+    "postmarket_20260611": "3 agent fork·S&P 7299(-1.2%)·Nasdaq 25296(-1.5%)·SOX-2.3%续跌·Russell+0.4% rotation into small·CPI 4.2%YoY 3Y high·PPI expected 6.4%+·US-Iran Apache downed→oil+3.2%$91·10Y 4.54%·FOMC 6/17 Warsh首秀·SPCX TOMORROW $135 $1.77T·Starship GROUNDED(IFT-12 booster Raptor3 fail·FAA mishap 5/27)·DXYZ~$40-43水下·SMCI-20.9%$7B dilution·MU$935 BUY(FwdP/E18x·6/24财报)·NVDA$201 BUY·AVGO$398 HOLD(200MA守住·insider selling)·SK Hynix BUY(HBM4 60-70% NVDA份额)·AMD HOLD·INTC SELL(consensusPT$83-89 below)·SNDK HOLD(600%YTD)·Samsung strike RESOLVED·COHR$388-417 BUY(NVDA$2B)·LITE$820-860 BUY(+90%rev)·RKLB$119 HOLD·ASTS$88-97 SELL(rev miss·insider sell)·LUNR$29-32 HOLD($500M ATM)·RDW$18-21 SELL(Jefferies降级)·禁止新仓位至CPI+FOMC clear·全文:BRIEF_20260611_postmarket.md",
+    "postmarket_20260612": "3 agent fork·relief rally Dow+853 S&P+1.4% Nasdaq+1.8%·Trump called off Iran strikes late session·CPI 4.2% PPI 6.5% stagflation stays·FOMC 6/16-17 Warsh首秀·🔥SPCX LIVE TODAY $135 Nasdaq $1.75T $75B史上最大IPO·Starship GROUNDED(IFT-12 V3 booster fail·FAA mishap 5/27)·DXYZ清仓铁律DAY·VIX~20-22·Oil$88-90 Iran de-escalation·10Y 4.46-4.53% 2Y 4.07-4.13%·DXY~100·Healthcare防御性轮动+6%wk·BTC$62.6K extreme fear F&G 9·🆕INTC+10% BofA→Buy PT$135·🆕SNDK$1863 ATH⚠+570%YTD→SELL/TRIM·AVGO$375(-24%ATH·-5%背离反弹·$370支撑·92%Buy·Q2 AI$10.8B+143%)·MU$1025(+6.6%·Wolfe$1250·6/24财报)·NVDA$208(+2-3%·Vera Rubin量产·SK Hynix HBM4至2030·FwdP/E19.7x)$4.9T·AMD$475(+3-4%·$500 call wall)·SK Hynix BUY(HBM4/5 multi-yr NVDA pact·60-70%份额·M15X扩产)·Samsung strike RESOLVED✅(5/27·73.7%·10yr deal)·COHR$358 BUY🔥(-19%ATH·NVDA$2B·CPO噪音=机会·B2B>4:1)·LITE$859 BUY🔥(-18%peak·+90%YoY·$400M+CPO backlog·JPM$1130·最强R/R)·RKLB$112-116(-25%ATH·SPCX rotation headwind)·ASTS$88-96(-33%ATH·🔴6/17 BB8-10 F9 binary·insider sell·consensus Reduce)·LUNR$29.83(-36%ATH·$1.1B backlog·EBITDA+·7/8Buy·SPCX create entry)·RDW$18-21 AVOID($500M ATM dilution·Jefferies降级)·Defensive rotation real·Semi rebound=relief not trend·禁止新仓位至FOMC clear·全文:BRIEF_20260612_postmarket.md",
+    "overnight_20260612_v24": "3 agent fork complete·SPCX debut day·S&P7394+1.75%·Nasdaq29446+3.29%·SOX+7.91% relief rally·Trump cancel Iran strikes·Oil$86-89(-5.9%)·Gold$4214 V-bounce·10Y4.46%·DXY<100·ADBE-5.8%AH(CFO→MRVL·beat irrelevant)·RKLB+11%AH(Nasdaq-100 inclusion 6/22)·RH+7.5%(beat+raise)·NVDA BUY🔥(FwdP/E19.7x·$80B回购·Vera Rubin Q3·Senate hearing done·共识PT$305)·AVGO BUY🔥($375 -24%ATH·$30B AI bookings·FCF$10.3B/qtr·25Buy/4Hold/0Sell)·MU HOLD($1025·6/24财报binary·HBM4 Rubin exclusion risk SemiAnalysis)·SNDK SELL/TRIM($1863 ATH +570%YTD·NBM$42B priced in·blow-off风险·take profits)·AMD HOLD($475·$500 call wall·Zen6 summer·CEO sold$55.7M)·INTC HOLD($127·BofA Buy PT$135·foundry-$2.4B·P/E extreme)·SK Hynix BUY(KRW2.29M·4.4x P/E absurd·77% margins·HBM4 multi-yr NVDA)·COHR BUY🔥($358 -19%ATH·NVDA$2B·CPO噪音=机会·JPM Overweight·B2B>4:1)·LITE BUY🔥($859 -18%peak·+90%YoY·$400M+CPO backlog·JPM$1130·最强R/R optical)·RKLB HOLD($115→$127AH Nasdaq-100 inclusion·SPCX direct competition for space$)·ASTS HOLD🔴($88-96·6/17 BB8-10 F9 binary·insider sell·consensus Reduce·CTO sold53.5%)·LUNR BUY watch($29.83 -36%ATH·$1.1B backlog·EBITDA+·7/8Buy·SPCX day may create entry)·RDW AVOID($18-21·$500M ATM dilution·Jefferies降级)·SPCX LIVE TODAY($135·$1.75T·4%float·MSCI inclusion 6/13 forced buy$35-50B·base case$140-175 W1·bear$63Morningstar)·Starship IFT-12: Ship39✅ Booster B19❌·FAA mishap 5/27·grounded·IFT-13 NET Jul-Aug·Samsung strike RESOLVED✅(5/27 73.7% ratified·10yr deal·zero supply impact)·DXYZ 清仓铁律 today·SPCX removes scarcity premium·MRVL 反弹$295-300减半·禁止新仓位至FOMC clear 6/17·净值~$32K·全文:BRIEF_20260612_overnight_v24.md",
+    "postmarket_20260606": "v18 overnight·3 agent fork·SOX-10%(AVGO导火索·2020最差单日)·Nasdaq-3%vsDow+1.73%ATH·Samsung罢工瓦解·SOX crossed 10000但+79%YTD·DRAM Q3减速:PC+8-13%vsQ2+46%·BofA B&B 8.0·COHR$425 STRONG BUY(NVDA$2B)·LITE$1040 STRONG BUY(+90%rev)·RKLB$120 HOLD(67xP/S)·ASTS$108 REDUCE(PT$81)·LUNR$30 SELL($500M稀释)·DXYZ$41清仓加速·SPCX 2x超额$135·CPI 6/10+SPCX 6/12双鬼拍门·全文:BRIEF_20260606_overnight_v18.md·ALERT已触发微信推送",
+    "premarket_20260606": "3 agent fork·Saturday scan for Mon 6/8·MRVL S&P500 inclusion=AH+6% exit window(gift)·SOX-10.3% Friday worst since Mar2020·DJIA+874 ATH rotation not panic·Goldman Flood buy the dip S&P target 8000·Hartnett B&B 8.0 sell signal but wait CPI+IPOs·CPI 6/10 Nowcast 3.89% risks>4.1%=dragon territory·FOMC 6/16-17 Warsh首秀·dot plot may show hikes·US-Iran missiles strike Kuwait airport+Ali Al Salem+Bahrain 5thFleet·Hormuz closed·China Section301 12.5% tariff proposed·Crypto F&G 12 extreme fear 46days·SPCX Nasdaq100 fast track 15day·MRVL SELL(bounce exit)·AVGO BUY(wait $397)·MU BUY($950-980)·NVDA HOLD·INTC/AMD SELL·SNDK HOLD·SK Hynix BUY(ADR catalyst)·COHR BUY dip $360-380·LITE HOLD·RKLB HOLD·ASTS/LUNR SELL·RDW HOLD↗️·DXYZ clear before 6/12·全文:BRIEF_20260606_premarket.md·WeChat push failed(IP whitelist·timeout)·Brief via onionoffice.xyz",
+    "premarket_20260605": "3 agent fork完成·Kospi -5~7%(19月最差·AVGO导火索)·SOX -2.15%→DJIA +874新高(rotation not panic)·Samsung罢工解除✅·MRVL Jensen认证·LUNR $500M ATM稀释·Hezbollah拒绝停火→US-Iran复杂化·NFP共识+85K(20-95K)·BofA卖出信号触发·BTC $62.5K极度恐惧RSI 17.8·今日唯一正确操作=不操作·全文outbox: BRIEF_20260605_premarket.md·WeChat推送失败(网络超时)",
+    "premarket_ratings": "AVGO BUY($410 dip·200MA $397·华尔街PT $508-550·25-35%上行·Google TPU分流real but gradual)·NVDA BUY(dominance·$80B buyback·🔴Senate 6/11)·SK Hynix BUY(57% HBM4·US ADR catalyst·21x PE)·MU HOLD(等待$950-980·6/24财报·CEO卖$21.5M)·INTC SELL(PT $83 -26%·short squeeze fuel gone·N1X威胁)·AMD SELL(PT $420 -17%·insider卖$120M zero buys·ARK dump $40M)",
+    "postmarket_watchlist": "RKLB$119.95 HOLD(内部卖出$68M/90d·CFO/COO/SVP/Director全员卖出·BUT挪威主权基金建仓4.89M股·Neutron Q4·等$105-110)·ASTS~$107 SELL(DB降级$106·F9 BB8-10 6月中·New Glenn依赖→2026部署存疑·共识~$86)·LUNR$30.69 HOLD($500M ATM稀释-14.5%·$1.1B backlog·Cantor$43·24%空头)·RDW$21.57 SELL(50%高于共识·毛利率崩溃9%·Jefferies降级)·COHR~$410 HOLD(B2B>4x·NVDA$2B anchor·高于$360-380入口·等回调)·LITE~$935 HOLD(2027售罄·已入<$1000入口区·173x PE极端·谨慎)",
+    "postmarket_macro": "S&P 7610 ATH·期货-0.3%·VIX 15.77 complacent·10Y 4.35-4.42%·CPI 6/10·FOMC 6/16-17(Warsh首秀)·🆕US-Iran final stage·🆕劳动短缺7GW数据中心缺口·黄金$4462-4504·BTC $62500·NFP+gamma今天=禁止交易·WTI $96·防守→周期轮动脆弱",
+    "memory_cycle_peak": "Bernstein+TrendForce确认DRAM Q2 +64%·NAND +60% QoQ·Q3减速:PC DRAM +8-13%·mobile DRAM +0-10%·NAND现货<合约20%·CXMT中国扩产中·HBM结构性需求独立于商品周期·2026 HBM供给+62%>需求+52%首次",
+    "avgo_dip_analysis": "Q2:Rev$22.19B(+48%)·EPS$2.44 beat·AI$10.8B(+143%)·FCF$10.3B·EBITDA margin 69%·Q3 AI guide$16B miss whisper$17.2B·-15%至~$411·华尔街25 Buy/4 Hold/0 Sell·8家在24h上调PT:JPM$580/Jefferies$550/Mizuho$530/Goldman$525/DB$515/MS$502·200MA$397支撑·$300B市值蒸发=情绪宣泄非基本面·CEO Hock确认6家hyperscaler·AI bookings>$30B",
+    "beat_then_crash": "🆕新财报规律确认·AVGO(beat-15%)·CRDO(triple beat-4~12%)·CRWD(beat+raised+4:1split-8.5%)·PANW(beat sold off)·Market shifted:beat=rally→beat=sell unless raise guidance·需guidance acceleration非just beat·影响MU 6/24财报策略",
+    "dram_q3_deceleration": "🆕确认·PC DRAM Q2+46%→Q3+8-13%·DDR5 16Gb Q3+5.7%→Q4 flat·Raymond James:DRAM ASP peak mid-2026·commodity cycle peaking·HBM唯一结构性增长(Q2+64%QoQ·2026 sellout)·HBM供给+62%>需求+52%首次宽松·CXMT中国扩产增加供给压力",
+    "intc_sell_rationale": "18A量产·Google TPUv8e EMIB封装·MS/AWS/Ericsson客户·但共识PT $68-82→30-41%下跌·P/E 102x vs 历史12x·N1X冲击PC·18A盈利2027末(CFO)·NVDA测试18A暂停·White House 9.9%持股成本$20.47为政策底",
+    "sk_hynix_buy_rationale": "~70% NVDA HBM4订单(Yonhap)·HBM4E 48GB 16H样品·P/E 21x合理·2027 Fwd P/E ~6-8x·2027 OP ~42.3T KRW(+55%)·HBM价格2027 +50%·3-5年LT合约锁定·产能翻倍计划·风险:三星HBM4追赶·HBM3e -30%YoY",
+    "samsung_strike_resolved": "5/27投票73.7%通过(46,142:16,474)·95.5%投票率·半导体工会80.6%通过·消费电子21.1%反对·10年协议签署·供应零影响·早期5月中停产损失轻微·尾部分化风险(消费电子工会起诉+股东诉讼)",
+    "starship_ift12_detail": "5/22 6:30PM EDT·V3首飞(B19/S39)·33 Raptor 3+6·Ship39成功部署20颗模拟Starlink V3·重返大气层验证成功·印度洋软溅落66.5min·BUT:1台booster engine out T+1:42·boostback burn失败·助推器硬溅落~1,500km/h·1台ship engine out·在轨引擎重启跳过·5/27 FAA mishap调查·停飞·IFT-13最早Q3末·DXYZ Starship pattern再次确认(7次1胜·avg -1.4%)",
+    "starship_ift12": "5/22发射·Ship39成功部署20颗Starlink V3模拟+再入验证·Super Heavy B19多引擎故障·硬溅落~1500km/h·5/27 FAA宣布mishap调查·Starship正式停飞·IFT-13预计7-8月·SpaceX可能放弃助推器回收",
+    "new_glenn_explosion": "5/28 LC-36静态点火爆炸·BO内部调查·修复3-15月·48颗Kuiper卫星+发射台全毁·Artemis Blue Moon风险·Congressman Babin(众院科学主席)承诺监督",
+    "us_iran_deal_final_stage": "Trump称US-Iran协议最后阶段·Hormuz立即重开(MOU签署后)·Hezbollah拒绝Lebanon停火(复杂化)·主导性二元催化剂·若达成:油价↓→利好风险资产·黄金safe-haven bid泄漏(Commerzbank下调年末目标至$4800)·黄金-16%从Jan ATH",
+    "data_center_labor_shortage": "🆕关键风险:美国施工劳动力缺口439-499K工人→7GW容量差距→近半数规划中AI数据中心取消/延期·仅资本支出无法解决·威胁所有AI半导体供应商的按时收入假设·是可能被低估的结构性阻力",
+    "nvda_senate_hearing_june11": "Warren+出口管制鹰派传唤Jensen参加参院听证·可能触发对华出口限制新头条→半导体板块波动·NVDA 47 Buy/3 Hold·$80B回购·25x股息上调(6/4除权)·Q1 rev $81.6B(+85%)·Q2 guide $91B·共识PT $304(+41%)",
+    "sk_hynix_us_adr": "SK Hynix美国ADR上市即将($10-14B)·估值差距缩小催化剂vs MU·Citi PT 310万won(+31%)·HBM4 57-58%全球份额·Jensen在HBM4E上写'Please make more'·Q1 op margin 72%·2026全年预售罄",
+    "btc_update": "BTC $61K(-31% YTD)·恐惧贪婪12极度恐惧·ETH $1450(-46% YTD)·$331M 24h清算",
+    "premarket_20260611": "3 agent fork·futures +0.8-1.2% bouncing·SOX-16% ATH correction(W-iv)·🆕INTC BofA double-upgrade→HOLD·🆕NVDA P/E19.7x→BUY·🆕MU HBM4 risk→HOLD·AVGO$372 BUY🔥·Hormuz CLOSED by Iran·PPI 8:30am +0.7% est·ECB +25bp today·SPCX tomorrow·DXYZ清仓铁律·全文:BRIEF_20260611_premarket.md",
+    "intc_double_upgrade": "🆕6/11 BofA double-upgrade Underperform→Buy PT$135·Google TPU 3M+ units Intel Foundry 2028·NVIDIA testing 18A for Feynman GPU·Tesla 14A·Hitachi·Apple preliminary·Foundry rev$5.4B(40%)·⚠P/E 123-141x·FCF-$3.87B·评级SELL→HOLD·保留仓位不加仓等FCF转正",
+    "nvda_buy_upgrade": "🆕6/11 HOLD→BUY·$200.42(-18% ATH)·FwdP/E19.7x BELOW S&P500 21.8x·历史级别错配·Vera Rubin Q3量产·38 Strong Buy PT$305(+52%)·$80B回购·Jensen参院听证会=加仓窗口·分批$195-205",
+    "mu_hold_downgrade": "🆕6/11 BUY→HOLD·HBM4 Rubin Exclusion风险 SemiAnalysis·pin speed不足·1c node良率~50%·若6/24确认=结构性风险非周期性·HBM3E 2026售罄但priced in·不做左侧等财报·Wells Fargo PT$1220·UBS$1625·Options 20% implied swing",
+    "avgo_372_update": "🆕6/11 AVGO$372(-23% ATH)·比昨天$385-398更便宜·Q2 beat·Q3 AI guide$16B miss whisper$17.2B only issue·$30B+新AI bookings(Q2出货3x)·backlog至FY2028·25Buy/4Hold/0Sell·共识PT$502-580·$370-385分批加仓",
+    "overnight_20260611_v21": "🆕3 agent fork complete·6/11 pre-market·SPCX TOMORROW 6/12 $135 $1.75T $75B·NVDA Senate hearing TODAY(Jensen v Warren China exports)·AVGO UPGRADE HOLD→BUY(AVGO$385-398·20% overreaction·22.5x fwd·6 hyperscalers locked·best R/R in semis)·SNDK UPGRADE HOLD→BUY($1559·-16% ATH·P/E9.6x forward·NAND structural shortage to 2028·$42B committed revenue)·MU BUY maintained($935·FwdP/E18x·HBM4 Vera Rubin certified·June 24 earnings)·NVDA DOWNGRADE BUY→HOLD($201-210·Senate hearing binary risk today·fundamentals flawless but regulatory overhang)·COHR$355 BUY🔥(dropped from$388-417 to$355=-19% ATH·in buy zone·NVDA$2B·booked through 2028)·LITE$853 BUY(+90%YoY rev·NVDA$2B·dip buyers active)·INTC$107-110 HOLD→SELL(consensus PT$83-89·P/E102x)·AMD$466 HOLD(CEO sold$55.7M·140x P/E·wait$400)·Space sector deeper correction(RKLB$105·ASTS$87·LUNR$26.54·RDW$14.87·all HOLD·SPCX gravity)·ASTS 6/17 BB8-10 Falcon9 launch binary catalyst·Starship IFT-12 5/22 partial success(V3 orbit+deploy✅·booster hard splashdown❌)·FAA mishap 5/27·grounded to Q3·Samsung strike RESOLVED 5/27(73.7% vote·10yr deal)·SK Hynix BUY(NVDA multiyear HBM4 deal)·Market:VIX22-24·Oil$92·CPI4.2% stagflation·rotation semis→defense/healthcare·BofA B&B 8.0 sell signal·禁止新仓位至CPI+FOMC clear·全文:BRIEF_20260611_overnight_v21.md"
+  },
+  "active_crons": [
+    "research_2h_:07 (c0f91f03) — 每2h·3Agent并行·DXYZ/SpaceX+Storage/Semi+Aerospace/Optical",
+    "inbox_hourly_:37 (fb3f942a) — lightweight, exit if empty",
+    "heat_hourly_:37 — hourly heat report ALERT_heat_{HH}.md",
+    "dns_check_hourly_:07 (802e8a11) — check onionoffice.xyz nameserver propagation",
+    "background_scheduler.py — wechat_sync(5min)+sentiment(hourly)+daily+publisher (ZERO AI tokens)"
+  ],
+  "infrastructure": {
+    "server_pid": "running",
+    "server_port": 8765,
+    "cloudflared": "running (named tunnel onion-tunnel + backup quick tunnel)",
+    "wechat_auto_reply": "running (polling 3s, keyword replies zero AI tokens)",
+    "watchdog": "running (30s health check, auto-restart, WeChat alerts)",
+    "wsl_tmux": "running (ceo-24x7 session)",
+    "startup_script": "installed in shell:startup (startup_onionquant.bat)",
+    "domain": "https://onionoffice.xyz — working",
+    "backup_tunnel": "auto-created by watchdog on demand",
+    "background_scheduler": "scripts/background_scheduler.py"
+  },
+  "interrupted_task": null,
+  "interrupted_at": "2026-06-12T18:06:10.929760",
+  "urgent_reason": "紧急：当前系统状态如何？有哪些待处理任务？MU持仓建议？",
+  "urgent_resolved": true,
+  "urgent_resolved_at": "2026-06-12T18:03:33.905720"
+}
