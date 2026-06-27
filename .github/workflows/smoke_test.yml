@@ -23,11 +23,8 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install pytest pytest-cov pytest-timeout
-          pip install numpy pandas scipy scikit-learn statsmodels matplotlib seaborn pyyaml python-dotenv
-          pip install empyrical-reloaded
-          pip install fastapi uvicorn aiohttp
-          pip install langchain langgraph langgraph-checkpoint-sqlite
+          pip install -r requirements.txt
+          pip install pytest-cov pytest-timeout
 
       - name: Lint (ruff)
         continue-on-error: true  # Non-blocking — legacy code will be cleaned incrementally
