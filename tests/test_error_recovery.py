@@ -24,10 +24,11 @@ def test_retry_on_transient_failure():
     ]
 
     with patch("openai.OpenAI", return_value=mock_client):
-        with patch.dict("os.environ", {"DEEPSEEK_API_KEY": "test-key"}):
-            result = _call_llm("test", "system", max_retries=2)
-            assert result == "OK after retry"
-            assert mock_client.chat.completions.create.call_count == 3
+        with patch("infrastructure.llm_provider.ENV_FILE", Path("__missing__.env")):
+            with patch.dict("os.environ", {"DEEPSEEK_API_KEY": "test-key"}, clear=True):
+                result = _call_llm("test", "system", max_retries=2)
+                assert result == "OK after retry"
+                assert mock_client.chat.completions.create.call_count == 3
 
 
 def test_failure_after_all_retries_raises():
@@ -36,12 +37,13 @@ def test_failure_after_all_retries_raises():
     mock_client.chat.completions.create.side_effect = TimeoutError("dead")
 
     with patch("openai.OpenAI", return_value=mock_client):
-        with patch.dict("os.environ", {"DEEPSEEK_API_KEY": "test-key"}):
-            try:
-                _call_llm("test", "system", max_retries=2)
-                assert False, "Should have raised"
-            except TimeoutError:
-                assert mock_client.chat.completions.create.call_count == 3
+        with patch("infrastructure.llm_provider.ENV_FILE", Path("__missing__.env")):
+            with patch.dict("os.environ", {"DEEPSEEK_API_KEY": "test-key"}, clear=True):
+                try:
+                    _call_llm("test", "system", max_retries=2)
+                    assert False, "Should have raised"
+                except TimeoutError:
+                    assert mock_client.chat.completions.create.call_count == 3
 
 
 def test_node_skip_on_failure():

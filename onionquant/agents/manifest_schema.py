@@ -157,7 +157,7 @@ class ManifestRegistry:
                 errs.append("missing system_prompt")
             if m.department and not m.department.startswith("_"):
                 # Verify department exists
-                dept_path = Path("company/departments") / m.department
+                dept_path = Path("onionquant/departments") / m.department
                 if not dept_path.exists():
                     errs.append(f"department '{m.department}' not found")
             if errs:

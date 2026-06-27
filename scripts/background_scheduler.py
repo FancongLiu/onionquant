@@ -3,7 +3,7 @@
 Background task scheduler — runs Python scripts on a cron-like schedule.
 Replaces CronCreate for non-AI tasks to avoid cold-start Claude sessions.
 
-Runs wechat_sync (5min), sentiment_hourly, research_publisher (30min 13-20 1-5),
+Runs wechat_sync (60min), sentiment_hourly, research_publisher (30min 13-20 1-5),
 daily pipeline (6:07 1-5).
 
 Zero AI token consumption — pure Python subprocess.
@@ -98,7 +98,7 @@ def main():
 
     # Task definitions: (cron_spec, script_name, [args], timeout_seconds)
     tasks = [
-        ("2,7,12,17,22,27,32,37,42,47,52,57 * * * *", "wechat_sync_push.py", [], 60),
+        ("2 * * * *", "wechat_sync_push.py", [], 60),
         ("9 22,23,0,1,2,3 * * 1-5", "sentiment_hourly_push.py", [], 120),
         ("7 6 * * 1-5", "run_pipeline.py", [], 600),
         ("0,30 13-20 * * 1-5", "research_publisher.py", [], 120),
@@ -119,6 +119,8 @@ def main():
         ("13 9,21 * * *", "content_review.py", [], 60),
         # Self-evolution cycle — every 6 hours (03:17, 09:17, 15:17, 21:17 BJT)
         ("17 3,9,15,21 * * *", "self_evolve.py", [], 360),
+        # Autonomy watchdog — pure Python heartbeat monitor, no AI process startup.
+        ("*/10 * * * *", "autonomy_watchdog.py", ["queue-if-stale"], 60),
     ]
 
     print(f"Watching {len(tasks)} tasks", flush=True)

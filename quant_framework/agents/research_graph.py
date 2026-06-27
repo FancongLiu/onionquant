@@ -214,30 +214,19 @@ AGGREGATOR_PROMPT = """你是 OnionQuant 的 CEO Agent。你的任务是将各�
 # ─── Node Functions ──────────────────────────────────────
 
 def _call_llm(prompt: str, system: str, temperature: float = 0.3) -> str:
-    """Call DeepSeek API with given prompt and system message."""
-    api_key = os.getenv("DEEPSEEK_API_KEY", "")
-    if not api_key:
-        env_file = Path(__file__).resolve().parent.parent.parent / ".env"
-        if env_file.exists():
-            for line in env_file.read_text(encoding="utf-8").split("\n"):
-                if line.startswith("DEEPSEEK_API_KEY="):
-                    api_key = line.split("=", 1)[1].strip()
-                    break
-    if not api_key:
-        return "[ERROR] No DEEPSEEK_API_KEY configured"
+    """Call the configured OpenAI-compatible provider."""
+    try:
+        from infrastructure.llm_provider import call_llm
 
-    from openai import OpenAI
-    client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
-    resp = client.chat.completions.create(
-        model="deepseek-chat",
-        messages=[
-            {"role": "system", "content": system},
-            {"role": "user", "content": prompt},
-        ],
-        max_tokens=1500,
-        temperature=temperature,
-    )
-    return resp.choices[0].message.content.strip()
+        text, _, _ = call_llm(
+            prompt,
+            system,
+            max_tokens=1500,
+            temperature=temperature,
+        )
+        return text
+    except Exception as exc:
+        return f"[ERROR] LLM provider unavailable: {exc}"
 
 
 def supervisor_node(state: ResearchState) -> dict:
