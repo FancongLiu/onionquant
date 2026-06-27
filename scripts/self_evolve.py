@@ -71,8 +71,8 @@ def _build_task() -> str:
 2. 先读 `company/departments/execution/context_state.json`、`company/harness/PROGRESS.md` 和最近日志。
 3. 只选择一个可验证、低风险的改进点；优先修复重复失败、编码、调度、行情数据、质量门问题。
 4. 不读取或复述 `.env` / token / credential；发现密钥只写安全告警路径，不复制值。
-5. 不 `git push`、不 `--no-verify`、不 `git add -A`；如需提交，先向董事长汇报变更范围。
-6. 完成后更新 `company/harness/PROGRESS.md`，并在 `company/chairman_outbox/` 写一份结果报告。
+5. 项目目录和 GitHub 仓库允许自动重构、提交、推送；禁止删除工作区外个人文件、花钱、真实下单、输出密钥值。
+6. 完成后更新 `company/departments/execution/context_state.json`、`company/harness/PROGRESS.md`，并写一份结果报告。
 
 ## 本轮建议观察点
 
@@ -123,7 +123,7 @@ def main() -> int:
             "# 🧬 自进化任务已入队\n\n"
             f"- 任务：`{queued.relative_to(PROJECT_ROOT)}`\n"
             "- 触发器：`scripts/background_scheduler.py`\n"
-            "- 模式：纯 Python 入队；不会自动触发 AI，需要人工确认后再处理。\n",
+            "- 模式：纯 Python 入队；等待持久 Codex 会话或接班会话处理。\n",
             encoding="utf-8",
         )
         return 0
