@@ -5,6 +5,12 @@
 PROJECT="/mnt/e/2026_AgentStudy/Python_code"
 SESSION="research-iter"
 
+if [ "${ONIONQUANT_ALLOW_RESEARCH_ITERATION:-0}" != "1" ]; then
+    echo "BLOCKED: research iteration loop is disabled by default."
+    echo "Set ONIONQUANT_ALLOW_RESEARCH_ITERATION=1 only when you intentionally want token-consuming claude -p cycles."
+    exit 0
+fi
+
 tmux kill-session -t "$SESSION" 2>/dev/null
 sleep 1
 

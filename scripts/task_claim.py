@@ -21,7 +21,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 CLAIMS_DIR = PROJECT_ROOT / "company" / "task_claims"
 TTL_SECONDS = 900  # 15 minutes — deadlock prevention
-VALID_TYPES = {"inbox", "iteration", "redteam", "hourly", "daily"}
+VALID_TYPES = {"inbox", "iteration", "redteam", "hourly", "daily", "self_evolve"}
 
 
 def _claim_dir(task_type: str) -> Path:

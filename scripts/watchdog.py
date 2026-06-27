@@ -48,11 +48,6 @@ SERVICES = {
         "start": lambda: _start_cloudflared(),
         "name": "cloudflared tunnel",
     },
-    "wsl_tmux": {
-        "check": lambda: _check_wsl_tmux(),
-        "start": lambda: _start_wsl_tmux(),
-        "name": "WSL tmux ceo-24x7",
-    },
     "bg_scheduler": {
         "check": lambda: _check_python_script("background_scheduler"),
         "start": lambda: _start_process(
@@ -61,6 +56,13 @@ SERVICES = {
         "name": "background_scheduler",
     },
 }
+
+if os.getenv("ONIONQUANT_ENABLE_WSL_AI_DAEMON") == "1":
+    SERVICES["wsl_tmux"] = {
+        "check": lambda: _check_wsl_tmux(),
+        "start": lambda: _start_wsl_tmux(),
+        "name": "WSL tmux ceo-24x7",
+    }
 
 _BACKUP_TUNNEL_URL = None
 _ALERTED_FAILURES = set()  # Don't spam WeChat for the same failure

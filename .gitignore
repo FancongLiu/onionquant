@@ -96,6 +96,8 @@ company/.server_log.txt
 # 运行时状态文件
 company/.watcher_state.json
 company/watcher_seen.json
+company/runtime/
+company/evolution_queue/
 
 # 董事长持仓数据（个人财务信息）
 company/chairman_position_tracker.json

@@ -6,6 +6,11 @@
 PROJECT="/mnt/e/2026_AgentStudy/Python_code"
 SESSION="ceo-24x7"
 PYTHON="$PROJECT/.venv-linux/bin/python3"
+if [ "${ONIONQUANT_ALLOW_AI_DAEMON:-0}" != "1" ]; then
+    echo "BLOCKED: AI daemon startup is disabled by default."
+    echo "Set ONIONQUANT_ALLOW_AI_DAEMON=1 only when you intentionally want token-consuming WSL AI work."
+    exit 0
+fi
 if [ ! -x "$PYTHON" ]; then
     PYTHON="$PROJECT/.venv/Scripts/python.exe"
 fi

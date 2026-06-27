@@ -10,13 +10,15 @@ Zero AI token consumption — pure Python subprocess.
 """
 
 import subprocess
+import sys
 import time
 from datetime import datetime
 from pathlib import Path
 
-from scripts._subprocess_utils import run
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from scripts._subprocess_utils import run
 
 # Docker / container: use the system Python; Windows dev: use .venv
 _VENV_CANDIDATES = [

@@ -8,6 +8,12 @@ SESSION_NAME="ceo-24x7"
 
 cd "$PROJECT_DIR" || exit 1
 
+if [ "${ONIONQUANT_ALLOW_AI_DAEMON:-0}" != "1" ]; then
+  echo "BLOCKED: persistent Claude CEO session is disabled by default."
+  echo "Set ONIONQUANT_ALLOW_AI_DAEMON=1 only when you intentionally want token-consuming AI work."
+  exit 0
+fi
+
 # Kill any previous session
 tmux kill-session -t "$SESSION_NAME" 2>/dev/null
 

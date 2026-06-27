@@ -20,13 +20,16 @@ import os
 import platform as _platform
 import re
 import subprocess
+import sys
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
 from scripts._subprocess_utils import run
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
 STOP_FILE = PROJECT_ROOT / "company" / ".stop_evolve"
 PROGRESS_FILE = PROJECT_ROOT / "company" / "harness" / "PROGRESS.md"
 SKILLS_DIR = PROJECT_ROOT / "company" / "departments" / "it_tech" / "discovered_skills"
@@ -207,6 +210,12 @@ source_task: {task[:80]}
 # ─── Main Loop ──────────────────────────────────────────
 
 def main():
+    if os.getenv("ONIONQUANT_ALLOW_CONTINUOUS_EVOLVE") != "1":
+        log("BLOCKED: continuous_evolve.py is disabled by default.")
+        log("Reason: it can launch fresh AI sessions and auto git push to main.")
+        log("Set ONIONQUANT_ALLOW_CONTINUOUS_EVOLVE=1 only after explicit review.")
+        return
+
     log("=== OnionQuant Evolution Daemon v2 ===")
     log("  Architecture: /goal + Hermes Learning Loop")
     log(f"  Skills dir: {SKILLS_DIR}")

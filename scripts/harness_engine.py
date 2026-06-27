@@ -388,6 +388,7 @@ class HarnessEngine:
 
     def __init__(self):
         self.current_task = None
+        self.current_task_id = None
         self.task_start_time = None
 
     def start_task(self, task_description: str, criteria_override: list = None):
@@ -396,6 +397,7 @@ class HarnessEngine:
         self.current_task = task_description
         self.task_start_time = time.time()
         task_id = f"task-{now_ts()}"
+        self.current_task_id = task_id
         create_contract(task_id, criteria_override)
         return task_id
 
@@ -405,7 +407,10 @@ class HarnessEngine:
         import time
 
         if not task_id:
+            task_id = self.current_task_id
+        if not task_id:
             task_id = f"task-{now_ts()}"
+            create_contract(task_id)
 
         duration = time.time() - (self.task_start_time or time.time())
 
@@ -428,6 +433,12 @@ class HarnessEngine:
             duration_sec=duration,
             evaluator_result=f"{eval_result['verdict']} ({eval_result['score']}/10)",
             skills_distilled=0,
+        )
+        update_criterion(
+            task_id,
+            "progress_updated",
+            passes=True,
+            evidence=f"PROGRESS.md updated at {now_iso()}",
         )
 
         # 4. Auto-distill Skill if complex enough
