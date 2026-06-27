@@ -478,29 +478,20 @@ def _format_risk_for_prompt(risk_metrics: dict[str, dict]) -> str:
 
 def _call_llm(prompt: str, system: str, temperature: float = 0.3, max_tokens: int = 800,
               max_retries: int = 2, timeout: float = 60.0) -> str:
-    """Call DeepSeek LLM with retry on transient failures. Max 2 retries, exponential backoff."""
-    api_key = os.getenv("DEEPSEEK_API_KEY", "")
-    if not api_key:
-        env_file = Path(__file__).resolve().parent.parent.parent / ".env"
-        if env_file.exists():
-            for line in env_file.read_text(encoding="utf-8").split("\n"):
-                if line.startswith("DEEPSEEK_API_KEY="):
-                    api_key = line.split("=", 1)[1].strip()
-                    break
-    if not api_key:
-        return "[ERROR] No DEEPSEEK_API_KEY"
-
-    from openai import OpenAI
-    client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com", timeout=timeout)
-
+    """Call configured OpenAI-compatible LLM with retry/backoff."""
     last_error = None
     for attempt in range(max_retries + 1):
         try:
-            resp = client.chat.completions.create(
-                model="deepseek-chat",
-                messages=[{"role": "system", "content": system}, {"role": "user", "content": prompt}],
-                max_tokens=max_tokens, temperature=temperature)
-            return resp.choices[0].message.content.strip()
+            from infrastructure.llm_provider import call_llm
+
+            text, _, _ = call_llm(
+                prompt,
+                system,
+                max_tokens=max_tokens,
+                temperature=temperature,
+                timeout=timeout,
+            )
+            return text
         except Exception as e:
             last_error = e
             if attempt < max_retries:
