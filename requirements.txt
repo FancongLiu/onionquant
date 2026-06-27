@@ -13,6 +13,7 @@ statsmodels>=0.14
 
 # Quant Frameworks
 riskfolio-lib>=7.0
+PyPortfolioOpt>=1.5
 empyrical-reloaded>=0.5
 alphalens-reloaded>=0.4
 pyqlib>=0.9
